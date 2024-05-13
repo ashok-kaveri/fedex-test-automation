@@ -48,3 +48,10 @@ Thumbs.db
 *.mov
 *.wmv
 
+.DS_Store
+node_modules/*
+npm-debug.log
+test/reports/*
+package-lock.json
+allure-report/*
+logs/*
