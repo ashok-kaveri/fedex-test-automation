@@ -47,90 +47,12 @@ export const config: WebdriverIO.Config = {
         './test/features/*.feature',
     ],
     suites: {
-      checkoutRates: [
-        [
-          './test/features/onlineStoreLogin.feature',
-          './test/features/adminlogin.feature',
-          './test/features/verifyRates.feature'
-        ],      
-      ],
-      "au-weightwise-solution-vw-enabled": [
-        [
-          './test/features/onlineStoreLogin.feature',
-          './test/features/adminlogin.feature',
-          './test/features/ratesAtCheckoutForStore:au-weightwise-solution-vw-enabled.feature'
-        ],   
-      ],
-      "au-boxwise-solutions-vw-disabled":[
-        [
-        './test/features/onlineStoreLogin.feature',
-        './test/features/adminlogin.feature',
-        './test/features/ratesAtCheckoutForStore:au-boxwise-solutions-vw-disabled.feature'
-        ]
-      ],
-      "au-boxwisesolution-vw-disable-fastrates":[
-        [ './test/features/onlineStoreLogin.feature',
-          './test/features/adminlogin.feature',
-          './test/features/ratesAtCheckoutForStore:au-boxwisesolution-vw-disable-fastrates.feature'
-        ]
-      ],
-      "au-boxwise-solutions-vw-enabled":[
-        [
-        './test/features/onlineStoreLogin.feature',
-        './test/features/adminlogin.feature',
-        './test/features/ratesAtCheckoutForStore:au-boxwise-solutions-vw-enabled.feature'
-        ]
-      ],
-      "auweightwise-solution-vw-disabled":[
-        [
-        './test/features/onlineStoreLogin.feature',
-        './test/features/adminlogin.feature',
-        './test/features/ratesAtCheckoutForStore:auweightwise-solution-vw-disabled.feature'
-        ]
-      ],
-      "infinity-emporium-wbp-vw-enabled":[
-        [
-        './test/features/onlineStoreLogin.feature',
-        './test/features/adminlogin.feature',
-        './test/features/ratesAtCheckoutForStore:infinity-emporium-wbp-vw-enabled.feature'
-        ]
-      ],
-      "au-boxwisesolution-vw-enbaled-fastrates":[
-        [
-        './test/features/onlineStoreLogin.feature',
-        './test/features/adminlogin.feature',
-        './test/features/ratesAtCheckoutForStore:au-boxwisesolution-vw-enbaled-fastrates.feature'
-        ]
-      ],
-      "weightwise-solutions-voumetric-weight-fast-rates": [
-        [
-          './test/features/onlineStoreLogin.feature',
-        './test/features/adminlogin.feature',
-        './test/features/ratesAtCheckoutForStore:weightwise-solutions-voumetric-weight-fast-rates.feature'
-        ]
-      ],
-      "weightwise-solutions-vw-disabled": [
-        [
-          './test/features/onlineStoreLogin.feature',
-          './test/features/adminlogin.feature',
-          './test/features/verifyRates.feature'
-        ]
-      ],
-      "boxwise-solution-vw-disabled-fastrates": [
-        [
-          './test/features/onlineStoreLogin.feature',
-          './test/features/adminlogin.feature',
-          './test/features/ratesAtCheckoutForStore:boxwise-solution-vw-disabled-fastrates.feature'
-        ]
-      ],
       "fedex-registration": [
         [
           './test/features/adminlogin.feature',
           './test/features/fedexRegistration.feature'
         ]
-      ]
-      
-      
+      ] 
     },  
     // Patterns to exclude.
     exclude: [

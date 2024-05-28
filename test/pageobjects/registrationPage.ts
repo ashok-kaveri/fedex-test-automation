@@ -78,8 +78,8 @@ class Registration extends Page {
     public open() {
         const { STORE_ID, APP } = process.env;
         const storeId = STORE_ID.match(/^(.*?)\.myshopify\.com/)[1];
-        return super.open(`admin.shopify.com/store/${storeId}/apps/${APP}/settings/account/additional/new`);
-    }
+        return super.open(`admin.shopify.com/store/${storeId}/apps/testing-553/settings/account/additional/new`);
+    } 
     public async addADetails(table) {
         try{
             console.log('__________________________________________');
