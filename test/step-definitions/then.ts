@@ -33,12 +33,14 @@ Then('I should be redirected to account', async () => {
 
 Then('I should be deleting the account for test {string}', async (testId: string) => {
     try {
+        //error extracting
         const errorMessage: string | undefined = await Registration.extractErrorMessage(); 
         if(errorMessage && errorMessage.trim() !== '') {
             await new ErrorHandler().onError(new Error(errorMessage), testId);
         } else {
-            console.log('No error message found. Skipping error handling.');
+            console.log('Account Registered.......');
         }
+        //account deleting
         const url = await browser.getUrl();
         if (!url.includes('new')) {
         await Registration.waitForDynamicUrl(); 
