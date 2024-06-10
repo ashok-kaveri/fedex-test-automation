@@ -21,6 +21,7 @@ class LoginPage extends Page {
 
     public get btnContinue () {
         return $('//*[@id="account_lookup"]/div[5]/button');
+        //*[@id="account_lookup"]/div[5]/button/span/span[1]
     }
 
     public get btnRequestLogin () {

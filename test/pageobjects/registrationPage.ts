@@ -58,7 +58,14 @@ class Registration extends Page {
         return $('//*[@id="AppFrameMain"]/div/div/div/div[2]/div[1]/div/div/div[3]/div/div/button');
     }
     public get deleteButton() {
-        return $('//*[@id="AppFrameMain"]/div/div/div/div[2]/div[1]/div/div/div[3]/div[1]/div/div/div[1]/div/button');
+        const DELETE_BUTTON_ID = '#delete-account-button';
+        browser.waitUntil(() => {
+            return $(DELETE_BUTTON_ID).isDisplayed();
+        }, {
+            timeout: 5000,
+            timeoutMsg: 'Delete button did not appear within 5 seconds'
+        });
+        return $(DELETE_BUTTON_ID);
     }
     public get deleteConfirmationMessage() {
         return $('//*[@id="resetConfirmation"]');
@@ -78,7 +85,8 @@ class Registration extends Page {
     public open() {
         const { STORE_ID, APP } = process.env;
         const storeId = STORE_ID.match(/^(.*?)\.myshopify\.com/)[1];
-        return super.open(`admin.shopify.com/store/${storeId}/apps/testing-553/settings/account/additional/new`);
+        // return super.open(`admin.shopify.com/store/${storeId}/apps/testing-553/settings/account/additional/new`);
+        return super.open(`admin.shopify.com/store/${storeId}/apps/${APP}/settings/account/additional/new`);
     } 
     public async addADetails(table) {
         try{
@@ -129,7 +137,6 @@ class Registration extends Page {
                 await (await (this.inputShipToCountries)).setValue(details[0].shipTo);
             }
                 const optionToSelect = await $('div[class$="-option"]');
-                // console.log('result: ', result);
                 await optionToSelect.click();
         
         }catch(e){
@@ -137,6 +144,31 @@ class Registration extends Page {
         }
 
 
+    }
+    public async extractErrorMessage() {
+        const bannerDiv = await $('div.Polaris-Page > div > div.Polaris-Banner.Polaris-Banner--withinPage');
+        const isBannerDisplayed = await bannerDiv.isDisplayed();
+        if (isBannerDisplayed) {
+            const blockStack = await bannerDiv.$('div.Polaris-InlineStack > div.Polaris-Box > div.Polaris-BlockStack');
+            const messageParagraph = await blockStack.$('div > p');
+            const errorMessage = await messageParagraph.getText();
+            console.log('error message!............................................................................', errorMessage);
+            return errorMessage;
+        }
+       
+    }
+    
+    public async waitForDynamicUrl(timeout: number = 20000) {
+        await browser.waitUntil(
+            async () => {
+                const currentUrl = await browser.getUrl();
+                return !currentUrl.includes('new');
+            },
+            {
+                timeout,
+                timeoutMsg: 'URL did not match the expected format within the timeout period'
+            }
+        );
     }
     public async register(){
         // await browser.switchToParentFrame();
