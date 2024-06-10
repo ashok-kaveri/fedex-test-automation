@@ -7,8 +7,11 @@ export default class Page {
     * @param url; 
     */
     // lookup
-    public open (url: string) {
-        return browser.url(`https://${url}`)
+    public async open (url: string) {
+        await browser.maximizeWindow();
+        await browser.url(`https://${url}`)
+       
+        return;
     }
 
     public async waitTillClickable(htmlElement: any ) {

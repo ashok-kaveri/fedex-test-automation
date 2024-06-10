@@ -14,6 +14,7 @@ const pages = {
     login: LoginPage
 }
 
+
 Then(/^I should be on page with (.*)$/, async (title) => {
     await expect(await AccountsPage.title).toBe(title)
 });
@@ -26,17 +27,28 @@ Then('I should be redirected to the dashboard', async () => {
 
 Then('I should be redirected to account', async () => {
 
-    console.log('URL: ', await browser.getUrl());
+    console.log('URL: ', await browser.getUrl());    
     await expect(browser).toHaveUrl(expect.stringContaining('/settings/account/additional'));
 });
 
 Then('I should be deleting the account for test {string}', async (testId: string) => {
-    const url = await browser.getUrl();
-    console.log('URL: ', url);
-    if(!url.includes('new')) {
-    await Registration.delete();
-    }
-    else {
-     await new ErrorHandler().onError(new Error("Account creation failed"),testId);   
+    try {
+        const errorMessage: string | undefined = await Registration.extractErrorMessage(); 
+        if(errorMessage && errorMessage.trim() !== '') {
+            await new ErrorHandler().onError(new Error(errorMessage), testId);
+        } else {
+            console.log('No error message found. Skipping error handling.');
+        }
+        const url = await browser.getUrl();
+        if (!url.includes('new')) {
+        await Registration.waitForDynamicUrl(); 
+        await Registration.delete();
+        console.log('Account deleted successfully!');
+        }
+    } catch (error) {
+        await new ErrorHandler().onError(error, testId);
     }
 });
+
+  
+

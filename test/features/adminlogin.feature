@@ -5,8 +5,10 @@ Feature: Login
     When I enter the email as "<email>"
     And I enter the password as "<password>"
     Examples:
-      |  email               | password       |
-      | alwin@pluginhive.com | Plugin@1231212 |
+      |  email                     | password       |
+      # | alwin@pluginhive.com       | Plugin@1231212 |
+      | athiramohan@pluginhive.com | Moana@24       |
+
 
 
 
