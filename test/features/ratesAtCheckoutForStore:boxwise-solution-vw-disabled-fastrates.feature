@@ -17,7 +17,7 @@ Feature: Rates at checkout
   
   Examples:
   | testId | email             | country | first_name | last_name | address| serviceName    | productURL                                                            |productWeight | productLength | productWidth | productHeight |packagingType  |  productIds   | 
-  |  #1258 | alwin@yopmail.com |   AU    |  alwin     |  john     | Whels  |  My Post Parcel| mypost-business-flat-rate-satchel-large                               |              |               |              |               |               | BE9P30,BE1P30 |
+  |  #1258 | alwin@yopmail.com |   AU    |  alwin     |  john     | Whels  | My Post Parcel | mypost-business-flat-rate-satchel-large                               |              |               |              |               |               | BE9P30,BE1P30 |
   |  #1259 | alwin@yopmail.com |   AU    |  alwin     |  john     | Whels  | My Post Parcel | mypost-business-flat-rate-satchel-medium                              |  3.19        |   26.5        | 38.5         |   13.0        |               | BE9P10,BE1P10 |
   |  #1260 | alwin@yopmail.com |   AU    |  alwin     |  john     | Whels  | My Post Parcel | unshippable-aircraft-wing-dimensions-are-105cm?variant=48466223825202 | 8.200        | 43.0          | 43.0         | 43.0          |               |               |
   |  #1261 | alwin@yopmail.com |   AU    |  alwin     |  john     | Whels  | My Post Parcel | unshippable-drum-20-kg                                                | 24.000       | 80.0          | 90.1         | 80.1          |               |               |

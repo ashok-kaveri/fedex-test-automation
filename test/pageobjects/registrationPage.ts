@@ -58,7 +58,7 @@ class Registration extends Page {
         return $('//*[@id="AppFrameMain"]/div/div/div/div[2]/div[1]/div/div/div[3]/div/div/button');
     }
     public get deleteButton() {
-        const DELETE_BUTTON_ID = '#delete-account-button';
+        const DELETE_BUTTON_ID = '#accountDelete';
         browser.waitUntil(() => {
             return $(DELETE_BUTTON_ID).isDisplayed();
         }, {
@@ -87,6 +87,7 @@ class Registration extends Page {
         const storeId = STORE_ID.match(/^(.*?)\.myshopify\.com/)[1];
         // return super.open(`admin.shopify.com/store/${storeId}/apps/testing-553/settings/account/additional/new`);
         return super.open(`admin.shopify.com/store/${storeId}/apps/${APP}/settings/account/additional/new`);
+        
     } 
     public async addADetails(table) {
         try{
