@@ -1,43 +1,29 @@
-import { Page, Locator } from '@playwright/test';
+import { Page } from '@playwright/test';
 import { BasePage } from './BasePage';
+import { ShopifyAdminLocators } from '../locators/shopify-admin.locators';
 
 export class ShopifyAdminPage extends BasePage {
-  private readonly searchButton: Locator;
-  private readonly searchContainer: Locator;
-  private readonly ordersButton: Locator;
-  private readonly searchInput: Locator;
-  private readonly searchResults: Locator;
+  private readonly locators: ShopifyAdminLocators;
 
   constructor(page: Page) {
     super(page);
-    this.searchButton = page.getByRole('button', { name: /search/i });
-    this.searchContainer = page.locator('#search-container');
-    this.ordersButton = this.searchContainer.getByRole('button', { name: 'Orders' });
-    this.searchInput = page.getByRole('combobox', { name: 'Search' });
-    this.searchResults = page.locator('ul#search-results');
+    this.locators = new ShopifyAdminLocators(page);
   }
 
-  /**
-   * Navigate to Shopify admin store
-   */
+  // Navigate to Shopify admin store
   async navigateToStore(storeName: string): Promise<void> {
     await this.goto(`https://admin.shopify.com/store/${storeName}`);
-    await this.waitForVisible(this.searchButton);
+    await this.waitForVisible(this.locators.searchButton);
   }
 
-  /**
-   * Search and open order by ID with retry logic
-   */
+  // Search and open order by ID with retry logic
   async searchAndOpenOrder(orderID: string, maxRetries: number = 3): Promise<void> {
-    await this.clickElement(this.searchButton);
-    await this.clickElement(this.ordersButton);
-    await this.fillInput(this.searchInput, orderID);
+    await this.clickElement(this.locators.searchButton);
+    await this.clickElement(this.locators.ordersButton);
+    await this.fillInput(this.locators.searchInput, orderID);
     
     // Wait for search results with retry logic
-    const orderLink = this.searchResults.locator(
-      `a[role="option"][href*="/orders/"]`,
-      { hasText: orderID }
-    );
+    const orderLink = this.locators.getOrderLink(orderID);
 
     let lastError: Error | undefined;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -50,9 +36,9 @@ export class ShopifyAdminPage extends BasePage {
         
         if (attempt < maxRetries) {
           // Clear and refill search
-          await this.searchInput.clear();
+          await this.locators.searchInput.clear();
           await this.page.waitForTimeout(1000);
-          await this.fillInput(this.searchInput, orderID);
+          await this.fillInput(this.locators.searchInput, orderID);
           await this.page.waitForTimeout(2000);
         }
       }
@@ -61,19 +47,13 @@ export class ShopifyAdminPage extends BasePage {
     throw new Error(`Order ${orderID} not found after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
-  /**
-   * Open more actions menu
-   */
+  // Open more actions menu
   async openMoreActions(): Promise<void> {
-    const moreActionsButton = this.page.getByRole('button', { name: 'More actions' }).first();
-    await this.clickElement(moreActionsButton);
+    await this.clickElement(this.locators.moreActionsButton);
   }
 
-  /**
-   * Click on Generate Label link to open manual label generation page
-   */
+  // Click on Generate Label link to open manual label generation page
   async openManualLabelPage(): Promise<void> {
-    const generateLabelLink = this.page.getByRole('link', { name: 'Generate Label', exact: true });
-    await this.clickElement(generateLabelLink);
+    await this.clickElement(this.locators.generateLabelLink);
   }
 }

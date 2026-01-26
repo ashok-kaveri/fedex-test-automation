@@ -1,6 +1,6 @@
 import axios from "axios";
-import dotenv from "dotenv";
-dotenv.config();
+import * as dotenv from "dotenv";
+dotenv.config({ quiet: true });
 
 const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || "";
 const SHOPIFY_STORE_NAME = process.env.STORE || "";

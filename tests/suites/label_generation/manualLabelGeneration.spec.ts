@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 import ShopifyOrderUploader from '../../helpers/createOrder';
 import { ShopifyAdminPage } from '../../pages/ShopifyAdminPage';
-import { FedExAppPage } from '../../pages/FedExAppPage';
+import { ManualLabelPage } from '../../pages/ManualLabelPage';
+import { OrdersPage } from '../../pages/OrdersPage';
+import { PickupPage } from '../../pages/PickupPage';
 
 const store = process.env.STORE;
 
@@ -11,11 +13,12 @@ if (!store) {
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Manual Label Generation Flow - End to End', () => {
+test.describe('Manual Label Generation Flow', () => {
   let sharedOrderID: string;
   let sharedPage: any;
 
   test.beforeAll(async ({ browser }) => {
+    
     // Create a persistent context and page for all tests
     const context = await browser.newContext({ storageState: 'auth.json' });
     sharedPage = await context.newPage();
@@ -50,61 +53,57 @@ test.describe('Manual Label Generation Flow - End to End', () => {
     await shopifyAdmin.openMoreActions();
     await shopifyAdmin.openManualLabelPage();
     
-    const fedexApp = new FedExAppPage(sharedPage);
-    await fedexApp.verifyOrderHeadingInOrderSummary(sharedOrderID);
-    await fedexApp.generatePackagesInManualPage();
+    const manualLabelPage = new ManualLabelPage(sharedPage);
+    await manualLabelPage.verifyOrderHeading(sharedOrderID);
+    await manualLabelPage.generatePackages();
   });
 
   test('3. Get shipping rates and select first service', async () => {
     test.setTimeout(60000);
 
-    const fedexApp = new FedExAppPage(sharedPage);
+    const manualLabelPage = new ManualLabelPage(sharedPage);
 
-    await fedexApp.getShippingRatesInManualPage(3);
-    await fedexApp.selectFirstShippingServiceInManualPage();
+    await manualLabelPage.getShippingRates(3);
+    await manualLabelPage.selectFirstShippingService();
   });
 
   test('4. Generate manual label and verify success', async () => {
     test.setTimeout(60000);
 
-    const fedexApp = new FedExAppPage(sharedPage);
+    const manualLabelPage = new ManualLabelPage(sharedPage);
 
-    await fedexApp.generateManualLabel();
-    await fedexApp.verifyLabelGeneratedInOrderSummary();
+    await manualLabelPage.generateLabel();
+    await manualLabelPage.verifyLabelGenerated();
   });
 
   test('5. Verify order in Orders table', async () => {
     test.setTimeout(60000);
 
-    const fedexApp = new FedExAppPage(sharedPage);
-    await fedexApp.navigateToOrdersPageInApp();
-    await fedexApp.searchOrderInApp(sharedOrderID, 3);
+    const ordersPage = new OrdersPage(sharedPage);
+    await ordersPage.navigate();
+    await ordersPage.searchOrder(sharedOrderID, 3);
   });
 
 //   test('6. Request pickup', async () => {
 //     test.setTimeout(60000);
 
-//     // Continue from test 5 - already in Orders with order found
-//     const fedexApp = new FedExAppPage(sharedPage);
+//     const ordersPage = new OrdersPage(sharedPage);
+//     await ordersPage.selectAllOrders();
+//     await ordersPage.openMoreActions();
 
-//     await fedexApp.selectAllOrdersInApp();
-//     await fedexApp.requestPickupInApp();
-//     await fedexApp.verifyPickupPageInApp();
-    
-//     console.log('Then the pickup should be requested successfully');
+//     const pickupPage = new PickupPage(sharedPage);
+//     await pickupPage.requestPickup();
+//     await pickupPage.verifyPickupPage();
 //   });
 
 //   test('7. Verify pickup details and status', async () => {
 //     test.setTimeout(60000);
 
-//     // Continue from test 6 - already on Pickups page
-//     const fedexApp = new FedExAppPage(sharedPage);
+//     const pickupPage = new PickupPage(sharedPage);
     
-//     await fedexApp.openPickupDetailsInPickupPage(sharedOrderID);
-//     await fedexApp.verifyPickupDetailsInPickupPage(sharedOrderID);
-//     await fedexApp.verifyPickupStatusInPickupPage('FAILURE');
-    
-//     console.log('Then the pickup details and status should be verified');
+//     await pickupPage.openPickupDetails(sharedOrderID);
+//     await pickupPage.verifyPickupDetails(sharedOrderID);
+//     await pickupPage.verifyPickupStatus('FAILURE');
 //   });
 });
 

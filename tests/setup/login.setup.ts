@@ -1,5 +1,5 @@
 import { test as setup, expect } from '@playwright/test';
-import fs from 'fs';
+import * as fs from 'fs';
 import { CaptchaHandler } from '../helpers/captchaHandler';
 
 const store = process.env.STORE;
