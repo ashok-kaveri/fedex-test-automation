@@ -30,22 +30,22 @@ export class ManualLabelPage extends BasePage {
   // Extract and parse error/warning logs from XML viewer modal
   async getErrorFromXML(): Promise<string> {
     try {
-      const moreOptionsBtn = this.locators.getMoreOptionsButton();
+      const moreOptionsBtn = this.locators.getFailedRatesMenuButton();
       await moreOptionsBtn.waitFor({ state: 'visible', timeout: 5000 });
       await moreOptionsBtn.click();
       
       await this.page.waitForTimeout(1000);
       
-      const viewXmlBtn = this.locators.getViewXmlButton();
+      const viewXmlBtn = this.locators.getViewXmlMenuItem();
       await viewXmlBtn.waitFor({ state: 'visible', timeout: 5000 });
       await viewXmlBtn.click();
       
-      const modal = this.locators.getModal();
+      const modal = this.locators.getXmlViewerModal();
       await modal.waitFor({ state: 'visible', timeout: 5000 });
       
-      const xmlContent = await this.locators.getModalXmlContent().textContent();
+      const xmlContent = await this.locators.getXmlModalPreContent().textContent();
       
-      const closeBtn = this.locators.getModalCloseButton();
+      const closeBtn = this.locators.getXmlModalCloseButton();
       await closeBtn.click();
       
       if (xmlContent) {
@@ -117,7 +117,7 @@ export class ManualLabelPage extends BasePage {
     
     const firstService = this.locators.radioButtons.first();
     const radioId = await firstService.getAttribute('id');
-    const firstServiceLabel = this.locators.getRadioLabel(radioId!);
+    const firstServiceLabel = this.locators.getShippingServiceLabel(radioId!);
     
     await firstServiceLabel.click();
     await expect(firstService).toBeChecked({ timeout: 3000 });
@@ -127,11 +127,5 @@ export class ManualLabelPage extends BasePage {
   async generateLabel(): Promise<void> {
     await this.locators.generateLabelButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.locators.generateLabelButton.click();
-  }
-
-  // Verify label generated successfully
-  async verifyLabelGenerated(): Promise<void> {
-    await expect(this.appContent.getMainContent()).toContainText('label generated', { timeout: 10000 });
-    await expect(this.locators.getPackagesSection()).toBeVisible({ timeout: 5000 });
   }
 }

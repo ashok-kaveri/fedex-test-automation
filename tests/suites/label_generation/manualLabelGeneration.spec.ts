@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 import ShopifyOrderUploader from '../../helpers/createOrder';
 import { ShopifyAdminPage } from '../../pages/ShopifyAdminPage';
 import { ManualLabelPage } from '../../pages/ManualLabelPage';
-import { OrdersPage } from '../../pages/OrdersPage';
+import { OrderSummaryPage } from '../../pages/OrderSummaryPage';
+import { ShippingPage } from '../../pages/ShippingPage';
 import { PickupPage } from '../../pages/PickupPage';
 
 const store = process.env.STORE;
@@ -71,25 +72,26 @@ test.describe('Manual Label Generation Flow', () => {
     test.setTimeout(60000);
 
     const manualLabelPage = new ManualLabelPage(sharedPage);
-
     await manualLabelPage.generateLabel();
-    await manualLabelPage.verifyLabelGenerated();
+
+    const orderSummaryPage = new OrderSummaryPage(sharedPage);
+    await orderSummaryPage.verifyLabelGenerated();
   });
 
   test('5. Verify order in Orders table', async () => {
     test.setTimeout(60000);
 
-    const ordersPage = new OrdersPage(sharedPage);
-    await ordersPage.navigate();
-    await ordersPage.searchOrder(sharedOrderID, 3);
+    const shippingPage = new ShippingPage(sharedPage);
+    await shippingPage.navigate();
+    await shippingPage.searchOrder(sharedOrderID, 3);
   });
 
 //   test('6. Request pickup', async () => {
 //     test.setTimeout(60000);
 
-//     const ordersPage = new OrdersPage(sharedPage);
-//     await ordersPage.selectAllOrders();
-//     await ordersPage.openMoreActions();
+//     const shippingPage = new ShippingPage(sharedPage);
+//     await shippingPage.selectAllOrders();
+//     await shippingPage.openMoreActions();
 
 //     const pickupPage = new PickupPage(sharedPage);
 //     await pickupPage.requestPickup();

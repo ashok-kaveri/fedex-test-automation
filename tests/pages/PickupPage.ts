@@ -40,11 +40,11 @@ export class PickupPage extends BasePage {
   // Verify pickup details page
   async verifyPickupDetails(orderID: string): Promise<void> {
     await expect(this.locators.pickupHeading).toContainText('Pickup Details', { timeout: 10000 });
-    await expect(this.appContent.getMainContent()).toContainText(orderID, { timeout: 5000 });
+    await expect(this.appContent.getAppFrameMain()).toContainText(orderID, { timeout: 5000 });
   }
 
   // Verify pickup status
   async verifyPickupStatus(expectedStatus: string): Promise<void> {
-    await expect(this.appContent.getMainContent()).toContainText(expectedStatus, { timeout: 8000 });
+    await expect(this.appContent.getAppFrameMain()).toContainText(expectedStatus, { timeout: 8000 });
   }
 }

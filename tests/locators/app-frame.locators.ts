@@ -9,7 +9,7 @@ export class AppFrameContentLocators {
   }
 
   // Get main app content area
-  getMainContent(): Locator {
+  getAppFrameMain(): Locator {
     return this.frame.locator('#AppFrameMain');
   }
 }

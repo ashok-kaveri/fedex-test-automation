@@ -1,7 +1,7 @@
 import { FrameLocator, Locator } from '@playwright/test';
 
-// Orders Page Locators - All UI elements for the Orders page within FedEx app (iframe)
-export class OrdersPageLocators {
+// Shipping Page Locators - All UI elements for the Shipping page within FedEx app (iframe)
+export class ShippingPageLocators {
   readonly frame: FrameLocator;
 
   // Navigation

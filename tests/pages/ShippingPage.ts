@@ -1,16 +1,16 @@
 import { Page, FrameLocator, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
-import { OrdersPageLocators } from '../locators/orders-page.locators';
+import { ShippingPageLocators } from '../locators/shipping-page.locators';
 
-// Page Object for Orders Page within FedEx App - Handles all actions related to viewing and searching orders
-export class OrdersPage extends BasePage {
+// Page Object for Shipping Page within FedEx App - Handles all actions related to viewing and searching orders
+export class ShippingPage extends BasePage {
   private readonly appFrame: FrameLocator;
-  private readonly locators: OrdersPageLocators;
+  private readonly locators: ShippingPageLocators;
 
   constructor(page: Page) {
     super(page);
     this.appFrame = this.getIframe('app-iframe');
-    this.locators = new OrdersPageLocators(this.appFrame);
+    this.locators = new ShippingPageLocators(this.appFrame);
   }
 
   // Navigate to Orders page

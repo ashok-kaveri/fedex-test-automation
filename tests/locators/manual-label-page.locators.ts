@@ -26,45 +26,40 @@ export class ManualLabelPageLocators {
     this.failedRatesBox = frame.locator('div.Polaris-Box').filter({ hasText: 'Failed to fetch rates' });
   }
 
-  // Get radio button label by ID
-  getRadioLabel(radioId: string): Locator {
+  // Get shipping service radio button label by radio ID
+  getShippingServiceLabel(radioId: string): Locator {
     return this.frame.locator(`label[for="${radioId}"]`);
   }
 
-  // Get packages section
-  getPackagesSection(): Locator {
-    return this.frame.getByLabel('Packages', { exact: true });
-  }
-
-  // Get more options button (three dots) for error handling
-  getMoreOptionsButton(): Locator {
+  // Get three-dot menu button in failed rates error box
+  getFailedRatesMenuButton(): Locator {
     return this.failedRatesBox.locator('button').filter({
       has: this.frame.locator('svg path[d="M6 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"]')
     }).first();
   }
 
-  // Get View XML button in dropdown
-  getViewXmlButton(): Locator {
+  // Get 'View XML' menu item in dropdown menu
+  getViewXmlMenuItem(): Locator {
     return this.frame.locator('button[role="menuitem"]').filter({ hasText: 'View XML' }).first();
   }
 
-  // Get modal dialog
-  getModal(): Locator {
+  // Get XML viewer modal dialog
+  getXmlViewerModal(): Locator {
     return this.frame.locator('div[role="dialog"][aria-modal="true"]');
   }
 
-  // Get modal close button
-  getModalCloseButton(): Locator {
-    return this.getModal().locator('button[aria-label="Close"]');
+  // Get close button in XML viewer modal
+  getXmlModalCloseButton(): Locator {
+    return this.getXmlViewerModal().locator('button[aria-label="Close"]');
   }
 
-  // Get response section in modal
-  getModalResponseSection(): Locator {
-    return this.getModal().locator('.Polaris-Layout__Section--oneHalf').nth(1);
+  // Get response section in XML viewer modal
+  getXmlModalResponseSection(): Locator {
+    return this.getXmlViewerModal().locator('.Polaris-Layout__Section--oneHalf').nth(1);
   }
 
-  // Get XML content in modal
-  getModalXmlContent(): Locator {
-    return this.getModalResponseSection().locator('pre');
+  // Get XML pre content element in response section
+  getXmlModalPreContent(): Locator {
+    return this.getXmlModalResponseSection().locator('pre');
   }
 }
