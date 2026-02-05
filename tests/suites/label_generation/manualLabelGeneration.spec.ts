@@ -17,12 +17,12 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Manual Label Generation Flow', () => {
   let sharedOrderID: string;
   let sharedPage: any;
+  let sharedContext: any;
 
   test.beforeAll(async ({ browser }) => {
-    
-    // Create a persistent context and page for all tests
-    const context = await browser.newContext({ storageState: 'auth.json' });
-    sharedPage = await context.newPage();
+    // Create shared context and page for all tests
+    sharedContext = await browser.newContext({ storageState: 'auth.json' });
+    sharedPage = await sharedContext.newPage();
     
     // Create order once for all tests
     const uploader = new ShopifyOrderUploader();
@@ -33,9 +33,8 @@ test.describe('Manual Label Generation Flow', () => {
   });
 
   test.afterAll(async () => {
-    if (sharedPage) {
-      await sharedPage.close();
-    }
+    await sharedPage?.close();
+    await sharedContext?.close();
   });
 
   test('1. Navigate to Shopify order', async () => {

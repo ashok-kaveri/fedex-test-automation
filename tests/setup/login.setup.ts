@@ -1,6 +1,7 @@
 import { test as setup, expect } from '@playwright/test';
 import * as fs from 'fs';
 import { CaptchaHandler } from '../helpers/captchaHandler';
+import { AccountSelectorPage } from '../pages/AccountSelectorPage';
 
 const store = process.env.STORE;
 const userEmail = process.env.USER_EMAIL;
@@ -49,15 +50,35 @@ setup('Write login session data', async ({ page }) => {
   // Wait for page to load
   await page.waitForTimeout(3000);
   
-  // Try to find and click account card if it exists
-  const accountCard = page.locator(`text="${userEmail}"`);
-  try {
-    await accountCard.waitFor({ state: 'visible', timeout: 5000 });
-    await accountCard.click();
-    console.log('Clicked on existing account card');
-  } catch (e) {
-    console.log('No account card found, proceeding with email entry');
+  // Check if account selector page appears
+  const accountSelector = new AccountSelectorPage(page);
+  const accountPageVisible = await accountSelector.isAccountSelectionPageVisible();
+  
+  if (accountPageVisible) {
+    // Account selection page is shown - click account card
+    await accountSelector.selectAccountByText(userEmail || '');
+    
+    // Wait for navigation after account selection
+    await page.waitForTimeout(5000);
+    
+    // Check if we're logged in after account selection
+    const currentUrl = page.url();
+    console.log(`Current URL after account card click: ${currentUrl}`);
+    
+    if (currentUrl.includes('admin.shopify.com/store/')) {
+      console.log('✅ Logged in via account card - no password needed');
+      await page.context().storageState({ path: STORAGE_PATH });
+      console.log('✅ Login successful, session saved');
+      return;
+    } else {
+      console.log('⚠️ Not logged in yet after account card click');
+      console.log('⚠️ May need CAPTCHA or additional verification');
+      // Continue to login form handling below
+    }
   }
+  
+  // Login form is shown - proceed with email/password login
+  console.log('📝 Login form detected - proceeding with email/password...');
   
   // Check if email is already filled or needs to be entered
   const emailInput = page.locator('#account_email');

@@ -25,7 +25,11 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: [['list'], ['html', { open: 'always' }]],
+  reporter: [
+    ['list'], 
+    ['html', { open: 'always' }],
+    ['./reports/slack-report/slack-reporter.ts']
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
@@ -33,32 +37,42 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+    
+    /* Disable automatic page/context creation - we handle it manually in tests */
+    launchOptions: {
+      args: ['--disable-blink-features=AutomationControlled'],
+    },
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
+      name: 'setup',
+      testMatch: '**/setup/**/*.setup.ts',
+    },
+
+    {
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
-        storageState: 'auth.json',
       },
+      testIgnore: '**/setup/**', // Exclude setup files from chromium project
     },
 
     {
       name: 'firefox',
       use: {
         ...devices['Desktop Firefox'],
-        storageState: 'auth.json',
       },
+      testIgnore: '**/setup/**', // Exclude setup files from firefox project
     },
 
     {
       name: 'webkit',
       use: {
         ...devices['Desktop Safari'],
-        storageState: 'auth.json',
       },
+      testIgnore: '**/setup/**', // Exclude setup files from webkit project
     },
 
     /* Test against mobile viewports. */
