@@ -48,14 +48,4 @@ test.describe('Manual Label Generation Flow', () => {
     await manualLabelPage.generateLabelInApp();
     await orderSummaryPage.verifyLabelGenerated();
   });
-<<<<<<< HEAD
-
-  test('5. Verify order in Orders table', async () => {
-    test.setTimeout(60000);
-    const shippingPage = new ShippingPage(sharedPage);
-    await shippingPage.navigateToOrdersPage();
-    await shippingPage.searchOrder(sharedOrderID, 3);
-  });
-=======
->>>>>>> automation-shinchan
 });
