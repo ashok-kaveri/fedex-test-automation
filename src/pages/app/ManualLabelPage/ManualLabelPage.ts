@@ -1,5 +1,5 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameHelper } from '../../helpers/appFrameHelper';
+import { AppFrameHelper } from '../../../helpers/appFrameHelper';
 
 // Page Object for Manual Label Generation Page within FedEx App - Handles all actions related to manual label generation
 export class ManualLabelPage {

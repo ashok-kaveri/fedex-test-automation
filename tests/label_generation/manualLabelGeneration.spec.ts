@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
 import { ShopifyAdminPage } from '../../src/pages/shopify/ShopifyAdminPage';
-import { ManualLabelPage } from '../../src/pages/app/ManualLabelPage';
-import { OrderSummaryPage } from '../../src/pages/app/OrderSummaryPage';
-import { ShippingPage } from '../../src/pages/app/ShippingPage';
-import { PickupPage } from '../../src/pages/app/PickupPage';
+import { ManualLabelPage } from '../../src/pages/app/ManualLabelPage/ManualLabelPage';
+import { OrderSummaryPage } from '../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
+import { ShippingPage } from '../../src/pages/app/ShippingPage/ShippingPage';
+import { PickupPage } from '../../src/pages/app/PickupPage/PickupPage';
 
 const store = process.env.STORE;
 

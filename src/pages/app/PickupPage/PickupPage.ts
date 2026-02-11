@@ -1,5 +1,5 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameContentLocators, AppFrameHelper } from '../../helpers/appFrameHelper';
+import { AppFrameContentLocators, AppFrameHelper } from '../../../helpers/appFrameHelper';
 
 // Page Object for Pickup Page within FedEx App - Handles all pickup-related actions
 export class PickupPage {

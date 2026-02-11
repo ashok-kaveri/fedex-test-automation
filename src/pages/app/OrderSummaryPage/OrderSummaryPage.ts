@@ -1,5 +1,5 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameContentLocators, AppFrameHelper } from '../../helpers/appFrameHelper';
+import { AppFrameContentLocators, AppFrameHelper } from '../../../helpers/appFrameHelper';
 
 // Page Object for Order Summary Page - Displayed after successful label generation
 export class OrderSummaryPage {

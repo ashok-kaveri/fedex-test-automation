@@ -1,5 +1,5 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameHelper } from '../../helpers/appFrameHelper';
+import { AppFrameHelper } from '../../../helpers/appFrameHelper';
 
 // Page Object for Shipping Page within FedEx App - Handles all actions related to viewing and searching orders
 export class ShippingPage {
@@ -19,7 +19,7 @@ export class ShippingPage {
     this.appFrame = AppFrameHelper.getAppFrame(page);
 
     // Initialize locators
-    this.ordersButton = this.appFrame.getByRole('button', { name: 'Pickup' });
+    this.ordersButton = this.appFrame.getByRole('button', { name: 'Shipping' });
     this.searchButton = this.appFrame.getByRole('button', { name: 'Search and filter results' });
     this.searchInput = this.appFrame.getByRole('textbox', { name: /Search by order id/ });
     this.ordersTable = this.appFrame.getByRole('table');
