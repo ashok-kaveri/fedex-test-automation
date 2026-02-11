@@ -3,28 +3,18 @@ import * as dotenv from 'dotenv';
 
 dotenv.config({ quiet: true });
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// import dotenv from 'dotenv';
-// import path from 'path';
-// dotenv.config({ path: path.resolve(__dirname, '.env') });
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
 export default defineConfig({
-  testDir: './',
-  /* Run tests in files in parallel */
-  fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  testDir: './tests',
+
+  /* Run tests sequentially */
+  fullyParallel: false,
+  workers: 1,
+
+  /* CI safety */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+
+  /* Reporters */
   reporter: [
     ['list'],
     ['html', { outputFolder: 'reports/playwright-report', open: 'always' }],
@@ -32,79 +22,41 @@ export default defineConfig({
     ['./reports/slack-report/slack-reporter.ts'],
     ['./reports/smart-report/open-smart-report.ts'],
   ],
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  use: {
-    /* Base URL to use in actions like `await page.goto('')`. */
-    // baseURL: 'http://localhost:3000',
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+  /* Shared settings */
+  use: {
     trace: 'on-first-retry',
-    
-    /* Disable automatic page/context creation - we handle it manually in tests */
+
     launchOptions: {
       args: ['--disable-blink-features=AutomationControlled'],
     },
+
+    viewport: { width: 1400, height: 1000 },
   },
 
-  /* Configure projects for major browsers */
+  /* Projects */
   projects: [
     {
-      name: 'setup',
-      testMatch: /src\/setup\/.*\.setup\.ts/,
-    },
-
-    {
-      name: 'chromium',
+      name: 'Google Chrome',
       use: {
         ...devices['Desktop Chrome'],
+        channel: 'chrome',
+        viewport: { width: 1400, height: 1000 },
       },
-      testMatch: /tests\/.*\.spec\.ts/,
-      testIgnore: '**/src/setup/**', // Exclude setup files from chromium project
     },
-
     {
-      name: 'firefox',
+      name: 'Safari',
       use: {
-        ...devices['Desktop Firefox'],
-      },
-      testMatch: /tests\/.*\.spec\.ts/,
-      testIgnore: '**/src/setup/**', // Exclude setup files from firefox project
-    },
-
-    {
-      name: 'webkit',
-      use: {
+        browserName: 'webkit',
         ...devices['Desktop Safari'],
       },
-      testMatch: /tests\/.*\.spec\.ts/,
-      testIgnore: '**/src/setup/**', // Exclude setup files from webkit project
     },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
+    {
+      name: 'Firefox',
+      use: {
+        browserName: 'firefox',
+        ...devices['Desktop Firefox'],
+      },
+    },
   ],
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   url: 'http://localhost:3000',
-  //   reuseExistingServer: !process.env.CI,
-  // },
 });
