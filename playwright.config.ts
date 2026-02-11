@@ -27,8 +27,10 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['list'],
-    ['html', { open: 'always' }],
+    ['html', { outputFolder: 'reports/playwright-report', open: 'always' }],
+    ['playwright-smart-reporter'],
     ['./reports/slack-report/slack-reporter.ts'],
+    ['./reports/smart-report/open-smart-report.ts'],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {

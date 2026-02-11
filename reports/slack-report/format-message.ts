@@ -21,7 +21,7 @@ export function formatSlackMessage(
   
   const appUrl = `https://admin.shopify.com/store/${store}/apps/fedex-shipping-app`;
   
-  const summaryText = `SUMMARY: ${passed} passed | ${failed} failed | ${skipped} skipped | Total: ${total}`;
+  const summaryText = `SUMMARY:\n✅ ${passed} passed | ❌ ${failed} failed | ⚠️ ${skipped} skipped | Total: ${total}`;
   const appUrlText = `App URL: ${appUrl}`;
   const appText = `APP: ${appName}`;
   const triggeredByText = `Triggered BY: ${userEmail}`;
