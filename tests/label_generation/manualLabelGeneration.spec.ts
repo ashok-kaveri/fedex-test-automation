@@ -79,32 +79,9 @@ test.describe('Manual Label Generation Flow', () => {
 
   test('5. Verify order in Orders table', async () => {
     test.setTimeout(60000);
-
     const shippingPage = new ShippingPage(sharedPage);
     await shippingPage.navigateToOrdersPage();
     await shippingPage.searchOrder(sharedOrderID, 3);
   });
-
-//   test('6. Request pickup', async () => {
-//     test.setTimeout(60000);
-
-//     const shippingPage = new ShippingPage(sharedPage);
-//     await shippingPage.selectAllOrdersInOrderGrid();
-//     await shippingPage.openMoreActionsInOrderGrid();
-
-//     const pickupPage = new PickupPage(sharedPage);
-//     await pickupPage.requestPickup();
-//     await pickupPage.verifyPickupPage();
-//   });
-
-//   test('7. Verify pickup details and status', async () => {
-//     test.setTimeout(60000);
-
-//     const pickupPage = new PickupPage(sharedPage);
-    
-//     await pickupPage.openPickupDetails(sharedOrderID);
-//     await pickupPage.verifyPickupDetails(sharedOrderID);
-//     await pickupPage.verifyPickupStatus('FAILURE');
-//   });
 });
 
