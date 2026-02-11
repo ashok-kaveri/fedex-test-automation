@@ -44,7 +44,7 @@ export class ShopifyAdminPage {
     await this.searchButton.click();
     await this.ordersButton.click();
     await this.searchInput.fill(orderID);
-    
+
     // Wait for search results with retry logic
     const orderLink = this.getOrderLink(orderID);
 
@@ -56,7 +56,7 @@ export class ShopifyAdminPage {
         return;
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt < maxRetries) {
           // Clear and refill search
           await this.searchInput.clear();
@@ -66,7 +66,7 @@ export class ShopifyAdminPage {
         }
       }
     }
-    
+
     throw new Error(`Order ${orderID} not found after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
@@ -76,7 +76,15 @@ export class ShopifyAdminPage {
   }
 
   // Click on Generate Label link to open manual label generation page
-  async openManualLabelPage(): Promise<void> {
+  async clickGenerateLabelLink(): Promise<void> {
     await this.generateLabelLink.click();
   }
-}
+
+  //generic method to navigate to order and click on generate label manually in shopify admin
+  async navigateToOrderInShopifyAndClickGenerateLabel(orderID: string): Promise<void> {
+    await this.navigateToStore(process.env.STORE!);
+    await this.searchAndOpenOrder(orderID, 5);
+    await this.openMoreActions();
+    await this.clickGenerateLabelLink();
+  }
+} 

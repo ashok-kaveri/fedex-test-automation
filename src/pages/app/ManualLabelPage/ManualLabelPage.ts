@@ -1,8 +1,9 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
 import { AppFrameHelper } from '../../../helpers/appFrameHelper';
+import { ShopifyAdminPage } from '../../shopify/ShopifyAdminPage';
 
 // Page Object for Manual Label Generation Page within FedEx App - Handles all actions related to manual label generation
-export class ManualLabelPage {
+export class GenerateLabelManuallyPage {
   readonly page: Page;
   private readonly appFrame: FrameLocator;
 
@@ -123,7 +124,7 @@ export class ManualLabelPage {
   }
 
   // Get shipping rates with retry logic for FedEx API errors
-  async getShippingRates(maxRetries: number = 3): Promise<void> {
+  async getShippingRates(maxRetries: number = 5): Promise<void> {
     await this.getShippingRatesButton.waitFor({ state: 'visible', timeout: 10000 });
     await this.getShippingRatesButton.click();
     
@@ -168,9 +169,32 @@ export class ManualLabelPage {
     await expect(firstService).toBeChecked({ timeout: 3000 });
   }
 
-  // Generate label
-  async generateLabel(): Promise<void> {
+  // click generate label button in manual label generation page
+  async clickGenerateLabelButtonInManualLabelGenerationPage(): Promise<void> {
     await this.generateLabelButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.generateLabelButton.click();
   }
+
+
+  /*   await shopifyAdmin.searchAndOpenOrder(sharedOrderID, 3);
+    await shopifyAdmin.openMoreActions();
+    await shopifyAdmin.openManualLabelPage();
+
+    */ 
+
+
+  async waitUntilGeneratePackageButtonVisible(): Promise<void> {
+    await this.generatePackagesButton.waitFor({ state: 'visible', timeout: 30000 });
+  }
+
+  //Generic method to generate label manually
+  async generateLabelInApp(): Promise<void> {
+    await this.waitUntilGeneratePackageButtonVisible();
+    await this.generatePackages();
+    await this.getShippingRates();
+    await this.selectFirstShippingService();
+    await this.clickGenerateLabelButtonInManualLabelGenerationPage();
+  }
+
+
 }
