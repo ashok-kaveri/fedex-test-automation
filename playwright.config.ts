@@ -15,7 +15,7 @@ dotenv.config({ quiet: true });
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: './',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -26,9 +26,9 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['list'], 
+    ['list'],
     ['html', { open: 'always' }],
-    ['./reports/slack-report/slack-reporter.ts']
+    ['./reports/slack-report/slack-reporter.ts'],
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
@@ -48,7 +48,7 @@ export default defineConfig({
   projects: [
     {
       name: 'setup',
-      testMatch: '**/setup/**/*.setup.ts',
+      testMatch: /src\/setup\/.*\.setup\.ts/,
     },
 
     {
@@ -56,7 +56,8 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
       },
-      testIgnore: '**/setup/**', // Exclude setup files from chromium project
+      testMatch: /tests\/.*\.spec\.ts/,
+      testIgnore: '**/src/setup/**', // Exclude setup files from chromium project
     },
 
     {
@@ -64,7 +65,8 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
       },
-      testIgnore: '**/setup/**', // Exclude setup files from firefox project
+      testMatch: /tests\/.*\.spec\.ts/,
+      testIgnore: '**/src/setup/**', // Exclude setup files from firefox project
     },
 
     {
@@ -72,7 +74,8 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
       },
-      testIgnore: '**/setup/**', // Exclude setup files from webkit project
+      testMatch: /tests\/.*\.spec\.ts/,
+      testIgnore: '**/src/setup/**', // Exclude setup files from webkit project
     },
 
     /* Test against mobile viewports. */

@@ -39,7 +39,7 @@ export function formatSlackMessage(
     return `${icon} ${test.title}`;
   }).join('\n');
   
-  const messageText = `@here  *Automation Test Report for FedEx App* :monkey_dance2:\n\n${summaryText}\n\n${appUrlText}\n${appText}\n${triggeredByText}\n\n\`\`\`\n${testDetailsText}\n\`\`\``;
+  const messageText = `<!here> *Automation Test Report for FedEx App* :monkey_dance2:\n\n${summaryText}\n\n${appUrlText}\n${appText}\n${triggeredByText}\n\n\`\`\`\n${testDetailsText}\n\`\`\``;
 
   // Convert duration from milliseconds to a readable format
   const durationInSeconds = Math.floor(duration / 1000);

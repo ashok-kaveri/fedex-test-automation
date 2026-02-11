@@ -49,6 +49,12 @@ class SlackReporter implements Reporter {
       return;
     }
 
+    // Skip if no tests were run (e.g., setup project)
+    if (this.total === 0) {
+      console.log('⏭️ Skipping Slack notification (no tests executed)');
+      return;
+    }
+
     const hasFailed = this.failed > 0;
     
     if (!shouldSendReport(hasFailed)) {
