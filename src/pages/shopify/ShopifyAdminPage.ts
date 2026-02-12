@@ -11,6 +11,7 @@ export class ShopifyAdminPage {
   readonly searchResults: Locator;
   readonly moreActionsButton: Locator;
   readonly generateLabelLink: Locator;
+  readonly autoGenerateLabel: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -23,6 +24,8 @@ export class ShopifyAdminPage {
     this.searchResults = page.locator('ul#search-results');
     this.moreActionsButton = page.getByRole('button', { name: 'More actions' }).first();
     this.generateLabelLink = page.getByRole('link', { name: 'Generate Label', exact: true });
+    this.autoGenerateLabel = page.getByRole('link', { name: 'Auto-Generate Label', exact: true });
+
   }
 
   // Helper method for dynamic locators
@@ -78,5 +81,11 @@ export class ShopifyAdminPage {
   // Click on Generate Label link to open manual label generation page
   async openManualLabelPage(): Promise<void> {
     await this.generateLabelLink.click();
+  }
+
+  //Click on Auto-label generation
+
+   async clickOnAutoLabelGeneration(): Promise<void> {
+    await this.autoGenerateLabel.click();
   }
 }

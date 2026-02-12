@@ -9,6 +9,8 @@ node_modules/
 smart-report.html
 test-history.json
 reports/playwright-report/
+package-lock.json
+yarn.lock
 
 # Environment and sensitive files
 .env
