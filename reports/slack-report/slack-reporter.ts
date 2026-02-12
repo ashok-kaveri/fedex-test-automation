@@ -23,6 +23,11 @@ class SlackReporter implements Reporter {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
+    // Skip setup tests from reporting
+    if (test.parent.project()?.name === 'setup') {
+      return;
+    }
+    
     this.total++;
     
     let status: 'passed' | 'failed' | 'skipped';

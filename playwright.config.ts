@@ -17,10 +17,10 @@ export default defineConfig({
   /* Reporters */
   reporter: [
     ['list'],
-    ['html', { outputFolder: 'reports/playwright-report', open: 'always' }],
+    ['html', { outputFolder: 'reports/playwright-report', open: 'on-failure' }],
     ['playwright-smart-reporter'],
     ['./reports/slack-report/slack-reporter.ts'],
-    ['./reports/smart-report/open-smart-report.ts'],
+    ['playwright-smart-reporter'],
   ],
 
   /* Shared settings */
@@ -37,11 +37,17 @@ export default defineConfig({
   /* Projects */
   projects: [
     {
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+      testDir: './src/setup',
+    },
+    {
       name: 'Google Chrome',
       use: {
         ...devices['Desktop Chrome'],
         channel: 'chrome',
         viewport: { width: 1400, height: 1000 },
+        storageState: './auth.json',
       },
     },
     {
@@ -49,6 +55,7 @@ export default defineConfig({
       use: {
         browserName: 'webkit',
         ...devices['Desktop Safari'],
+        storageState: './auth.json',
       },
     },
     {
@@ -56,6 +63,7 @@ export default defineConfig({
       use: {
         browserName: 'firefox',
         ...devices['Desktop Firefox'],
+        storageState: './auth.json',
       },
     },
   ],
