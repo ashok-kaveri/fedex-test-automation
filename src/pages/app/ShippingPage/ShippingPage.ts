@@ -19,7 +19,8 @@ export class ShippingPage {
     this.appFrame = AppFrameHelper.getAppFrame(page);
 
     // Initialize locators
-    this.ordersButton = this.appFrame.getByRole('button', { name: 'Shipping' });
+    // this.ordersButton = this.appFrame.getByRole('button', { name: 'Shipping' });
+    this.ordersButton = this.appFrame.getByText('Shipping');
     this.searchButton = this.appFrame.getByRole('button', { name: 'Search and filter results' });
     this.searchInput = this.appFrame.getByRole('textbox', { name: /Search by order id/ });
     this.ordersTable = this.appFrame.getByRole('table');
@@ -44,27 +45,27 @@ export class ShippingPage {
     await this.searchButton.click();
 
     await this.searchInput.waitFor({ state: 'visible', timeout: 5000 });
-    
+
     const cleanOrderID = orderID.replace(/^#/, '');
-    
+
     let lastError: Error | undefined;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await this.searchInput.clear();
         await this.searchInput.fill(cleanOrderID);
         await this.searchInput.press('Enter');
-        
+
         await expect(this.ordersTable).toContainText('label generated', { timeout: 8000 });
         return;
       } catch (error) {
         lastError = error as Error;
-        
+
         if (attempt < maxRetries) {
           await this.page.waitForTimeout(2000);
         }
       }
     }
-    
+
     throw new Error(`Order ${orderID} not found in table after ${maxRetries} attempts: ${lastError?.message}`);
   }
 

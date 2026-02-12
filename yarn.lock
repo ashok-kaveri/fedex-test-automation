@@ -15,12 +15,12 @@
     formdata-node "^4.3.2"
     node-fetch "^2.6.7"
 
-"@playwright/test@^1.56.1", "@playwright/test@>=1.40.0":
-  version "1.56.1"
-  resolved "https://registry.npmjs.org/@playwright/test/-/test-1.56.1.tgz"
-  integrity sha512-vSMYtL/zOcFpvJCW71Q/OEGQb7KYBPAdKh35WNSkaZA75JlAO8ED8UN6GUNTm3drWomcbcqRPFqQbLae8yBTdg==
+"@playwright/test@^1.58.2":
+  version "1.58.2"
+  resolved "https://registry.npmjs.org/@playwright/test/-/test-1.58.2.tgz"
+  integrity sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==
   dependencies:
-    playwright "1.56.1"
+    playwright "1.58.2"
 
 "@types/node-fetch@^2.6.4":
   version "2.6.13"
@@ -284,10 +284,10 @@ openai@^4.70.0:
     formdata-node "^4.3.2"
     node-fetch "^2.6.7"
 
-playwright-core@1.56.1:
-  version "1.56.1"
-  resolved "https://registry.npmjs.org/playwright-core/-/playwright-core-1.56.1.tgz"
-  integrity sha512-hutraynyn31F+Bifme+Ps9Vq59hKuUCz7H1kDOcBs+2oGguKkWTU50bBWrtz34OUWmIwpBTWDxaRPXrIXkgvmQ==
+playwright-core@1.58.2:
+  version "1.58.2"
+  resolved "https://registry.npmjs.org/playwright-core/-/playwright-core-1.58.2.tgz"
+  integrity sha512-yZkEtftgwS8CsfYo7nm0KE8jsvm6i/PTgVtB8DL726wNf6H2IMsDuxCpJj59KDaxCtSnrWan2AeDqM7JBaultg==
 
 playwright-smart-reporter@^1.0.8:
   version "1.0.8"
@@ -300,12 +300,12 @@ playwright-smart-reporter@^1.0.8:
     "@anthropic-ai/sdk" "^0.32.0"
     openai "^4.70.0"
 
-playwright@1.56.1:
-  version "1.56.1"
-  resolved "https://registry.npmjs.org/playwright/-/playwright-1.56.1.tgz"
-  integrity sha512-aFi5B0WovBHTEvpM3DzXTUaeN6eN0qWnTkKx4NQaH4Wvcmc153PdaY2UBdSYKaGYw+UyWXSVyxDUg5DoPEttjw==
+playwright@1.58.2:
+  version "1.58.2"
+  resolved "https://registry.npmjs.org/playwright/-/playwright-1.58.2.tgz"
+  integrity sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==
   dependencies:
-    playwright-core "1.56.1"
+    playwright-core "1.58.2"
   optionalDependencies:
     fsevents "2.3.2"
 

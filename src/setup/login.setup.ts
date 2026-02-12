@@ -34,31 +34,9 @@ setup('Write login session data', async ({ page }) => {
   
   // Check if auth.json exists and is valid
   if(fs.existsSync(STORAGE_PATH) && fs.statSync(STORAGE_PATH).size > 0 ) {
-    try {
-      // Try to use existing session
-      const context = await page.context().browser()?.newContext({ storageState: STORAGE_PATH });
-      if (context) {
-        const testPage = await context.newPage();
-        await testPage.goto(`https://admin.shopify.com/store/${store}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        
-        // Check if we're still logged in (not redirected to login page)
-        const currentUrl = testPage.url();
-        await testPage.close();
-        await context.close();
-        
-        if (currentUrl.includes('admin.shopify.com/store/')) {
-          console.log('✅ Session valid, reusing auth.json');
-          return;
-        } else {
-          fs.unlinkSync(STORAGE_PATH);
-        }
-      }
-    } catch (e) {
-      if (fs.existsSync(STORAGE_PATH)) {
-        fs.unlinkSync(STORAGE_PATH);
-      }
-    }
-  }  
+    console.log('✅ Session file exists, reusing auth.json');
+    return;
+  }
   
   console.log('🔐 Performing login...');
   
