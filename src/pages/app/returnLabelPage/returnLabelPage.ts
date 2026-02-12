@@ -9,7 +9,10 @@ export class ReturnLabelPage {
 
   // Locators
   readonly returnLabelPageTitle: Locator;
-
+  readonly returnQuantityInput: Locator;
+  readonly refreshratesButton: Locator;
+  readonly shippingRatesSelection: Locator;
+  readonly generateReturnLabelButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -18,11 +21,26 @@ export class ReturnLabelPage {
 
     // Initialize locators
     this.returnLabelPageTitle = this.appFrame.locator(`div.Polaris-Page-Header__TitleWrapper > h1`);
+    this.returnQuantityInput = this.appFrame.locator('input[name="[object Object].returnQuantity"]');
+    this.refreshratesButton = this.appFrame.getByRole('button', { name: 'Refresh Rates' });
+    // this.shippingRatesSelection = this.appFrame.locator('input[type="radio"]'); // make sure while using this locotor use [0]
+    this.shippingRatesSelection = this.appFrame.getByRole('radio', { name: /FedEx/i });
+    this.generateReturnLabelButton = this.appFrame.getByRole('button', { name: 'Generate Return Label' });
   }
 
   // Verify return label page title 
-  async validateReturnLabelTitle(): Promise<void> {
+  async validateReturnLabelTitle(){
+    await this.page.reload();
+    await expect(this.returnLabelPageTitle).toBeVisible({ timeout: 5000 });
     let something = await expect(this.returnLabelPageTitle).toContainText('Return Label', { timeout: 10000 });
     console.log("Return label page title validation: " + something);
+  }
+
+  async returnLabelGeneration(){
+    await this.returnQuantityInput.fill('1');
+    await this.refreshratesButton.click();
+    await this.shippingRatesSelection.first().check(); 
+    await this.generateReturnLabelButton.click();
+    await expect(this.page.getByText('SUCCESS')).toBeVisible();   
   }
 }

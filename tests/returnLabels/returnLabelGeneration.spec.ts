@@ -4,6 +4,8 @@ import { ShopifyAdminPage } from '../../src/pages/shopify/ShopifyAdminPage';
 import { GenerateLabelManuallyPage } from '../../src/pages/app/ManualLabelPage/ManualLabelPage';
 import { OrderSummaryPage } from '../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
 import { ShippingPage } from '../../src/pages/app/ShippingPage/ShippingPage';
+import { ReturnLabelPage } from '../../src/pages/app/returnLabelPage/returnLabelPage';
+
 
 const store = process.env.STORE;
 
@@ -22,6 +24,7 @@ test.describe('Return Label Generation Flow', () => {
     let orderSummaryPage: OrderSummaryPage;
     let shopifyAdminPage: ShopifyAdminPage;
     let orderUploader: ShopifyOrderUploader;
+    let returnLabelPage: ReturnLabelPage;
 
     test.beforeAll(async ({ browser }) => {
         sharedContext = await browser.newContext({ storageState: 'auth.json' });
@@ -32,6 +35,7 @@ test.describe('Return Label Generation Flow', () => {
         orderSummaryPage = new OrderSummaryPage(sharedPage);
         shopifyAdminPage = new ShopifyAdminPage(sharedPage);
         orderUploader = new ShopifyOrderUploader();
+        returnLabelPage = new ReturnLabelPage(sharedPage);
 
     });
 
@@ -52,6 +56,12 @@ test.describe('Return Label Generation Flow', () => {
         await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
         await manualLabelPage.generateLabelInApp();
         await orderSummaryPage.verifyLabelGenerated();
+    });
+
+    test('Generate return label for the order', async () => {
+        await orderSummaryPage.navigatingToReturnLabelPage();
+        await returnLabelPage.validateReturnLabelTitle();
+        await returnLabelPage.returnLabelGeneration();        
     });
 
 });
