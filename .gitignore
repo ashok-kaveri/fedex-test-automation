@@ -6,6 +6,9 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+smart-report.html
+test-history.json
+reports/playwright-report/
 
 # Environment and sensitive files
 .env

@@ -1,11 +1,13 @@
 import { Reporter, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
-import { sendSlackNotification } from './send-slack';
+import { sendSlackMessage, uploadFileToSlack } from './send-slack';
 import { formatSlackMessage } from './format-message';
 import { shouldSendReport } from './slack-config';
+import path from 'path';
 
 interface TestDetail {
   title: string;
   status: 'passed' | 'failed' | 'skipped';
+  specFile: string;
 }
 
 class SlackReporter implements Reporter {
@@ -36,28 +38,25 @@ class SlackReporter implements Reporter {
       status = 'skipped';
     }
     
-    // Get test title from the test case
-    const testTitle = test.title;
-    this.testDetails.push({ title: testTitle, status });
+    const specFile = test.location.file.split('/').pop() || 'unknown';
+    this.testDetails.push({ title: test.title, status, specFile });
   }
 
   async onEnd(result: FullResult) {
-    const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+    const botToken = process.env.SLACK_BOT_TOKEN;
+    const channelId = process.env.SLACK_CHANNEL_ID;
     
-    if (!webhookUrl) {
-      console.log('⏭️ Skipping Slack notification (SLACK_WEBHOOK_URL not set)');
+    if (!botToken || !channelId) {
+      console.log('⏭️ Skipping Slack notification (SLACK_BOT_TOKEN or SLACK_CHANNEL_ID not set)');
       return;
     }
 
-    // Skip if no tests were run (e.g., setup project)
     if (this.total === 0) {
       console.log('⏭️ Skipping Slack notification (no tests executed)');
       return;
     }
 
-    const hasFailed = this.failed > 0;
-    
-    if (!shouldSendReport(hasFailed)) {
+    if (!shouldSendReport(this.failed > 0)) {
       console.log('⏭️ Skipping Slack notification based on SLACK_SEND_RESULTS setting');
       return;
     }
@@ -65,7 +64,9 @@ class SlackReporter implements Reporter {
     const duration = Date.now() - this.startTime;
     const message = formatSlackMessage(this.passed, this.failed, this.skipped, this.total, duration, this.testDetails);
     
-    await sendSlackNotification(webhookUrl, message);
+    await sendSlackMessage(botToken.trim(), channelId.trim(), message);
+    const reportPath = path.join(process.cwd(), 'smart-report.html');
+    await uploadFileToSlack(botToken.trim(), channelId.trim(), reportPath);
   }
 }
 
