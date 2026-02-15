@@ -9,6 +9,8 @@ export class OrderSummaryPage {
 
   // Locators
   readonly packagesSection: Locator;
+  readonly returnPackagesection: Locator;
+  readonly returnPackageButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -17,6 +19,8 @@ export class OrderSummaryPage {
 
     // Initialize locators
     this.packagesSection = this.appFrame.getByLabel('Packages', { exact: true });
+    this.returnPackagesection = this.appFrame.locator('[id="returnpacks"]');
+    this.returnPackageButton = this.appFrame.locator('button').filter({ hasText: 'Return Packages' });
   }
 
   // Verify label was generated successfully
