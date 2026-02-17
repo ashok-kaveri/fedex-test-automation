@@ -59,6 +59,19 @@ export class PickupPage {
   async verifyPickupStatus(expectedStatus: string): Promise<void> {
     await expect(this.appContent.getAppFrameMain()).toContainText(expectedStatus, { timeout: 8000 });
   }
+async verifyOrderStatus(
+  orderID: string,
+  expectedStatus: string
+): Promise<void> {
+  const orderRow = this.getOrderRow(orderID);
 
+  await expect(orderRow).toBeVisible({ timeout: 15000 });
+
+  const statusBadge = orderRow.locator(".Polaris-Badge");
+
+  await expect(statusBadge).toHaveText(expectedStatus, {
+    timeout: 30000, // wait for async update
+  });
+}
 
 }

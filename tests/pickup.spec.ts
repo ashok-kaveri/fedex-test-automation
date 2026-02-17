@@ -4,7 +4,7 @@ import { ShopifyAdminPage } from "../src/pages/shopify/ShopifyAdminPage";
 import { GenerateLabelManuallyPage } from "../src/pages/app/ManualLabelPage/ManualLabelPage";
 import { OrderSummaryPage } from "../src/pages/app/OrderSummaryPage/OrderSummaryPage";
 import { ShippingPage } from "../src/pages/app/ShippingPage/ShippingPage";
-import { PickupPage } from "../src/pages/app/PickupPage/PickupPage.ts";
+import { PickupPage } from "../src/pages/app/PickupPage/PickupPage";
 
 test.describe.configure({ mode: "serial" });
 
@@ -17,6 +17,7 @@ test.describe("Manual Label Generation Flow", () => {
   let shopifyAdminPage: ShopifyAdminPage;
   let orderSummaryPage: OrderSummaryPage;
   let orderUploader: ShopifyOrderUploader;
+    let pickupPage: PickupPage;
 
   test.beforeAll(async ({ browser }) => {
     // Create shared context and page for all tests
@@ -27,6 +28,7 @@ test.describe("Manual Label Generation Flow", () => {
     shippingPage = new ShippingPage(sharedPage);
     shopifyAdminPage = new ShopifyAdminPage(sharedPage);
     orderSummaryPage = new OrderSummaryPage(sharedPage);
+    pickupPage = new PickupPage(sharedPage);
     orderUploader = new ShopifyOrderUploader();
   });
 
@@ -47,33 +49,24 @@ test.describe("Manual Label Generation Flow", () => {
     await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(
       sharedOrderID,
     );
-    // await sharedPage.pause();
-
-    // Wait for the FedEx app to load after clicking Generate Label in Shopify
-    await sharedPage.waitForTimeout(3000);
-
     await manualLabelPage.generateLabelInApp();
-    await sharedPage.waitForTimeout(6000);
-    // await orderSummaryPage.verifyLabelGenerated();
+    await orderSummaryPage.verifyLabelGenerated();
   });
 
   test("Click Back and serach the order and pickup", async () => {
-    test.setTimeout(60000);
+    test.setTimeout(180000);
 
     await manualLabelPage.clickBackButtonInManualLabelGenerationPage();
-    await sharedPage.waitForTimeout(5000);
-
-    // await sharedPage.waitForLoadState();
-
-    await shippingPage.searchOrder(sharedOrderID);
-    await shippingPage.clickOnSelectAllOrders();
-    await sharedPage.waitForTimeout(3000);
-    await shippingPage.openMoreActionsInOrderGrid();
-    await sharedPage.waitForTimeout(2000);
-    await shippingPage.clickOnRequestPickupButton();
-    await sharedPage.waitForTimeout(4000);
+    await shippingPage.selectOrderCheckboxByOrderIdWithLabelGenerated(sharedOrderID);
+    await shippingPage.selectItemInMoreActionsMenu("Request Pick Up");
     await shippingPage.clickOnYesInPopUp();
-    await sharedPage.waitForTimeout(4000);
-    
+
+
+    // /tobedone  
+// await pickupPage.verifyOrderStatus(
+//   sharedOrderID,
+//   "Pickup requested"
+// );    
+
   });
 });
