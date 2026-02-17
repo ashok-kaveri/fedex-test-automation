@@ -59,4 +59,6 @@ export class PickupPage {
   async verifyPickupStatus(expectedStatus: string): Promise<void> {
     await expect(this.appContent.getAppFrameMain()).toContainText(expectedStatus, { timeout: 8000 });
   }
+
+
 }

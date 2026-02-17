@@ -13,7 +13,8 @@ export class ShippingPage {
   readonly ordersTable: Locator;
   readonly moreActionsButton: Locator;
   readonly selectAllCell: Locator;
-
+  readonly selectAllCheckbox: Locator;
+readonly requestPickupButton: Locator;
   constructor(page: Page) {
     this.page = page;
     this.appFrame = AppFrameHelper.getAppFrame(page);
@@ -26,6 +27,12 @@ export class ShippingPage {
     this.ordersTable = this.appFrame.getByRole('table');
     this.moreActionsButton = this.appFrame.getByRole('button', { name: 'More actions' }).first();
     this.selectAllCell = this.appFrame.getByRole('cell', { name: 'Select all orders' });
+    this.selectAllCheckbox = this.appFrame.getByRole('checkbox', { 
+  name: 'Select all orders' 
+});
+this.requestPickupButton = this.appFrame.getByRole('button', { 
+  name: 'Request Pick Up' 
+});
   }
 
   // Helper method for dynamic locators
@@ -85,4 +92,25 @@ export class ShippingPage {
     await this.moreActionsButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.moreActionsButton.click();
   }
+
+  async clickOnSelectAllOrders() {
+    await expect(this.selectAllCheckbox).toBeVisible({ timeout: 10000 });
+    await expect(this.selectAllCheckbox).toBeEnabled({ timeout: 10000 });
+
+    if (!(await this.selectAllCheckbox.isChecked())) {
+      await this.selectAllCheckbox.setChecked(true, { force: true });
+    }
+
+    await expect(this.selectAllCheckbox).toBeChecked({ timeout: 5000 });
+  }
+
+  async clickOnRequestPickupButton(){
+    await this.requestPickupButton.click();
+  }
+
+async clickOnYesInPopUp(){
+    const confirmYesButton = this.appFrame.getByRole('button', { name: 'Yes' });
+    await confirmYesButton.waitFor({ state: 'visible', timeout: 8000 });
+    await confirmYesButton.click();
+}
 }
