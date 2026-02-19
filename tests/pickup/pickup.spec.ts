@@ -1,10 +1,10 @@
 import { test, expect } from '@playwright/test';
-import ShopifyOrderUploader from '../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../src/pages/shopify/ShopifyAdminPage';
-import { GenerateLabelManuallyPage } from '../src/pages/app/ManualLabelPage/ManualLabelPage';
-import { OrderSummaryPage } from '../src/pages/app/OrderSummaryPage/OrderSummaryPage';
-import { ShippingPage } from '../src/pages/app/ShippingPage/ShippingPage';
-import { PickupPage } from '../src/pages/app/PickupPage/PickupPage';
+import ShopifyOrderUploader from '../../src/helpers/createOrder';
+import { ShopifyAdminPage } from '../../src/pages/shopify/ShopifyAdminPage';
+import { GenerateLabelManuallyPage } from '../../src/pages/app/ManualLabelPage/ManualLabelPage';
+import { OrderSummaryPage } from '../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
+import { ShippingPage } from '../../src/pages/app/ShippingPage/ShippingPage';
+import { PickupPage } from '../../src/pages/app/PickupPage/PickupPage';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -63,6 +63,5 @@ test.describe('Manual Label Generation Flow', () => {
     await sharedPage.waitForURL(/pickup/i);
     await expect(pickupPage.pickupHeading).toContainText('Pickups');
     await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
-    await sharedPage.waitForTimeout(5000);
   });
 });
