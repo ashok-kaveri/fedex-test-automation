@@ -5,6 +5,7 @@ import { AppFrameHelper } from '../../../helpers/appFrameHelper';
 export class ShippingPage {
   readonly page: Page;
   private readonly appFrame: FrameLocator;
+  private lastRequestPickupTriggeredAt: Date | null;
 
   // Locators
   readonly ordersButton: Locator;
@@ -18,6 +19,7 @@ export class ShippingPage {
   constructor(page: Page) {
     this.page = page;
     this.appFrame = AppFrameHelper.getAppFrame(page);
+    this.lastRequestPickupTriggeredAt = null;
 
     // Initialize locators
     // this.ordersButton = this.appFrame.getByRole('button', { name: 'Shipping' });
@@ -29,9 +31,7 @@ export class ShippingPage {
       name: /Search by order id/,
     });
     this.ordersTable = this.appFrame.getByRole('table');
-    this.moreActionsButton = this.appFrame
-      .getByRole('button', { name: 'More actions' })
-      .first();
+    this.moreActionsButton = this.appFrame.getByRole('button', { name: 'More actions' }).first();
     this.selectAllCell = this.appFrame.getByRole('cell', {
       name: 'Select all orders',
     });
@@ -83,9 +83,7 @@ export class ShippingPage {
       }
     }
 
-    throw new Error(
-      `Order ${orderID} not found in table after ${maxRetries} attempts: ${lastError?.message}`,
-    );
+    throw new Error(`Order ${orderID} not found in table after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
   // Verify order appears in table with label generated status
@@ -117,10 +115,8 @@ export class ShippingPage {
 
     await expect(this.selectAllCheckbox).toBeChecked({ timeout: 5000 });
   }
-
-  async selectOrderCheckboxByOrderIdWithLabelGenerated(
-    orderID: string,
-  ): Promise<void> {
+// Select order checkbox by order ID which has label generated status in the order grid
+  async selectOrderCheckboxByOrderIdWithLabelGenerated(orderID: string): Promise<void> {
     const normalizedOrderID = orderID.startsWith('#') ? orderID : `#${orderID}`;
     const orderRow = this.ordersTable
       .locator('tr.Polaris-IndexTable__TableRow')
@@ -132,9 +128,7 @@ export class ShippingPage {
     await expect(orderRow).toBeVisible({ timeout: 10000 });
     await expect(orderRow).toContainText('label generated', { timeout: 10000 });
 
-    const orderCheckbox = orderRow
-      .locator('input[id^="Select-"][type="checkbox"]')
-      .first();
+    const orderCheckbox = orderRow.locator('input[id^="Select-"][type="checkbox"]').first();
     await expect(orderCheckbox).toBeVisible({ timeout: 5000 });
     await expect(orderCheckbox).toBeEnabled({ timeout: 5000 });
 
@@ -145,24 +139,11 @@ export class ShippingPage {
     await expect(orderCheckbox).toBeChecked({ timeout: 5000 });
   }
 
-  // async selectItemInMoreActionsMenu(menuItem: string): Promise<void> {
-  //   const actionName = `${menuItem}`;
-  //   const normalizedActionName = actionName.trim().replace(/\s+/g, " ");
 
-  //   await this.openMoreActionsInOrderGrid();
-
-  //   const menuItems = this.appFrame
-  //     .getByRole("button", { name: normalizedActionName })
-  //     .first();
-
-  //   await expect(menuItems).toBeEnabled({ timeout: 5000 });
-  //   await menuItems.scrollIntoViewIfNeeded();
-  //   await menuItems.click({ trial: true });
-  //   await menuItems.click();
-  // }
-
+  //Click on Moreactions button and select an action from the dropdown
   async clickMoreActionsItem(actionName: string): Promise<void> {
     const normalizedActionName = actionName.trim().replace(/\s+/g, ' ');
+    const isRequestPickupAction = normalizedActionName.toLowerCase() === 'request pick up';
 
     const candidates: Locator[] = [
       this.appFrame.getByRole('menuitem', { name: normalizedActionName }).first(),
@@ -185,6 +166,30 @@ export class ShippingPage {
           await candidate.scrollIntoViewIfNeeded();
           await candidate.click({ trial: true });
           await candidate.click();
+
+          if (isRequestPickupAction) {
+            const confirmYesButton = this.appFrame.getByRole('button', { name: 'Yes' }).first();
+
+            try {
+              await confirmYesButton.waitFor({
+                state: 'visible',
+                timeout: 2500,
+              });
+            } catch {
+              continue;
+            }
+
+            this.lastRequestPickupTriggeredAt = new Date();
+            const formattedPickupRequestTime = new Intl.DateTimeFormat('en-US', {
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+            }).format(this.lastRequestPickupTriggeredAt);
+            console.log(`Pickup requested at: ${formattedPickupRequestTime}`);
+          }
+
           return;
         }
       } catch (error) {
@@ -192,21 +197,12 @@ export class ShippingPage {
       }
     }
 
-    throw new Error(
-      `Failed to click "${actionName}" from More actions after retries: ${lastError?.message}`
-    );
+    throw new Error(`Failed to click "${actionName}" from More actions after retries: ${lastError?.message}`);
   }
 
-  // async clickMoreActionsItem(actionName: string): Promise<void> {
-  //   await this.openMoreActionsInOrderGrid();
-
-  //   const action = this.appFrame.getByRole('button', {
-  //     name: new RegExp(actionName, 'i'),
-  //   });
-
-  //   await expect(action).toBeVisible();
-  //   await action.click();
-  // }
+  getLastRequestPickupTriggeredAt(): Date | null {
+    return this.lastRequestPickupTriggeredAt;
+  }
 
   async clickOnYesInPopUp(): Promise<void> {
     const confirmYesButton = this.appFrame.getByRole('button', { name: 'Yes' });

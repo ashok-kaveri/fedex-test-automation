@@ -1,8 +1,5 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import {
-  AppFrameContentLocators,
-  AppFrameHelper,
-} from '../../../helpers/appFrameHelper';
+import { AppFrameContentLocators, AppFrameHelper } from '../../../helpers/appFrameHelper';
 
 export class PickupPage {
   readonly page: Page;
@@ -23,13 +20,13 @@ export class PickupPage {
   readonly previousButton: Locator;
   readonly nextButton: Locator;
   readonly paginationInfo: Locator;
+  private readonly requestedTimeDisplayFormatter: Intl.DateTimeFormat;
 
   constructor(page: Page) {
     this.page = page;
     this.appFrame = AppFrameHelper.getAppFrame(page);
     this.appContent = new AppFrameContentLocators(this.appFrame);
 
-    // Existing
     this.pickupHeading = this.appFrame.getByRole('heading', {
       name: 'Pickups',
     });
@@ -40,7 +37,6 @@ export class PickupPage {
 
     this.confirmYesButton = this.appFrame.getByRole('button', { name: 'Yes' });
 
-    // Added
     this.howToButton = this.appFrame.getByRole('button', {
       name: 'How to',
     });
@@ -68,6 +64,57 @@ export class PickupPage {
     });
 
     this.paginationInfo = this.appFrame.getByText(/Page \d+ of \d+/);
+
+    this.requestedTimeDisplayFormatter = new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  private parseRequestedTimeWithCurrentYear(requestedTime: string): Date {
+    const match = requestedTime.trim().match(/^([A-Za-z]{3})\s+(\d{1,2}),\s+(\d{1,2}):(\d{2})\s+(AM|PM)$/i);
+
+    if (!match) {
+      throw new Error(`Unable to parse requested time value: "${requestedTime}"`);
+    }
+
+    const [, monthShort, dayStr, hourStr, minuteStr, period] = match;
+
+    // prettier-ignore
+    const months: Record<string, number> = {
+      Jan: 0,Feb: 1,Mar: 2,Apr: 3,May: 4,Jun: 5,Jul: 6,Aug: 7,Sep: 8, Oct: 9, Nov: 10, Dec: 11,
+    };
+
+    const monthIndex = months[monthShort[0].toUpperCase() + monthShort.slice(1, 3).toLowerCase()];
+    if (monthIndex === undefined) {
+      throw new Error(`Unknown month in requested time value: "${requestedTime}"`);
+    }
+
+    let hour = Number(hourStr) % 12;
+    if (period.toUpperCase() === 'PM') {
+      hour += 12;
+    }
+
+    return new Date(new Date().getFullYear(), monthIndex, Number(dayStr), hour, Number(minuteStr), 0, 0);
+  }
+
+  private getMinimumDistanceToMinuteMs(reference: Date, minuteTime: Date): number {
+    const minuteStartMs = minuteTime.getTime();
+    const minuteEndMs = minuteStartMs + 59_999;
+    const referenceMs = reference.getTime();
+
+    if (referenceMs < minuteStartMs) {
+      return minuteStartMs - referenceMs;
+    }
+
+    if (referenceMs > minuteEndMs) {
+      return referenceMs - minuteEndMs;
+    }
+
+    return 0;
   }
 
   getOrderRow(orderID: string): Locator {
@@ -104,35 +151,42 @@ export class PickupPage {
   }
 
   async verifyPickupStatus(expectedStatus: string): Promise<void> {
-    await expect(this.appContent.getAppFrameMain()).toContainText(
-      expectedStatus,
-      { timeout: 8000 },
-    );
+    await expect(this.appContent.getAppFrameMain()).toContainText(expectedStatus, { timeout: 8000 });
   }
 
-  async verifyOrderStatus(
-    orderID: string,
-    expectedStatus: string,
-  ): Promise<void> {
+  async verifyOrderStatus(orderID: string, expectedStatus: string): Promise<void> {
     const orderRow = this.getOrderRow(orderID);
     await expect(orderRow).toBeVisible({ timeout: 15000 });
   }
 
-  async processPickupRow(orderID: any): Promise<void> {
+  async processPickupRow(orderID: any, requestPickupTriggeredAt?: Date): Promise<void> {
     // await this.page.pause();
-    const row = this.appFrame
-      .locator('tr.Polaris-IndexTable__TableRow')
-      .filter({ hasText: orderID })
-      .first();
+    const row = this.appFrame.locator('tr.Polaris-IndexTable__TableRow').filter({ hasText: orderID }).first();
 
     await expect(row).toBeVisible();
 
     const pickupNumber = await row.locator('td').nth(1).innerText();
     const status = await row.locator('td').nth(2).innerText();
+    // expect(status.trim().toLowerCase()).not.toContain('failed');
     expect(status).toContain('Success');
     const requestedTime = await row.locator('td').nth(3).innerText();
     const orders = await row.locator('td').nth(5).innerText();
     expect(orders).toContain(orderID);
+
+    if (requestPickupTriggeredAt) {
+      const displayedRequestedTime = requestedTime.trim();
+      const parsedRequestedMinute = this.parseRequestedTimeWithCurrentYear(displayedRequestedTime);
+      const distanceMs = this.getMinimumDistanceToMinuteMs(requestPickupTriggeredAt, parsedRequestedMinute);
+
+      if (distanceMs > 0) {
+        console.log(`Time difference from requested minute: ${distanceMs}ms`);
+      } else {
+        console.log(`Same time as requested time: ${displayedRequestedTime}`);
+      }
+
+      expect(distanceMs).toBeLessThanOrEqual(40_000);
+      expect(displayedRequestedTime).toBe(this.requestedTimeDisplayFormatter.format(requestPickupTriggeredAt));
+    }
 
     console.log('Pickup Number:', pickupNumber.trim());
     console.log('Status:', status.trim());

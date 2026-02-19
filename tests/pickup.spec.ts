@@ -46,28 +46,23 @@ test.describe('Manual Label Generation Flow', () => {
 
   test('Navigate to Shopify order and generate label manually', async () => {
     test.setTimeout(180000);
-    await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(
-      sharedOrderID,
-    );
+    await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
     await manualLabelPage.generateLabelInApp();
     await orderSummaryPage.verifyLabelGenerated();
   });
 
   test('Click Back and serach the order and pickup', async () => {
     test.setTimeout(180000);
-
     await manualLabelPage.clickBackButtonInManualLabelGenerationPage();
-    await shippingPage.selectOrderCheckboxByOrderIdWithLabelGenerated(
-      sharedOrderID,
-    );
+    await shippingPage.selectOrderCheckboxByOrderIdWithLabelGenerated(sharedOrderID);
     await shippingPage.clickMoreActionsItem('Request Pick Up');
+    const requestPickupTriggeredAt = shippingPage.getLastRequestPickupTriggeredAt();
+    expect(requestPickupTriggeredAt).not.toBeNull();
     await shippingPage.clickOnYesInPopUp();
-
     await pickupPage.verifyOrderStatus(sharedOrderID, 'Pickup requested');
     await sharedPage.waitForURL(/pickup/i);
     await expect(pickupPage.pickupHeading).toContainText('Pickups');
-
-    await pickupPage.processPickupRow(sharedOrderID);
+    await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
     await sharedPage.waitForTimeout(5000);
   });
 });
