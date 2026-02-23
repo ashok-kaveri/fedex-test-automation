@@ -18,3 +18,4 @@ auth.json
 # IDE
 .vscode/
 .idea/
+.preettier-vscode/

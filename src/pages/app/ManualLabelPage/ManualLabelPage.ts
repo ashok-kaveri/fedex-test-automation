@@ -15,6 +15,7 @@ export class GenerateLabelManuallyPage {
   readonly generateLabelButton: Locator;
   readonly radioButtons: Locator;
   readonly failedRatesBox: Locator;
+  readonly clickBackButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -28,6 +29,8 @@ export class GenerateLabelManuallyPage {
     this.generateLabelButton = this.appFrame.getByRole('button', { name: 'Generate Label' });
     this.radioButtons = this.appFrame.locator('input[type="radio"][name]');
     this.failedRatesBox = this.appFrame.locator('div.Polaris-Box').filter({ hasText: 'Failed to fetch rates' });
+    this.clickBackButton = this.appFrame.getByRole('button', { name: 'Orders' });
+
   }
 
   // Helper methods for dynamic locators
@@ -194,6 +197,11 @@ export class GenerateLabelManuallyPage {
     await this.getShippingRates();
     await this.selectFirstShippingService();
     await this.clickGenerateLabelButtonInManualLabelGenerationPage();
+  }
+
+  async clickBackButtonInManualLabelGenerationPage(): Promise<void> {
+    await this.clickBackButton.waitFor({ state: 'visible', timeout: 5000 });
+    await this.clickBackButton.click();
   }
 
 
