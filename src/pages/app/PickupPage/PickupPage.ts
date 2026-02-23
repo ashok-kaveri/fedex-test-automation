@@ -21,6 +21,7 @@ export class PickupPage {
   readonly nextButton: Locator;
   readonly paginationInfo: Locator;
   private readonly requestedTimeDisplayFormatter: Intl.DateTimeFormat;
+  readonly statusInPickupLinkPage: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -72,6 +73,32 @@ export class PickupPage {
       minute: '2-digit',
       hour12: true,
     });
+
+    this.statusInPickupLinkPage = this.appFrame.locator('p.Polaris-Text--subdued').filter({ hasText: 'SUCCESS' });
+  }
+
+  async verifyPickupField(label: string, expectedValue?: string | RegExp): Promise<string> {
+    const labelLocator = this.appFrame.locator('p.Polaris-Text--semibold').filter({ hasText: label }).first();
+
+    await expect(labelLocator).toBeVisible({ timeout: 10000 });
+
+    const valueLocator = labelLocator.locator('xpath=ancestor::div[contains(@class,"Polaris-Grid-Cell")]').locator('xpath=following-sibling::div[1]').locator('p, button').first();
+
+    await expect(valueLocator).toBeVisible({ timeout: 10000 });
+
+    if (expectedValue !== undefined) {
+      await expect(valueLocator).toHaveText(expectedValue);
+    }
+
+    return (await valueLocator.innerText()).trim();
+  }
+
+  async clickRowByOrderId(orderId: string): Promise<void> {
+    const formattedOrderId = orderId.startsWith('#') ? orderId : `#${orderId}`;
+    const row = this.appFrame.locator('tr.Polaris-IndexTable__TableRow').filter({ hasText: formattedOrderId }).first();
+    await row.waitFor({ state: 'visible' });
+    await row.click();
+    await expect(this.appFrame.locator('text=Pickup Confirmation Number')).toBeVisible({ timeout: 10000 });
   }
 
   private parseRequestedTimeWithCurrentYear(requestedTime: string): Date {
@@ -159,7 +186,7 @@ export class PickupPage {
     await expect(orderRow).toBeVisible({ timeout: 15000 });
   }
 
-  async processPickupRow(orderID: any, requestPickupTriggeredAt?: Date): Promise<void> {
+  async processPickupRow(orderID: any, requestPickupTriggeredAt?: Date): Promise<string> {
     // await this.page.pause();
     const row = this.appFrame.locator('tr.Polaris-IndexTable__TableRow').filter({ hasText: orderID }).first();
 
@@ -181,16 +208,12 @@ export class PickupPage {
       if (distanceMs > 0) {
         console.log(`Time difference from requested minute: ${distanceMs}ms`);
       } else {
-        console.log(`Same time as requested time: ${displayedRequestedTime}`);
+        console.log(`Time in Pickup Page is same as requested time: ${displayedRequestedTime}`);
       }
 
       expect(distanceMs).toBeLessThanOrEqual(40_000);
       expect(displayedRequestedTime).toBe(this.requestedTimeDisplayFormatter.format(requestPickupTriggeredAt));
     }
-
-    console.log('Pickup Number:', pickupNumber.trim());
-    console.log('Status:', status.trim());
-    console.log('Requested Time:', requestedTime.trim());
-    console.log('Orders:', orders.trim());
+    return pickupNumber;
   }
 }

@@ -16,6 +16,7 @@ export class ShippingPage {
   readonly selectAllCell: Locator;
   readonly selectAllCheckbox: Locator;
   readonly requestPickupButton: Locator;
+
   constructor(page: Page) {
     this.page = page;
     this.appFrame = AppFrameHelper.getAppFrame(page);
@@ -115,7 +116,7 @@ export class ShippingPage {
 
     await expect(this.selectAllCheckbox).toBeChecked({ timeout: 5000 });
   }
-// Select order checkbox by order ID which has label generated status in the order grid
+  // Select order checkbox by order ID which has label generated status in the order grid
   async selectOrderCheckboxByOrderIdWithLabelGenerated(orderID: string): Promise<void> {
     const normalizedOrderID = orderID.startsWith('#') ? orderID : `#${orderID}`;
     const orderRow = this.ordersTable
@@ -138,7 +139,6 @@ export class ShippingPage {
 
     await expect(orderCheckbox).toBeChecked({ timeout: 5000 });
   }
-
 
   //Click on Moreactions button and select an action from the dropdown
   async clickMoreActionsItem(actionName: string): Promise<void> {

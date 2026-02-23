@@ -52,7 +52,7 @@ test.describe('Manual Label Generation Flow', () => {
   });
 
   test('Click Back and serach the order and pickup', async () => {
-    test.setTimeout(180000);
+    test.setTimeout(60000);
     await manualLabelPage.clickBackButtonInManualLabelGenerationPage();
     await shippingPage.selectOrderCheckboxByOrderIdWithLabelGenerated(sharedOrderID);
     await shippingPage.clickMoreActionsItem('Request Pick Up');
@@ -63,5 +63,13 @@ test.describe('Manual Label Generation Flow', () => {
     await sharedPage.waitForURL(/pickup/i);
     await expect(pickupPage.pickupHeading).toContainText('Pickups');
     await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
+    await sharedPage.waitForTimeout(1000);
+    await pickupPage.clickRowByOrderId(sharedOrderID);
+    // await expect(pickupPage.statusInPickupLinkPage).toBeVisible({ timeout: 10000 });
+    await pickupPage.verifyPickupField('Status', 'SUCCESS');
+    await pickupPage.verifyPickupField('Orders', sharedOrderID);
+    const pickupNumber = await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
+    await pickupPage.verifyPickupField('Pickup Confirmation Number', pickupNumber);
+    await sharedPage.waitForTimeout(10000);
   });
 });
