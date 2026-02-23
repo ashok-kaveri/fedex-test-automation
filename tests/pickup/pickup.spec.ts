@@ -65,11 +65,9 @@ test.describe('Manual Label Generation Flow', () => {
     await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
     await sharedPage.waitForTimeout(1000);
     await pickupPage.clickRowByOrderId(sharedOrderID);
-    // await expect(pickupPage.statusInPickupLinkPage).toBeVisible({ timeout: 10000 });
     await pickupPage.verifyPickupField('Status', 'SUCCESS');
     await pickupPage.verifyPickupField('Orders', sharedOrderID);
     const pickupNumber = await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
     await pickupPage.verifyPickupField('Pickup Confirmation Number', pickupNumber);
-    await sharedPage.waitForTimeout(10000);
   });
 });
