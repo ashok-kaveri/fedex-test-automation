@@ -16,10 +16,11 @@
   "description": "Fedex test automation project using Playwright",
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@types/node": "^24.9.1"
+    "@types/node": "^24.9.1",
+    "playwright-smart-reporter": "^1.0.8"
   },
   "dependencies": {
     "axios": "^1.6.7",
-    "dotenv": "^17.2.3"
+    "dotenv": "^17.2.4"
   }
 }

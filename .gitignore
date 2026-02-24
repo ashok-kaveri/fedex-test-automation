@@ -6,6 +6,11 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+smart-report.html
+test-history.json
+reports/playwright-report/
+package-lock.json
+yarn.lock
 
 # Environment and sensitive files
 .env
@@ -15,3 +20,4 @@ auth.json
 # IDE
 .vscode/
 .idea/
+.preettier-vscode/
