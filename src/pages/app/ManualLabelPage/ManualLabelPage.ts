@@ -16,6 +16,13 @@ export class GenerateLabelManuallyPage {
   readonly radioButtons: Locator;
   readonly failedRatesBox: Locator;
   readonly clickBackButton: Locator;
+  readonly failedRatesMenuButton: Locator;
+  readonly viewXmlMenuItem: Locator;
+  readonly xmlViewerModal: Locator;
+  readonly xmlModalCloseButton: Locator;
+  readonly xmlModalResponseSection: Locator;
+  readonly xmlModalPreContent: Locator;
+  readonly getShippingServiceLabel: (radioId: string) => Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -30,38 +37,19 @@ export class GenerateLabelManuallyPage {
     this.radioButtons = this.appFrame.locator('input[type="radio"][name]');
     this.failedRatesBox = this.appFrame.locator('div.Polaris-Box').filter({ hasText: 'Failed to fetch rates' });
     this.clickBackButton = this.appFrame.getByRole('button', { name: 'Orders' });
-
-  }
-
-  // Helper methods for dynamic locators
-  getShippingServiceLabel(radioId: string): Locator {
-    return this.appFrame.locator(`label[for="${radioId}"]`);
-  }
-
-  getFailedRatesMenuButton(): Locator {
-    return this.failedRatesBox.locator('button').filter({
+    
+    // XML viewer modal locators
+    this.xmlViewerModal = this.appFrame.locator('div[role="dialog"][aria-modal="true"]');
+    this.failedRatesMenuButton = this.failedRatesBox.locator('button').filter({
       has: this.appFrame.locator('svg path[d="M6 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"]')
     }).first();
-  }
-
-  getViewXmlMenuItem(): Locator {
-    return this.appFrame.locator('button[role="menuitem"]').filter({ hasText: 'View XML' }).first();
-  }
-
-  getXmlViewerModal(): Locator {
-    return this.appFrame.locator('div[role="dialog"][aria-modal="true"]');
-  }
-
-  getXmlModalCloseButton(): Locator {
-    return this.getXmlViewerModal().locator('button[aria-label="Close"]');
-  }
-
-  getXmlModalResponseSection(): Locator {
-    return this.getXmlViewerModal().locator('.Polaris-Layout__Section--oneHalf').nth(1);
-  }
-
-  getXmlModalPreContent(): Locator {
-    return this.getXmlModalResponseSection().locator('pre');
+    this.viewXmlMenuItem = this.appFrame.locator('button[role="menuitem"]').filter({ hasText: 'View XML' }).first();
+    this.xmlModalCloseButton = this.xmlViewerModal.locator('button[aria-label="Close"]');
+    this.xmlModalResponseSection = this.xmlViewerModal.locator('.Polaris-Layout__Section--oneHalf').nth(1);
+    this.xmlModalPreContent = this.xmlModalResponseSection.locator('pre');
+    
+    // Dynamic locators
+    this.getShippingServiceLabel = (radioId: string) => this.appFrame.locator(`label[for="${radioId}"]`);
   }
 
   // Verify order ID is displayed in manual page heading
@@ -78,23 +66,19 @@ export class GenerateLabelManuallyPage {
   // Extract and parse error/warning logs from XML viewer modal
   async getErrorFromXML(): Promise<string> {
     try {
-      const moreOptionsBtn = this.getFailedRatesMenuButton();
-      await moreOptionsBtn.waitFor({ state: 'visible', timeout: 5000 });
-      await moreOptionsBtn.click();
+      await this.failedRatesMenuButton.waitFor({ state: 'visible', timeout: 5000 });
+      await this.failedRatesMenuButton.click();
       
       await this.page.waitForTimeout(1000);
       
-      const viewXmlBtn = this.getViewXmlMenuItem();
-      await viewXmlBtn.waitFor({ state: 'visible', timeout: 5000 });
-      await viewXmlBtn.click();
+      await this.viewXmlMenuItem.waitFor({ state: 'visible', timeout: 5000 });
+      await this.viewXmlMenuItem.click();
       
-      const modal = this.getXmlViewerModal();
-      await modal.waitFor({ state: 'visible', timeout: 5000 });
+      await this.xmlViewerModal.waitFor({ state: 'visible', timeout: 5000 });
       
-      const xmlContent = await this.getXmlModalPreContent().textContent();
+      const xmlContent = await this.xmlModalPreContent.textContent();
       
-      const closeBtn = this.getXmlModalCloseButton();
-      await closeBtn.click();
+      await this.xmlModalCloseButton.click();
       
       if (xmlContent) {
         const errorInfo = this.parseErrorFromXML(xmlContent);
@@ -135,17 +119,26 @@ export class GenerateLabelManuallyPage {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await this.radioButtons.first().waitFor({ state: 'visible', timeout: 10000 });
+        console.log(`✅ Shipping rates loaded successfully on attempt ${attempt}`);
         return;
       } catch (error) {
         lastError = error as Error;
+        console.log(`⚠️ Attempt ${attempt}/${maxRetries} failed: ${lastError.message}`);
         
-        const retryExists = await this.retryButton.count() > 0;
-        
-        if (retryExists && attempt < maxRetries) {
-          await this.retryButton.click();
-          await this.page.waitForTimeout(2000);
-        } else if (!retryExists && attempt < maxRetries) {
-          await this.page.waitForTimeout(3000);
+        try {
+          const retryExists = await this.retryButton.count() > 0;
+          
+          if (retryExists && attempt < maxRetries) {
+            console.log('🔄 Retry button found, clicking...');
+            await this.retryButton.click();
+            await this.page.waitForTimeout(2000);
+          } else if (!retryExists && attempt < maxRetries) {
+            console.log('⏳ Waiting before next attempt...');
+            await this.page.waitForTimeout(3000);
+          }
+        } catch (retryError) {
+          console.log('❌ Error checking retry button:', retryError);
+          if (attempt >= maxRetries) break;
         }
       }
     }
@@ -176,6 +169,7 @@ export class GenerateLabelManuallyPage {
   async clickGenerateLabelButtonInManualLabelGenerationPage(): Promise<void> {
     await this.generateLabelButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.generateLabelButton.click();
+    console.log('🚀 Generate Label button clicked - label generation started');
   }
 
 
