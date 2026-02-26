@@ -6,6 +6,7 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+/tests/traces/
 smart-report.html
 test-history.json
 reports/playwright-report/
