@@ -18,6 +18,7 @@ export class ShippingPage {
   readonly requestPickupButton: Locator;
   readonly headers: Locator;
   readonly refreshButton: Locator;
+  readonly yesBtnInPopUpForRequestPickup: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -33,13 +34,10 @@ export class ShippingPage {
     this.selectAllCell = this.appFrame.getByRole('cell', { name: 'Select all orders' });
     this.selectAllCheckbox = this.appFrame.getByRole('checkbox', { name: 'Select all orders' });
     this.requestPickupButton = this.appFrame.getByRole('button', { name: 'Request Pick Up' });
-
-    // From second file
     this.refreshButton = this.appFrame.locator('button:has-text("Refresh")');
     this.headers = this.appFrame.locator('table thead th');
+    this.yesBtnInPopUpForRequestPickup = this.appFrame.getByRole('button', { name: 'Yes' });
   }
-
-  // ================= BASIC NAVIGATION =================
 
   getOrderRow(orderID: string): Locator {
     return this.ordersTable.getByText(orderID);
@@ -49,8 +47,6 @@ export class ShippingPage {
     await this.ordersButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.ordersButton.click();
   }
-
-  // ================= SEARCH =================
 
   async searchOrder(orderID: string, maxRetries: number = 3): Promise<void> {
     const cleanOrderID = orderID.replace(/^#/, '');
@@ -77,8 +73,6 @@ export class ShippingPage {
 
     throw new Error(`Order ${orderID} not found: ${lastError?.message}`);
   }
-
-  // ================= GRID HELPERS =================
 
   getRowByOrderId(orderID: string) {
     const clean = orderID.replace(/^#/, '');
@@ -116,8 +110,6 @@ export class ShippingPage {
     return false;
   }
 
-  // ================= VALIDATIONS =================
-
   async verifyOrderStatusInOrderGrid(): Promise<void> {
     await expect(this.ordersTable).toContainText('label generated', { timeout: 10000 });
   }
@@ -145,8 +137,6 @@ export class ShippingPage {
     throw new Error(`Timeout. Last value: ${lastValue}`);
   }
 
-  // ================= SELECTION =================
-
   async selectAllOrdersInOrderGrid() {
     await this.selectAllCell.waitFor({ state: 'visible', timeout: 5000 });
     await this.selectAllCell.click();
@@ -164,40 +154,63 @@ export class ShippingPage {
     const row = this.ordersTable.locator('tr.Polaris-IndexTable__TableRow').filter({
       has: this.appFrame.locator('a.orderId', { hasText: normalized }),
     });
-
     const checkbox = row.locator('input[id^="Select-"][type="checkbox"]').first();
     await checkbox.setChecked(true, { force: true });
   }
-
-  // ================= MORE ACTIONS =================
 
   async openMoreActionsInOrderGrid() {
     await this.moreActionsButton.waitFor({ state: 'visible' });
     await this.moreActionsButton.click();
   }
 
-  async clickMoreActionsItem(actionName: string) {
-    const normalized = actionName.trim();
-    const isPickup = normalized.toLowerCase() === 'request pick up';
+  async clickMoreActionsItem(actionName: string): Promise<void> {
+    const normalizedActionName = actionName.trim().replace(/\s+/g, ' ');
+    const isRequestPickupAction = normalizedActionName.toLowerCase() === 'request pick up';
+    const candidates: Locator[] = [
+      this.appFrame.getByRole('menuitem', { name: normalizedActionName }).first(),
+      this.appFrame.locator('.Polaris-ActionList button').filter({ hasText: normalizedActionName }).first(),
+      this.appFrame.getByRole('button', { name: normalizedActionName }).first(),
+      this.appFrame.locator('button').filter({ hasText: normalizedActionName }).first(),
+    ];
+    let lastError: Error | undefined;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await this.openMoreActionsInOrderGrid();
 
-    await this.openMoreActionsInOrderGrid();
-    const candidate = this.appFrame.locator('button, [role="menuitem"]').filter({ hasText: normalized }).first();
-    await candidate.click();
-
-    if (isPickup) {
-      const yesBtn = this.appFrame.getByRole('button', { name: 'Yes' });
-      await yesBtn.waitFor({ state: 'visible', timeout: 5000 });
-      this.lastRequestPickupTriggeredAt = new Date();
+        for (const candidate of candidates) {
+          if ((await candidate.count()) === 0) continue;
+          if (!(await candidate.isVisible())) continue;
+          await expect(candidate).toBeEnabled({ timeout: 5000 });
+          await candidate.scrollIntoViewIfNeeded();
+          await candidate.click({ trial: true });
+          await candidate.click();
+          if (isRequestPickupAction) {
+            const confirmYesButton = this.appFrame.getByRole('button', { name: 'Yes' }).first();
+            try {
+              await confirmYesButton.waitFor({
+                state: 'visible',
+                timeout: 2500,
+              });
+            } catch {
+              continue;
+            }
+          }
+          return;
+        }
+      } catch (error) {
+        lastError = error as Error;
+      }
     }
+    throw lastError ?? new Error(`Failed to click action: ${actionName}`);
+  }
+
+  async clickOnYesInPopUp() {
+    await this.yesBtnInPopUpForRequestPickup.waitFor({ state: 'visible' });
+    this.lastRequestPickupTriggeredAt = new Date();
+    await this.yesBtnInPopUpForRequestPickup.click();
   }
 
   getLastRequestPickupTriggeredAt() {
     return this.lastRequestPickupTriggeredAt;
-  }
-
-  async clickOnYesInPopUp() {
-    const yes = this.appFrame.getByRole('button', { name: 'Yes' });
-    await yes.waitFor({ state: 'visible' });
-    await yes.click();
   }
 }
