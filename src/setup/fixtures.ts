@@ -1,7 +1,4 @@
-import baseTest from '@playwright/test';
-import { type Page } from '@playwright/test';
-import type { Browser } from '@playwright/test';
-import * as fs from 'fs';
+import baseTest, { type Page } from '@playwright/test';
 import { ShopifyAdminPage } from '../pages/shopify/ShopifyAdminPage';
 import { ShippingPage } from '../pages/app/ShippingPage/ShippingPage';
 import { GenerateLabelManuallyPage } from '../pages/app/ManualLabelPage/ManualLabelPage';
@@ -24,34 +21,21 @@ export type Pages = {
 };
 
 export const test = baseTest.extend<{ pages: Pages }>({
-  pages: [
-    async ({ browser }: { browser: Browser }, use: (r: Pages) => Promise<void>) => {
-      const storagePath = './auth.json';
-      if (!fs.existsSync(storagePath)) {
-        throw new Error('auth.json not found. Run the login --npx playwright test --project="setup" --headed ');
-      }
+  pages: async ({ page }, use) => {
+    const pages: Pages = {
+      sharedPage: page,
+      shopifyAdmin: new ShopifyAdminPage(page),
+      shippingPage: new ShippingPage(page),
+      manualLabelPage: new GenerateLabelManuallyPage(page),
+      orderSummaryPage: new OrderSummaryPage(page),
+      pickupPage: new PickupPage(page),
+      returnLabelPage: new ReturnLabelPage(page),
+      packagingSettingsPage: new PackagingSettingsPage(page),
+      productsPage: new ProductsPage(page),
+    };
 
-      const context = await browser.newContext({ storageState: storagePath });
-      const page = await context.newPage();
-
-      const pages: Pages = {
-        sharedPage: page,
-        shopifyAdmin: new ShopifyAdminPage(page),
-        shippingPage: new ShippingPage(page),
-        manualLabelPage: new GenerateLabelManuallyPage(page),
-        orderSummaryPage: new OrderSummaryPage(page),
-        pickupPage: new PickupPage(page),
-        returnLabelPage: new ReturnLabelPage(page),
-        packagingSettingsPage: new PackagingSettingsPage(page),
-        productsPage: new ProductsPage(page),
-      };
-
-      await use(pages);
-
-      await context.close();
-    },
-    { scope: 'worker' },
-  ] as unknown as any,
+    await use(pages);
+  },
 });
 
 export const expect = test.expect;
