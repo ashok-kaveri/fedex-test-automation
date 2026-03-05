@@ -8,7 +8,7 @@ import { PickupPage } from '../../src/pages/app/PickupPage/PickupPage';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Manual Label Generation Flow', () => {
+test.describe('Manual Label Generation Flow', { tag: '@sanity' }, () => {
   let sharedOrderID: string;
   let sharedPage: any;
   let sharedContext: any;
@@ -20,7 +20,6 @@ test.describe('Manual Label Generation Flow', () => {
   let pickupPage: PickupPage;
 
   test.beforeAll(async ({ browser }) => {
-    // Create shared context and page for all tests
     sharedContext = await browser.newContext({ storageState: 'auth.json' });
     sharedPage = await sharedContext.newPage();
 
@@ -51,25 +50,20 @@ test.describe('Manual Label Generation Flow', () => {
     await orderSummaryPage.verifyLabelGenerated();
   });
 
-  test('Click Back and serach the order and pickup', async () => {
+  test('Click Back in OrderSummary and search the order and click request pickup', async () => {
     test.setTimeout(60000);
     await manualLabelPage.clickBackButtonInManualLabelGenerationPage();
     await shippingPage.selectOrderCheckboxByOrderIdWithLabelGenerated(sharedOrderID);
     await shippingPage.clickMoreActionsItem('Request Pick Up');
+    await shippingPage.clickOnYesInPopUp();
     const requestPickupTriggeredAt = shippingPage.getLastRequestPickupTriggeredAt();
     expect(requestPickupTriggeredAt).not.toBeNull();
-    await shippingPage.clickOnYesInPopUp();
-    await pickupPage.verifyOrderStatus(sharedOrderID, 'Pickup requested');
     await sharedPage.waitForURL(/pickup/i);
     await expect(pickupPage.pickupHeading).toContainText('Pickups');
-    await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
-    await sharedPage.waitForTimeout(1000);
+    const pickupNumber = await pickupPage.verifyPickupRowColumns(sharedOrderID, requestPickupTriggeredAt ?? undefined);
     await pickupPage.clickRowByOrderId(sharedOrderID);
-    // await expect(pickupPage.statusInPickupLinkPage).toBeVisible({ timeout: 10000 });
-    await pickupPage.verifyPickupField('Status', 'SUCCESS');
-    await pickupPage.verifyPickupField('Orders', sharedOrderID);
-    const pickupNumber = await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
-    await pickupPage.verifyPickupField('Pickup Confirmation Number', pickupNumber);
-    await sharedPage.waitForTimeout(10000);
+    await pickupPage.verifyPickupDetails('Pickup Confirmation Number', pickupNumber);
+    await pickupPage.verifyPickupDetails('Status', 'SUCCESS');
+    await pickupPage.verifyPickupDetails('Orders', sharedOrderID);
   });
 });

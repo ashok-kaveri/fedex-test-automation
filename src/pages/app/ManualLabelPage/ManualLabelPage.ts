@@ -16,14 +16,23 @@ export class GenerateLabelManuallyPage {
   readonly radioButtons: Locator;
   readonly failedRatesBox: Locator;
   readonly clickBackButton: Locator;
+
   readonly ratesActionMenu: Locator;
-  readonly rateViewLogsButton: Locator;
+  // readonly rateViewLogsButton: Locator;
   readonly rateDownloadLogsButton: Locator;
   readonly viewAddressLogsButton: Locator;
   readonly ratesLogHeader: Locator;
   readonly rateRequestContainer: Locator;
-  readonly logDialogCrossCloseButton: Locator;
+  // readonly logDialogCrossCloseButton: Locator;
   readonly requestHeader: Locator;
+
+  readonly failedRatesMenuButton: Locator;
+  readonly viewXMLLogItem: Locator;
+  readonly xmlViewerModal: Locator;
+  readonly xmlModalCloseButton: Locator;
+  readonly xmlModalResponseSection: Locator;
+  readonly xmlModalPreContent: Locator;
+  readonly getShippingServiceLabel: (radioId: string) => Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -38,52 +47,34 @@ export class GenerateLabelManuallyPage {
     this.radioButtons = this.appFrame.locator('input[type="radio"][name]');
     this.failedRatesBox = this.appFrame.locator('div.Polaris-Box').filter({ hasText: 'Failed to fetch rates' });
     this.clickBackButton = this.appFrame.getByRole('button', { name: 'Orders' });
+
     this.ratesActionMenu = this.appFrame.locator('.Polaris-Box').filter({ hasText: 'Shipping rates from account' }).locator('button[aria-controls]');
-    this.rateViewLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: 'View Logs' });
-    this.rateDownloadLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: 'Download Logs' });
-    this.viewAddressLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: 'View Address Logs' });
+    //this.rateViewLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: 'View Logs' });
+    this.rateDownloadLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: /Download (Logs|XML)/ });
+    this.viewAddressLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: /View Address (Logs|XML)/ });
     this.ratesLogHeader = this.appFrame.getByRole('dialog').getByRole('heading', { name: 'Rates Log' });
     this.requestHeader = this.appFrame.getByRole('heading', { name: 'Request', exact: true });
     this.rateRequestContainer = this.appFrame.getByRole('dialog').locator('pre').first();
-    this.logDialogCrossCloseButton = this.appFrame.getByRole('dialog').getByLabel('Close', { exact: true });
-  }
+    //this.logDialogCrossCloseButton = this.appFrame.getByRole('dialog').getByLabel('Close', { exact: true });
 
-  // Helper methods for dynamic locators
-  getShippingServiceLabel(radioId: string): Locator {
-    return this.appFrame.locator(`label[for="${radioId}"]`);
-  }
-
-  getFailedRatesMenuButton(): Locator {
-    return this.failedRatesBox
+    // XML viewer modal locators
+    this.xmlViewerModal = this.appFrame.locator('div[role="dialog"][aria-modal="true"]');
+    this.failedRatesMenuButton = this.failedRatesBox
       .locator('button')
       .filter({
         has: this.appFrame.locator('svg path[d="M6 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"]'),
       })
       .first();
-  }
+    this.viewXMLLogItem = this.appFrame
+      .locator('button[role="menuitem"]')
+      .filter({ hasText: /View XML|View Logs/ })
+      .first();
+    this.xmlModalCloseButton = this.xmlViewerModal.locator('button[aria-label="Close"]');
+    this.xmlModalResponseSection = this.xmlViewerModal.locator('.Polaris-Layout__Section--oneHalf').nth(1);
+    this.xmlModalPreContent = this.xmlModalResponseSection.locator('pre');
 
-  getViewXmlMenuItem(): Locator {
-    return this.appFrame.locator('button[role="menuitem"]').filter({ hasText: /View XML|View Logs/i }).first();
-  }
-
-  getXmlViewerModal(): Locator {
-    return this.appFrame.locator('div[role="dialog"][aria-modal="true"]');
-  }
-
-  getXmlModalCloseButton(): Locator {
-    return this.getXmlViewerModal().locator('button[aria-label="Close"]');
-  }
-
-  getXmlModalRequestSection(): Locator {
-    return this.getXmlViewerModal().locator('.Polaris-Layout__Section--oneHalf').nth(0);
-  }
-
-  getXmlModalResponseSection(): Locator {
-    return this.getXmlViewerModal().locator('.Polaris-Layout__Section--oneHalf').nth(1);
-  }
-
-  getXmlModalPreContent(): Locator {
-    return this.getXmlModalResponseSection().locator('pre');
+    // Dynamic locators
+    this.getShippingServiceLabel = (radioId: string) => this.appFrame.locator(`label[for="${radioId}"]`);
   }
 
   // Verify order ID is displayed in manual page heading
@@ -100,23 +91,19 @@ export class GenerateLabelManuallyPage {
   // Extract and parse error/warning logs from XML viewer modal
   async getErrorFromXML(): Promise<string> {
     try {
-      const moreOptionsBtn = this.getFailedRatesMenuButton();
-      await moreOptionsBtn.waitFor({ state: 'visible', timeout: 5000 });
-      await moreOptionsBtn.click();
+      await this.failedRatesMenuButton.waitFor({ state: 'visible', timeout: 5000 });
+      await this.failedRatesMenuButton.click();
 
       await this.page.waitForTimeout(1000);
 
-      const viewXmlBtn = this.getViewXmlMenuItem();
-      await viewXmlBtn.waitFor({ state: 'visible', timeout: 5000 });
-      await viewXmlBtn.click();
+      await this.viewXMLLogItem.waitFor({ state: 'visible', timeout: 5000 });
+      await this.viewXMLLogItem.click();
 
-      const modal = this.getXmlViewerModal();
-      await modal.waitFor({ state: 'visible', timeout: 5000 });
+      await this.xmlViewerModal.waitFor({ state: 'visible', timeout: 5000 });
 
-      const xmlContent = await this.getXmlModalPreContent().textContent();
+      const xmlContent = await this.xmlModalPreContent.textContent();
 
-      const closeBtn = this.getXmlModalCloseButton();
-      await closeBtn.click();
+      await this.xmlModalCloseButton.click();
 
       if (xmlContent) {
         const errorInfo = this.parseErrorFromXML(xmlContent);
@@ -156,17 +143,26 @@ export class GenerateLabelManuallyPage {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         await this.radioButtons.first().waitFor({ state: 'visible', timeout: 10000 });
+        console.log(`✅ Shipping rates loaded successfully on attempt ${attempt}`);
         return;
       } catch (error) {
         lastError = error as Error;
+        console.log(`⚠️ Attempt ${attempt}/${maxRetries} failed: ${lastError.message}`);
 
-        const retryExists = (await this.retryButton.count()) > 0;
+        try {
+          const retryExists = (await this.retryButton.count()) > 0;
 
-        if (retryExists && attempt < maxRetries) {
-          await this.retryButton.click();
-          await this.page.waitForTimeout(2000);
-        } else if (!retryExists && attempt < maxRetries) {
-          await this.page.waitForTimeout(3000);
+          if (retryExists && attempt < maxRetries) {
+            console.log('🔄 Retry button found, clicking...');
+            await this.retryButton.click();
+            await this.page.waitForTimeout(2000);
+          } else if (!retryExists && attempt < maxRetries) {
+            console.log('⏳ Waiting before next attempt...');
+            await this.page.waitForTimeout(3000);
+          }
+        } catch (retryError) {
+          console.log('❌ Error checking retry button:', retryError);
+          if (attempt >= maxRetries) break;
         }
       }
     }
@@ -197,6 +193,7 @@ export class GenerateLabelManuallyPage {
   async clickGenerateLabelButtonInManualLabelGenerationPage(): Promise<void> {
     await this.generateLabelButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.generateLabelButton.click();
+    console.log('🚀 Generate Label button clicked - label generation started');
   }
 
   /*   await shopifyAdmin.searchAndOpenOrder(sharedOrderID, 3);
@@ -238,19 +235,49 @@ export class GenerateLabelManuallyPage {
   }
 
   async clickViewLogsFromRatesMenu() {
-    await this.rateViewLogsButton.click();
+    await this.viewXMLLogItem.click();
   }
+
+  // async getSignatureValueFromRequestLog() {
+  //   await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
+  //   const jsonString = await this.rateRequestContainer.innerText();
+  //   const logData = JSON.parse(jsonString);
+  //   const signatureValue = logData.requestObject.requestedShipment.requestedPackageLineItems[0].packageSpecialServices.signatureOptionType;
+  //   return signatureValue;
+  // }
 
   async getSignatureValueFromRequestLog() {
     await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
-    const jsonString = await this.rateRequestContainer.innerText();
-    const logData = JSON.parse(jsonString);
-    const signatureValue = logData.requestObject.requestedShipment.requestedPackageLineItems[0].packageSpecialServices.signatureOptionType;
-    return signatureValue;
+
+    const logString = await this.rateRequestContainer.innerText();
+    const trimmedLog = logString.trim();
+
+    //If REST
+    if (trimmedLog.startsWith('{')) {
+      const jsonData = JSON.parse(trimmedLog);
+
+      return jsonData?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.packageSpecialServices?.signatureOptionType || null;
+    }
+
+    //If SOAP
+    if (trimmedLog.startsWith('<')) {
+      return await this.page.evaluate((xml) => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xml, 'text/xml');
+        const nodes = xmlDoc.getElementsByTagName('*');
+        for (let node of nodes) {
+          if (node.localName === 'OptionType') {
+            return node.textContent;
+          }
+        }
+        return null;
+      }, trimmedLog);
+    }
+    return null;
   }
 
   async closeRatesLog() {
-    await this.logDialogCrossCloseButton.click();
+    await this.xmlModalCloseButton.click();
     await expect(this.appFrame.getByRole('dialog')).toBeHidden();
   }
 }

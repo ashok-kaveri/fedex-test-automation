@@ -43,7 +43,7 @@ export class ShopifyAdminPage {
   }
 
   // Search and open order by ID with retry logic
-  async searchAndOpenOrder(orderID: string, maxRetries: number = 3): Promise<void> {
+  async searchAndOpenOrder(orderID: string, maxRetries: number = 4): Promise<void> {
     await this.searchButton.click();
     await this.ordersButton.click();
     await this.searchInput.fill(orderID);

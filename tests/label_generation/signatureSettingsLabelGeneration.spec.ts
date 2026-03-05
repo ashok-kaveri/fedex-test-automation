@@ -58,5 +58,7 @@ test.describe('Manual Label Generation with signature options', () => {
     console.log(actualsignature);
     await manualLabelPage.closeRatesLog();
     expect(actualsignature).toBe(configuredSignature);
+    await manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
+    await orderSummaryPage.verifyLabelGenerated();
   });
 });
