@@ -1,21 +1,15 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameContentLocators, AppFrameHelper } from '../../../helpers/appFrameHelper';
+import { BasePage } from '../../basePage';
 
 // Page Object for Order Summary Page - Displayed after successful label generation
-export class OrderSummaryPage {
-  readonly page: Page;
-  private readonly appFrame: FrameLocator;
-  private readonly appContent: AppFrameContentLocators;
-
+export class OrderSummaryPage extends BasePage {
   // Locators
   readonly packagesSection: Locator;
   readonly returnPackagesection: Locator;
   readonly returnPackageButton: Locator;
 
   constructor(page: Page) {
-    this.page = page;
-    this.appFrame = AppFrameHelper.getAppFrame(page);
-    this.appContent = new AppFrameContentLocators(this.appFrame);
+    super(page);
 
     // Initialize locators
     this.packagesSection = this.appFrame.getByLabel('Packages', { exact: true });

@@ -1,12 +1,8 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameHelper } from '../../../helpers/appFrameHelper';
-import { ShopifyAdminPage } from '../../shopify/ShopifyAdminPage';
+import { BasePage } from '../../basePage';
 
 // Page Object for Manual Label Generation Page within FedEx App - Handles all actions related to manual label generation
-export class GenerateLabelManuallyPage {
-  readonly page: Page;
-  private readonly appFrame: FrameLocator;
-
+export class GenerateLabelManuallyPage extends BasePage {
   // Locators
   readonly heading: Locator;
   readonly generatePackagesButton: Locator;
@@ -18,8 +14,7 @@ export class GenerateLabelManuallyPage {
   readonly clickBackButton: Locator;
 
   constructor(page: Page) {
-    this.page = page;
-    this.appFrame = AppFrameHelper.getAppFrame(page);
+    super(page);
 
     // Initialize locators
     this.heading = this.appFrame.locator('h1');
@@ -30,7 +25,6 @@ export class GenerateLabelManuallyPage {
     this.radioButtons = this.appFrame.locator('input[type="radio"][name]');
     this.failedRatesBox = this.appFrame.locator('div.Polaris-Box').filter({ hasText: 'Failed to fetch rates' });
     this.clickBackButton = this.appFrame.getByRole('button', { name: 'Orders' });
-
   }
 
   // Helper methods for dynamic locators
@@ -39,9 +33,12 @@ export class GenerateLabelManuallyPage {
   }
 
   getFailedRatesMenuButton(): Locator {
-    return this.failedRatesBox.locator('button').filter({
-      has: this.appFrame.locator('svg path[d="M6 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"]')
-    }).first();
+    return this.failedRatesBox
+      .locator('button')
+      .filter({
+        has: this.appFrame.locator('svg path[d="M6 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"]'),
+      })
+      .first();
   }
 
   getViewXmlMenuItem(): Locator {
@@ -81,45 +78,44 @@ export class GenerateLabelManuallyPage {
       const moreOptionsBtn = this.getFailedRatesMenuButton();
       await moreOptionsBtn.waitFor({ state: 'visible', timeout: 5000 });
       await moreOptionsBtn.click();
-      
+
       await this.page.waitForTimeout(1000);
-      
+
       const viewXmlBtn = this.getViewXmlMenuItem();
       await viewXmlBtn.waitFor({ state: 'visible', timeout: 5000 });
       await viewXmlBtn.click();
-      
+
       const modal = this.getXmlViewerModal();
       await modal.waitFor({ state: 'visible', timeout: 5000 });
-      
+
       const xmlContent = await this.getXmlModalPreContent().textContent();
-      
+
       const closeBtn = this.getXmlModalCloseButton();
       await closeBtn.click();
-      
+
       if (xmlContent) {
         const errorInfo = this.parseErrorFromXML(xmlContent);
         return errorInfo;
       }
-      
+
       return 'No XML content found';
     } catch (error) {
       return 'Unable to extract error logs';
     }
   }
 
-
   // Parse error/warning details from XML content
   private parseErrorFromXML(xmlContent: string): string {
     try {
       const codeMatch = xmlContent.match(/<code>([^<]+)<\/code>/);
       const messageMatch = xmlContent.match(/<message>([^<]+)<\/message>/);
-      
+
       if (codeMatch || messageMatch) {
         const code = codeMatch ? codeMatch[1] : 'N/A';
         const message = messageMatch ? messageMatch[1] : 'N/A';
         return `Error Code: ${code}\nMessage: ${message}`;
       }
-      
+
       return 'Could not parse error details from XML';
     } catch (error) {
       return 'Error parsing XML content';
@@ -130,7 +126,7 @@ export class GenerateLabelManuallyPage {
   async getShippingRates(maxRetries: number = 5): Promise<void> {
     await this.getShippingRatesButton.waitFor({ state: 'visible', timeout: 10000 });
     await this.getShippingRatesButton.click();
-    
+
     let lastError: Error | undefined;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -138,9 +134,9 @@ export class GenerateLabelManuallyPage {
         return;
       } catch (error) {
         lastError = error as Error;
-        
-        const retryExists = await this.retryButton.count() > 0;
-        
+
+        const retryExists = (await this.retryButton.count()) > 0;
+
         if (retryExists && attempt < maxRetries) {
           await this.retryButton.click();
           await this.page.waitForTimeout(2000);
@@ -149,25 +145,25 @@ export class GenerateLabelManuallyPage {
         }
       }
     }
-    
+
     const errorDetails = await this.getErrorFromXML();
     console.log('FedEx API Error Details:\n', errorDetails);
-    
+
     throw new Error(`Failed to load shipping rates after ${maxRetries} attempts: ${lastError?.message}\n\nFedEx Error:\n${errorDetails}`);
   }
 
   // Select the first shipping service
   async selectFirstShippingService(): Promise<void> {
     const count = await this.radioButtons.count();
-    
+
     if (count === 0) {
       throw new Error('No shipping services available to select');
     }
-    
+
     const firstService = this.radioButtons.first();
     const radioId = await firstService.getAttribute('id');
     const firstServiceLabel = this.getShippingServiceLabel(radioId!);
-    
+
     await firstServiceLabel.click();
     await expect(firstService).toBeChecked({ timeout: 3000 });
   }
@@ -178,13 +174,11 @@ export class GenerateLabelManuallyPage {
     await this.generateLabelButton.click();
   }
 
-
   /*   await shopifyAdmin.searchAndOpenOrder(sharedOrderID, 3);
     await shopifyAdmin.openMoreActions();
     await shopifyAdmin.openManualLabelPage();
 
-    */ 
-
+    */
 
   async waitUntilGeneratePackageButtonVisible(): Promise<void> {
     await this.generatePackagesButton.waitFor({ state: 'visible', timeout: 30000 });
@@ -203,6 +197,4 @@ export class GenerateLabelManuallyPage {
     await this.clickBackButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.clickBackButton.click();
   }
-
-
 }
