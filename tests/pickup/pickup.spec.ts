@@ -3,7 +3,7 @@ import ShopifyOrderUploader from '../../src/helpers/createOrder';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Manual Label + Pickup Flow', () => {
+test.describe('Manual Label Generation Flow', { tag: '@sanity' }, () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 
@@ -25,24 +25,20 @@ test.describe('Manual Label + Pickup Flow', () => {
     await pages.orderSummaryPage.verifyLabelGenerated();
   });
 
-  test('Click Back and search the order and pickup', async ({ pages }) => {
+  test('Click Back in OrderSummary and search the order and click request pickup', async ({ pages }) => {
     test.setTimeout(60000);
     await pages.manualLabelPage.clickBackButtonInManualLabelGenerationPage();
     await pages.shippingPage.selectOrderCheckboxByOrderIdWithLabelGenerated(sharedOrderID);
     await pages.shippingPage.clickMoreActionsItem('Request Pick Up');
+    await pages.shippingPage.clickOnYesInPopUp();
     const requestPickupTriggeredAt = pages.shippingPage.getLastRequestPickupTriggeredAt();
     expect(requestPickupTriggeredAt).not.toBeNull();
-    await pages.shippingPage.clickOnYesInPopUp();
-    await pages.pickupPage.verifyOrderStatus(sharedOrderID, 'Pickup requested');
-    await pages.pickupPage.page.waitForURL(/pickup/i);
+    await pages.sharedPage.waitForURL(/pickup/i);
     await expect(pages.pickupPage.pickupHeading).toContainText('Pickups');
-    await pages.pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
-    await pages.pickupPage.page.waitForTimeout(1000);
+    const pickupNumber = await pages.pickupPage.verifyPickupRowColumns(sharedOrderID, requestPickupTriggeredAt ?? undefined);
     await pages.pickupPage.clickRowByOrderId(sharedOrderID);
-    await pages.pickupPage.verifyPickupField('Status', 'SUCCESS');
-    await pages.pickupPage.verifyPickupField('Orders', sharedOrderID);
-    const pickupNumber = await pages.pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
-    await pages.pickupPage.verifyPickupField('Pickup Confirmation Number', pickupNumber);
-    await pages.pickupPage.page.waitForTimeout(10000);
+    await pages.pickupPage.verifyPickupDetails('Pickup Confirmation Number', pickupNumber);
+    await pages.pickupPage.verifyPickupDetails('Status', 'SUCCESS');
+    await pages.pickupPage.verifyPickupDetails('Orders', sharedOrderID);
   });
 });

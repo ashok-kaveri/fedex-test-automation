@@ -1,4 +1,5 @@
 import baseTest from '@playwright/test';
+import { type Page } from '@playwright/test';
 import type { Browser } from '@playwright/test';
 import * as fs from 'fs';
 import { ShopifyAdminPage } from '../pages/shopify/ShopifyAdminPage';
@@ -11,6 +12,7 @@ import { PackagingSettingsPage } from '../pages/app/settings/packagingSettingsPa
 import { ProductsPage } from '../pages/app/Products/productsPage';
 
 export type Pages = {
+  sharedPage: Page;
   shopifyAdmin: ShopifyAdminPage;
   shippingPage: ShippingPage;
   manualLabelPage: GenerateLabelManuallyPage;
@@ -33,6 +35,7 @@ export const test = baseTest.extend<{ pages: Pages }>({
       const page = await context.newPage();
 
       const pages: Pages = {
+        sharedPage: page,
         shopifyAdmin: new ShopifyAdminPage(page),
         shippingPage: new ShippingPage(page),
         manualLabelPage: new GenerateLabelManuallyPage(page),

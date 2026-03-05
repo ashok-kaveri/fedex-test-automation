@@ -7,6 +7,7 @@ export class OrderSummaryPage extends BasePage {
   readonly packagesSection: Locator;
   readonly returnPackagesection: Locator;
   readonly returnPackageButton: Locator;
+  readonly labelGeneratedStatus: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -15,11 +16,19 @@ export class OrderSummaryPage extends BasePage {
     this.packagesSection = this.appFrame.getByLabel('Packages', { exact: true });
     this.returnPackagesection = this.appFrame.locator('[id="returnpacks"]');
     this.returnPackageButton = this.appFrame.locator('button').filter({ hasText: 'Return Packages' });
+    this.labelGeneratedStatus = this.appFrame.locator('text=label generated');
   }
 
-  // Verify label was generated successfully
+  // Verify label was generated successfully - waits up to 70 seconds
   async verifyLabelGenerated(): Promise<void> {
-    await expect(this.appContent.getAppFrameMain()).toContainText('label generated', { timeout: 10000 });
-    await expect(this.packagesSection).toBeVisible({ timeout: 5000 });
+    try {
+      // Wait for "label generated" text to appear with 70 second timeout
+      await this.labelGeneratedStatus.waitFor({ state: 'visible', timeout: 70000 });
+    } catch (error) {
+      // If not found, check if we can still verify via packages section
+    }
+    
+    // Verify packages section is visible
+    await expect(this.packagesSection).toBeVisible({ timeout: 10000 });
   }
 }

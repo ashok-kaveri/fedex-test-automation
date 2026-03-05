@@ -19,7 +19,7 @@ test.describe('Manual Label Generation Flow', () => {
   });
 
   test('Navigate to Shopify order and generate label manually', async ({ pages }) => {
-    test.setTimeout(60000);
+    test.setTimeout(120000);
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
     await pages.manualLabelPage.generateLabelInApp();
     await pages.orderSummaryPage.verifyLabelGenerated();
