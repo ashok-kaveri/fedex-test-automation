@@ -1,8 +1,7 @@
 import { Page, Locator } from '@playwright/test';
+import { BasePage } from '../basePage';
 
-export class ShopifyAdminPage {
-  readonly page: Page;
-
+export class ShopifyAdminPage extends BasePage {
   // Locators
   readonly searchButton: Locator;
   readonly searchContainer: Locator;
@@ -14,7 +13,7 @@ export class ShopifyAdminPage {
   readonly autoGenerateLabel: Locator;
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
 
     // Initialize locators
     this.searchButton = page.getByRole('button', { name: /search/i });
@@ -25,15 +24,11 @@ export class ShopifyAdminPage {
     this.moreActionsButton = page.getByRole('button', { name: 'More actions' }).first();
     this.generateLabelLink = page.getByRole('link', { name: 'Generate Label', exact: true });
     this.autoGenerateLabel = page.getByRole('link', { name: 'Auto-Generate Label', exact: true });
-
   }
 
   // Helper method for dynamic locators
   getOrderLink(orderID: string): Locator {
-    return this.searchResults.locator(
-      `a[role="option"][href*="/orders/"]`,
-      { hasText: orderID }
-    );
+    return this.searchResults.locator(`a[role="option"][href*="/orders/"]`, { hasText: orderID });
   }
 
   // Navigate to Shopify admin store
@@ -45,6 +40,7 @@ export class ShopifyAdminPage {
   // Search and open order by ID with retry logic
   async searchAndOpenOrder(orderID: string, maxRetries: number = 4): Promise<void> {
     await this.searchButton.click();
+    await this.searchInput.waitFor({ state: 'visible' });
     await this.ordersButton.click();
     await this.searchInput.fill(orderID);
 
@@ -85,7 +81,7 @@ export class ShopifyAdminPage {
 
   //Click on Auto-label generation
 
-   async clickOnAutoLabelGeneration(): Promise<void> {
+  async clickOnAutoLabelGeneration(): Promise<void> {
     await this.autoGenerateLabel.click();
   }
 
@@ -96,4 +92,4 @@ export class ShopifyAdminPage {
     await this.openMoreActions();
     await this.clickGenerateLabelLink();
   }
-} 
+}

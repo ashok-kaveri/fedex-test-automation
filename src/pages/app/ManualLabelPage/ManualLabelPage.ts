@@ -1,12 +1,8 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameHelper } from '../../../helpers/appFrameHelper';
-import { ShopifyAdminPage } from '../../shopify/ShopifyAdminPage';
+import { BasePage } from '../../basePage';
 
 // Page Object for Manual Label Generation Page within FedEx App - Handles all actions related to manual label generation
-export class GenerateLabelManuallyPage {
-  readonly page: Page;
-  private readonly appFrame: FrameLocator;
-
+export class GenerateLabelManuallyPage extends BasePage {
   // Locators
   readonly heading: Locator;
   readonly generatePackagesButton: Locator;
@@ -27,16 +23,16 @@ export class GenerateLabelManuallyPage {
   readonly requestHeader: Locator;
 
   readonly failedRatesMenuButton: Locator;
-  readonly viewXMLLogItem: Locator;
+  readonly viewRateLog: Locator;
   readonly xmlViewerModal: Locator;
-  readonly xmlModalCloseButton: Locator;
-  readonly xmlModalResponseSection: Locator;
+  readonly dialogModalCloseButton: Locator;
+  readonly LogModalRequestSection: Locator;
+  readonly LogModalResponseSection: Locator;
   readonly xmlModalPreContent: Locator;
   readonly getShippingServiceLabel: (radioId: string) => Locator;
 
   constructor(page: Page) {
-    this.page = page;
-    this.appFrame = AppFrameHelper.getAppFrame(page);
+    super(page);
 
     // Initialize locators
     this.heading = this.appFrame.locator('h1');
@@ -65,13 +61,14 @@ export class GenerateLabelManuallyPage {
         has: this.appFrame.locator('svg path[d="M6 10a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"]'),
       })
       .first();
-    this.viewXMLLogItem = this.appFrame
+    this.viewRateLog = this.appFrame
       .locator('button[role="menuitem"]')
       .filter({ hasText: /View XML|View Logs/ })
       .first();
-    this.xmlModalCloseButton = this.xmlViewerModal.locator('button[aria-label="Close"]');
-    this.xmlModalResponseSection = this.xmlViewerModal.locator('.Polaris-Layout__Section--oneHalf').nth(1);
-    this.xmlModalPreContent = this.xmlModalResponseSection.locator('pre');
+    this.dialogModalCloseButton = this.xmlViewerModal.locator('button[aria-label="Close"]');
+    this.LogModalRequestSection = this.xmlViewerModal.locator('.Polaris-Layout__Section--oneHalf').nth(0).locator('pre');
+    this.LogModalResponseSection = this.xmlViewerModal.locator('.Polaris-Layout__Section--oneHalf').nth(1).locator('pre');
+    //this.ModalContent = this.xmlModalResponseSection.locator('pre');
 
     // Dynamic locators
     this.getShippingServiceLabel = (radioId: string) => this.appFrame.locator(`label[for="${radioId}"]`);
@@ -96,14 +93,14 @@ export class GenerateLabelManuallyPage {
 
       await this.page.waitForTimeout(1000);
 
-      await this.viewXMLLogItem.waitFor({ state: 'visible', timeout: 5000 });
-      await this.viewXMLLogItem.click();
+      await this.viewRateLog.waitFor({ state: 'visible', timeout: 5000 });
+      await this.viewRateLog.click();
 
       await this.xmlViewerModal.waitFor({ state: 'visible', timeout: 5000 });
 
-      const xmlContent = await this.xmlModalPreContent.textContent();
+      const xmlContent = await this.LogModalResponseSection.textContent();
 
-      await this.xmlModalCloseButton.click();
+      await this.dialogModalCloseButton.click();
 
       if (xmlContent) {
         const errorInfo = this.parseErrorFromXML(xmlContent);
@@ -202,6 +199,14 @@ export class GenerateLabelManuallyPage {
 
     */
 
+  async selectShippingServiceForSignature(serviceValue: string): Promise<void> {
+    const radio = this.appFrame.locator(`input[type="radio"][value="${serviceValue}"]`);
+    await radio.waitFor({ state: 'visible', timeout: 10000 });
+    await radio.scrollIntoViewIfNeeded();
+    await radio.check({ force: true });
+    await expect(radio).toBeChecked();
+  }
+
   async waitUntilGeneratePackageButtonVisible(): Promise<void> {
     await this.generatePackagesButton.waitFor({ state: 'visible', timeout: 30000 });
   }
@@ -220,6 +225,7 @@ export class GenerateLabelManuallyPage {
     await this.waitUntilGeneratePackageButtonVisible();
     await this.generatePackages();
     await this.getShippingRates();
+    await this.selectShippingServiceForSignature('FEDEX_2_DAY');
     await this.clickRateActionsMenuInShippingRates();
     await this.clickViewLogsFromRatesMenu();
     await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
@@ -235,27 +241,18 @@ export class GenerateLabelManuallyPage {
   }
 
   async clickViewLogsFromRatesMenu() {
-    await this.viewXMLLogItem.click();
+    await this.viewRateLog.click();
   }
-
-  // async getSignatureValueFromRequestLog() {
-  //   await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
-  //   const jsonString = await this.rateRequestContainer.innerText();
-  //   const logData = JSON.parse(jsonString);
-  //   const signatureValue = logData.requestObject.requestedShipment.requestedPackageLineItems[0].packageSpecialServices.signatureOptionType;
-  //   return signatureValue;
-  // }
 
   async getSignatureValueFromRequestLog() {
     await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
 
-    const logString = await this.rateRequestContainer.innerText();
+    const logString = await this.LogModalRequestSection.innerText();
     const trimmedLog = logString.trim();
 
     //If REST
     if (trimmedLog.startsWith('{')) {
       const jsonData = JSON.parse(trimmedLog);
-
       return jsonData?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.packageSpecialServices?.signatureOptionType || null;
     }
 
@@ -277,7 +274,7 @@ export class GenerateLabelManuallyPage {
   }
 
   async closeRatesLog() {
-    await this.xmlModalCloseButton.click();
+    await this.dialogModalCloseButton.click();
     await expect(this.appFrame.getByRole('dialog')).toBeHidden();
   }
 }

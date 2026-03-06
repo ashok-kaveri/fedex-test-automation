@@ -1,11 +1,7 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameContentLocators, AppFrameHelper } from '../../../helpers/appFrameHelper';
+import { BasePage } from '../../basePage';
 
-export class PickupPage {
-  readonly page: Page;
-  private readonly appFrame: FrameLocator;
-  private readonly appContent: AppFrameContentLocators;
-
+export class PickupPage extends BasePage {
   // Existing Locators
   readonly pickupHeading: Locator;
   readonly requestPickupButton: Locator;
@@ -26,9 +22,7 @@ export class PickupPage {
   readonly navigateToPickupDetailsLink: Locator;
 
   constructor(page: Page) {
-    this.page = page;
-    this.appFrame = AppFrameHelper.getAppFrame(page);
-    this.appContent = new AppFrameContentLocators(this.appFrame);
+    super(page);
 
     this.pickupHeading = this.appFrame.getByRole('heading', {
       name: 'Pickups',

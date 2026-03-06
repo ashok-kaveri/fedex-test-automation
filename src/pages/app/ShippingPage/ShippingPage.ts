@@ -1,10 +1,8 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameHelper } from '../../../helpers/appFrameHelper';
+import { BasePage } from '../../basePage';
 
 // Page Object for Shipping Page within FedEx App
-export class ShippingPage {
-  readonly page: Page;
-  private readonly appFrame: FrameLocator;
+export class ShippingPage extends BasePage {
   private lastRequestPickupTriggeredAt: Date | null;
 
   // Locators
@@ -21,8 +19,7 @@ export class ShippingPage {
   readonly yesBtnInPopUpForRequestPickup: Locator;
 
   constructor(page: Page) {
-    this.page = page;
-    this.appFrame = AppFrameHelper.getAppFrame(page);
+    super(page);
     this.lastRequestPickupTriggeredAt = null;
 
     // Initialize locators

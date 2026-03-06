@@ -30,6 +30,7 @@ export class SideDockPage {
   readonly includeInsuranceCheckbox: Locator;
   readonly liabilityTypeDropdown: Locator;
   readonly insuranceAmountDropdown: Locator;
+  readonly percentageProductInput: Locator;
 
   readonly purposeOfShipmentDropdown: Locator;
   readonly termsOfSaleDropdown: Locator;
@@ -83,6 +84,7 @@ export class SideDockPage {
     this.includeInsuranceCheckbox = this.modalContainer.getByLabel('Include Third Party Insurance In Commercial Invoice ?');
     this.liabilityTypeDropdown = this.modalContainer.getByLabel('Liability Type for Coverage (Applicable only for Freight shipments)');
     this.insuranceAmountDropdown = this.modalContainer.getByLabel('Insurance amount to be used:');
+    this.percentageProductInput = this.appFrame.getByLabel('Percentage of Product Price');
 
     this.purposeOfShipmentDropdown = this.appFrame
       .locator('div')
@@ -144,12 +146,19 @@ export class SideDockPage {
     await this.thirdPartyInsuranceCheckbox.check();
   }
 
-  async addInsuranceDetails({ liabilityType, insuranceAmount }) {
+  async disableThirdPartyInsurance() {
+    await this.thirdPartyInsuranceCheckbox.uncheck();
+  }
+
+  async addInsuranceDetails({ liabilityType, insuranceType, percentage }) {
     await this.insuranceEditButton.click();
     await this.modalContainer.waitFor({ state: 'visible' });
     await this.includeInsuranceCheckbox.check();
     await this.liabilityTypeDropdown.selectOption(liabilityType);
-    await this.insuranceAmountDropdown.selectOption(insuranceAmount);
+    await this.insuranceAmountDropdown.selectOption(insuranceType);
+    if (insuranceType === 'Percentage of Product Price') {
+      await this.percentageProductInput.fill(percentage);
+    }
     await this.modalCloseButton.click();
   }
 
