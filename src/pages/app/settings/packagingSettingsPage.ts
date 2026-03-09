@@ -9,6 +9,43 @@ export class PackagingSettingsPage extends BasePage {
   readonly stackProductsInBoxes: Locator;
   readonly boxesTable: Locator;
 
+  readonly defaultProductLengthInput: Locator;
+  readonly defaultProductWidthInput: Locator;
+  readonly defaultProductHeightInput: Locator;
+  readonly defaultProductWeightInput: Locator;
+
+  readonly defaultProductLengthUnitDropdown: Locator;
+  readonly defaultProductWidthUnitDropdown: Locator;
+  readonly defaultProductHeightUnitDropdown: Locator;
+
+  readonly restoreFedexBoxesButton: Locator;
+  readonly fedexBoxesHeader: Locator;
+
+  readonly freightServicesSection: Locator;
+
+  readonly freightLengthInput: Locator;
+  readonly freightWidthInput: Locator;
+  readonly freightHeightInput: Locator;
+
+  readonly addCustomBoxButton: Locator;
+  readonly addPackageModal: Locator;
+  readonly addPackageModalTitle: Locator;
+
+  readonly customBoxNameInput: Locator;
+
+  readonly innerBoxLengthInput: Locator;
+  readonly innerBoxWidthInput: Locator;
+  readonly innerBoxHeightInput: Locator;
+
+  readonly outerBoxLengthInput: Locator;
+  readonly outerBoxWidthInput: Locator;
+  readonly outerBoxHeightInput: Locator;
+
+  readonly emptyBoxWeightInput: Locator;
+  readonly maxBoxWeightInput: Locator;
+
+  readonly addBoxButton: Locator;
+
   constructor(page: Page) {
     super(page);
 
@@ -17,6 +54,50 @@ export class PackagingSettingsPage extends BasePage {
     this.addAdditionalWeight = this.appFrame.getByLabel('Add Additional Weight To All Packages');
     this.stackProductsInBoxes = this.appFrame.getByLabel('Do You Stack Products In Boxes?');
     this.boxesTable = this.appFrame.locator('tbody tr');
+
+    // FedEx boxes locators
+    this.restoreFedexBoxesButton = this.appFrame.getByRole('button', { name: 'Restore FedEx Boxes' });
+    this.fedexBoxesHeader = this.appFrame.locator('th', { hasText: 'FedEx' }).first();
+
+    // Default product dimensions locators
+    this.defaultProductLengthInput = this.appFrame.locator('input[name="length"]');
+    this.defaultProductWidthInput = this.appFrame.locator('input[name="width"]');
+    this.defaultProductHeightInput = this.appFrame.locator('input[name="height"]');
+
+    this.defaultProductWeightInput = this.appFrame.getByLabel('Default weight for products (gm):');
+
+    this.defaultProductLengthUnitDropdown = this.appFrame.locator('select[name="lengthUnit"]');
+    this.defaultProductWidthUnitDropdown = this.appFrame.locator('select[name="widthUnit"]');
+    this.defaultProductHeightUnitDropdown = this.appFrame.locator('select[name="heightUnit"]');
+
+    // Freight services locators
+    this.freightServicesSection = this.appFrame.getByRole('heading', { name: 'For FedEx® Freight Services' }).locator('xpath=ancestor::div[contains(@class,"Polaris-BlockStack")]');
+
+    this.freightLengthInput = this.freightServicesSection.getByLabel('Length');
+    this.freightWidthInput = this.freightServicesSection.getByLabel('Width');
+    this.freightHeightInput = this.freightServicesSection.getByLabel('Height');
+
+    // Add custom box locators
+    this.addCustomBoxButton = this.appFrame.getByRole('button', { name: /add custom box/i });
+
+    this.addPackageModal = this.appFrame.getByRole('dialog', { name: /add package/i });
+
+    this.addPackageModalTitle = this.addPackageModal.getByRole('heading', { name: 'Add Package' });
+
+    this.customBoxNameInput = this.addPackageModal.getByLabel('Name');
+
+    this.innerBoxLengthInput = this.addPackageModal.getByLabel('Length').nth(0);
+    this.innerBoxWidthInput = this.addPackageModal.getByLabel('Width').nth(0);
+    this.innerBoxHeightInput = this.addPackageModal.getByLabel('Height').nth(0);
+
+    this.outerBoxLengthInput = this.addPackageModal.getByLabel('Length').nth(1);
+    this.outerBoxWidthInput = this.addPackageModal.getByLabel('Width').nth(1);
+    this.outerBoxHeightInput = this.addPackageModal.getByLabel('Height').nth(1);
+
+    this.emptyBoxWeightInput = this.addPackageModal.getByLabel('Box Weight When Empty');
+    this.maxBoxWeightInput = this.addPackageModal.getByLabel('Max Weight');
+
+    this.addBoxButton = this.addPackageModal.getByRole('button', { name: 'Add Box' });
   }
 
   async settingsDropDownUsingLabel(label: string, value: string) {
@@ -69,8 +150,8 @@ export class PackagingSettingsPage extends BasePage {
   }
 
   async restoreFedExBoxes() {
-    // Click Restore button inside iframe
-    await this.appFrame.getByRole('button', { name: 'Restore FedEx Boxes' }).click();
+    await this.restoreFedexBoxesButton.click();
+    await this.fedexBoxesHeader.waitFor({ timeout: 2000 });
   }
 
   async keepOnlyBoxes(allowedBoxes: Record<string, number[]>): Promise<void> {
@@ -108,14 +189,9 @@ export class PackagingSettingsPage extends BasePage {
   }
 
   async openAddCustomBox() {
-    await this.appFrame.getByRole('button', { name: /add custom box/i }).click();
-
+    await this.addCustomBoxButton.click();
     // Wait for modal title
-    await expect(this.appFrame.getByRole('heading', { name: 'Add Package' })).toBeVisible();
-  }
-
-  get addPackageModal() {
-    return this.appFrame.getByRole('dialog', { name: /add package/i });
+    await expect(this.addPackageModalTitle).toBeVisible();
   }
 
   // async fillField(label: string, value: string | number, index: number = 0) {
@@ -132,30 +208,22 @@ export class PackagingSettingsPage extends BasePage {
   }): Promise<void> {
     await this.openAddCustomBox();
 
-    const modal = this.addPackageModal;
+    await this.customBoxNameInput.fill(data.name);
 
-    // Name
-    await modal.getByLabel('Name').fill(data.name);
+    await this.innerBoxLengthInput.fill(String(data.inner.length));
+    await this.innerBoxWidthInput.fill(String(data.inner.width));
+    await this.innerBoxHeightInput.fill(String(data.inner.height));
 
-    // Inner Dimensions (index 0)
-    await modal.getByLabel('Length').nth(0).fill(String(data.inner.length));
-    await modal.getByLabel('Width').nth(0).fill(String(data.inner.width));
-    await modal.getByLabel('Height').nth(0).fill(String(data.inner.height));
+    await this.outerBoxLengthInput.fill(String(data.outer.length));
+    await this.outerBoxWidthInput.fill(String(data.outer.width));
+    await this.outerBoxHeightInput.fill(String(data.outer.height));
 
-    // Outer Dimensions (index 1)
-    await modal.getByLabel('Length').nth(1).fill(String(data.outer.length));
-    await modal.getByLabel('Width').nth(1).fill(String(data.outer.width));
-    await modal.getByLabel('Height').nth(1).fill(String(data.outer.height));
+    await this.emptyBoxWeightInput.fill(String(data.weight.empty));
+    await this.maxBoxWeightInput.fill(String(data.weight.max));
 
-    // Weight
-    await modal.getByLabel('Box Weight When Empty').fill(String(data.weight.empty));
-    await modal.getByLabel('Max Weight').fill(String(data.weight.max));
+    await this.addBoxButton.click();
 
-    // Add Box
-    await modal.getByRole('button', { name: 'Add Box' }).click();
-
-    // Wait modal close
-    await expect(modal).toBeHidden();
+    await expect(this.addPackageModal).toBeHidden();
   }
 
   getBoxRowByName(name: string) {
@@ -169,29 +237,22 @@ export class PackagingSettingsPage extends BasePage {
   }
 
   async setDefaultProductDimensions(data: { length: number; width: number; height: number; weight: number; unit?: 'cm' | 'in' | 'ft' | 'mt' }) {
-    // Fill dimensions
-    await this.appFrame.locator('input[name="length"]').fill(String(data.length));
-    await this.appFrame.locator('input[name="width"]').fill(String(data.width));
-    await this.appFrame.locator('input[name="height"]').fill(String(data.height));
+    await this.defaultProductLengthInput.fill(String(data.length));
+    await this.defaultProductWidthInput.fill(String(data.width));
+    await this.defaultProductHeightInput.fill(String(data.height));
 
-    // // Fill default weight
-    // await this.appFrame.getByLabel('Default weight for products (gm):').fill(String(data.weight));
+    await this.defaultProductWeightInput.fill(String(data.weight));
 
-    await this.fillInputByLabel('Default weight for products (gm):', data.weight);
-
-    // Change unit if provided
     if (data.unit) {
-      await this.appFrame.locator('select[name="lengthUnit"]').selectOption(data.unit);
-      await this.appFrame.locator('select[name="widthUnit"]').selectOption(data.unit);
-      await this.appFrame.locator('select[name="heightUnit"]').selectOption(data.unit);
+      await this.defaultProductLengthUnitDropdown.selectOption(data.unit);
+      await this.defaultProductWidthUnitDropdown.selectOption(data.unit);
+      await this.defaultProductHeightUnitDropdown.selectOption(data.unit);
     }
   }
 
   async addDimensionsForFreight(data: { length: number; width: number; height: number }) {
-    const section = this.appFrame.getByRole('heading', { name: 'For FedEx® Freight Services' }).locator('xpath=ancestor::div[contains(@class,"Polaris-BlockStack")]');
-
-    await section.getByLabel('Length').fill(String(data.length));
-    await section.getByLabel('Width').fill(String(data.width));
-    await section.getByLabel('Height').fill(String(data.height));
+    await this.freightLengthInput.fill(String(data.length));
+    await this.freightWidthInput.fill(String(data.width));
+    await this.freightHeightInput.fill(String(data.height));
   }
 }

@@ -52,6 +52,11 @@ export class BasePage {
   }
 
   successMessage(message: string) {
-    return this.appFrame.getByText(message, { exact: true });
+    return this.page.getByText(message, { exact: true });
+  }
+
+  async expectToast(message: string) {
+    const toast = this.appFrame.locator(`text=${message}`);
+    await toast.waitFor({ state: 'visible', timeout: 5000 });
   }
 }

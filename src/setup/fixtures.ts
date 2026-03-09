@@ -9,7 +9,7 @@ import { OrderSummaryPage } from '../pages/app/OrderSummaryPage/OrderSummaryPage
 import { PickupPage } from '../pages/app/PickupPage/PickupPage';
 import { ReturnLabelPage } from '../pages/app/returnLabelPage/returnLabelPage';
 import { PackagingSettingsPage } from '../pages/app/settings/packagingSettingsPage';
-import { ProductsPage } from '../pages/app/Products/productsPage';
+import { ProductsPage } from '../pages/app/Products/productsPage_M';
 export type Pages = {
   sharedPage: Page;
   shopifyAdmin: ShopifyAdminPage;

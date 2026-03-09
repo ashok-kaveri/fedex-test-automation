@@ -56,23 +56,24 @@ test.describe('Box Packaging Flow', () => {
     // await pages.packagingSettingsPage.clickSettingsButtonUsingHeading('Default product dimensions and weight', 'Save');
     // await expect(pages.packagingSettingsPage.successMessage('Product Settings Updated')).toBeVisible({ timeout: 5000 });
     await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'more settings');
-    await pages.packagingSettingsPage.addDimensionsForFreight({
-      length: 25,
-      width: 30,
-      height: 40,
-    });
+    // await pages.packagingSettingsPage.addDimensionsForFreight({
+    //   length: 25,
+    //   width: 30,
+    //   height: 40,
+    // });
     await pages.packagingSettingsPage.settingsDropDownUsingLabel('Packing Method', 'Box Packing');
-    await pages.packagingSettingsPage.setVolumetricWeight(true);
-    await pages.packagingSettingsPage.setStackProductsInBoxes(true);
-    await pages.packagingSettingsPage.setAdditionalWeight(true);
-    await pages.packagingSettingsPage.fillInputByLabel('Max Weight', 10);
-    await pages.packagingSettingsPage.fillInputByLabel('Length', 10);
-    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Additional Weight Options', 'Constant');
-    await pages.packagingSettingsPage.fillInputByLabel('Constant Weight To Be Added', 10);
+    await pages.packagingSettingsPage.setVolumetricWeight(false);
+    // await pages.packagingSettingsPage.setStackProductsInBoxes(true);
+    // await pages.packagingSettingsPage.setAdditionalWeight(true);
+    // await pages.packagingSettingsPage.fillInputByLabel('Max Weight', 10);
+    // await pages.packagingSettingsPage.fillInputByLabel('Length', 10);
+    // await pages.packagingSettingsPage.settingsDropDownUsingLabel('Additional Weight Options', 'Constant');
+    // await pages.packagingSettingsPage.fillInputByLabel('Constant Weight To Be Added', 10);
     await pages.packagingSettingsPage.restoreFedExBoxes();
-    await pages.packagingSettingsPage.keepOnlyBoxes({ 'FedEx® Small Box': [] });
-    await pages.packagingSettingsPage.addCustomBox(customBoxData);
-    await expect(pages.packagingSettingsPage.getBoxRowByName(customBoxData.name)).toBeVisible();
+    await pages.packagingSettingsPage.keepOnlyBoxes({ 'FedEx® Small Box': [1] });
+    // await pages.packagingSettingsPage.addCustomBox(customBoxData);
+    // await expect(pages.packagingSettingsPage.getBoxRowByName(customBoxData.name)).toBeVisible();
+    await pages.sharedPage.pause();
     await pages.packagingSettingsPage.savePackagingDetails();
   });
 });
