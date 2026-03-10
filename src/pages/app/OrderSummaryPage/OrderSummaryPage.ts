@@ -11,6 +11,7 @@ export class OrderSummaryPage {
   readonly packagesSection: Locator;
   readonly returnPackagesection: Locator;
   readonly returnPackageButton: Locator;
+  readonly printDocumentsButton: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -21,6 +22,8 @@ export class OrderSummaryPage {
     this.packagesSection = this.appFrame.getByLabel('Packages', { exact: true });
     this.returnPackagesection = this.appFrame.locator('[id="returnpacks"]');
     this.returnPackageButton = this.appFrame.getByRole('button', { name: 'Return Packages' });
+    this.printDocumentsButton = this.appFrame.getByRole('button', { name: 'Print Documents' });
+    
   }
 
   // Verify label was generated successfully
@@ -28,6 +31,7 @@ export class OrderSummaryPage {
     await expect(this.appContent.getAppFrameMain()).toContainText('label generated', { timeout: 10000 });
     await expect(this.packagesSection).toBeVisible({ timeout: 5000 });
   }
+
   // Verify return package section is displayed
   async navigatingToReturnLabelPage() {
     await expect(this.returnPackagesection).toBeVisible({ timeout: 5000 });
@@ -35,5 +39,11 @@ export class OrderSummaryPage {
     await expect(this.returnPackageButton).toBeVisible({ timeout: 5000 });
     await this.returnPackageButton.click();
   }
+
+  // printing the documents for the label generated order
+  async clickPrintDocuments(): Promise<void> {
+    await this.printDocumentsButton.waitFor({ state: 'visible', timeout: 5000 });
+    await this.printDocumentsButton.click();
+}
 
 }

@@ -59,9 +59,18 @@ test.describe('Return Label Generation Flow', () => {
     });
 
     test('Generate return label for the order', async () => {
+        test.setTimeout(120000);
+        await sharedPage.goto(`https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/shopify`);
+        await shippingPage.searchButton.waitFor({ state: 'visible', timeout: 30000 });
+        await shippingPage.searchOrder(sharedOrderID);
+        await shippingPage.orderClick();
         await orderSummaryPage.navigatingToReturnLabelPage();
         await returnLabelPage.validateReturnLabelTitle();
-        await returnLabelPage.returnLabelGeneration();        
+        await returnLabelPage.returnLabelGeneration();
+        console.log('Return label generated successfully for the order fulfilled from the app');
     });
 
 });
+
+
+// tests/returnLabels/returnLabelGeneration.spec.ts

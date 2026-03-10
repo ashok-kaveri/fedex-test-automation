@@ -11,6 +11,8 @@ export class ReturnLabelPage {
   readonly returnLabelPageTitle: Locator;
   readonly returnQuantityInput: Locator;
   readonly refreshratesButton: Locator;
+  readonly retryButton: Locator;
+  readonly radioButtons: Locator;
   readonly shippingRatesSelection: Locator;
   readonly generateReturnLabelButton: Locator;
 
@@ -23,24 +25,64 @@ export class ReturnLabelPage {
     this.returnLabelPageTitle = this.appFrame.locator(`div.Polaris-Page-Header__TitleWrapper > h1`);
     this.returnQuantityInput = this.appFrame.locator('input[name="[object Object].returnQuantity"]');
     this.refreshratesButton = this.appFrame.getByRole('button', { name: 'Refresh Rates' });
+    this.retryButton = this.appFrame.getByRole('button', { name: 'Retry' });
+    this.radioButtons = this.appFrame.locator('input[type="radio"][name]');
     // this.shippingRatesSelection = this.appFrame.locator('input[type="radio"]'); // make sure while using this locotor use [0]
     this.shippingRatesSelection = this.appFrame.getByRole('radio', { name: /FedEx/i });
     this.generateReturnLabelButton = this.appFrame.getByRole('button', { name: 'Generate Return Label' });
   }
 
   // Verify return label page title 
-  async validateReturnLabelTitle(){
+  async validateReturnLabelTitle() {
+    // await this.page.goto(`https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/api/v1/returnLabels`);
+    await this.page.waitForLoadState('load');
+    await expect(this.returnLabelPageTitle).toBeVisible({ timeout: 30000 });
+    await expect(this.returnLabelPageTitle).toContainText('Return Label', { timeout: 10000 });
     await this.page.reload();
-    await expect(this.returnLabelPageTitle).toBeVisible({ timeout: 5000 });
-    let something = await expect(this.returnLabelPageTitle).toContainText('Return Label', { timeout: 10000 });
-    console.log("Return label page title validation: " + something);
   }
 
-  async returnLabelGeneration(){
+  async waitForShippingRatesWithRetry(maxRetries: number = 5): Promise<void> {
+    let lastError: Error | undefined;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await this.radioButtons.first().waitFor({ state: 'visible', timeout: 10000 });
+        return; // Success: Exit the method
+      } catch (error) {
+        lastError = error as Error;
+
+        const retryExists = (await this.retryButton.count()) > 0;
+
+        if (retryExists && attempt < maxRetries) {
+          console.log(`Attempt ${attempt}: Rates not found. Clicking 'Retry' button...`);
+          await this.retryButton.click();
+          await this.page.waitForTimeout(2000); // Brief wait for the refresh to trigger
+        } else if (attempt < maxRetries) {
+          console.log(`Attempt ${attempt}: Rates not found. Waiting for auto-load...`);
+          await this.page.waitForTimeout(3000);
+        }
+      }
+    }
+    throw new Error(`Failed to load return shipping rates after ${maxRetries} attempts: ${lastError?.message}`);
+  }
+
+
+  async returnLabelGeneration() {
+    await this.returnQuantityInput.waitFor({ state: 'visible', timeout: 120000 });
     await this.returnQuantityInput.fill('1');
+    await this.page.waitForTimeout(3000);
     await this.refreshratesButton.click();
-    await this.shippingRatesSelection.first().check(); 
+    await this.waitForShippingRatesWithRetry();
+    await expect(this.generateReturnLabelButton).toBeEnabled({ timeout: 40000 });
     await this.generateReturnLabelButton.click();
-    await expect(this.page.getByText('SUCCESS')).toBeVisible();   
+
+    // Validation: Use appFrame because the SUCCESS text is inside the iframe
+    const successBadge = this.appFrame.getByText('SUCCESS').first();
+    const downloadLink = this.appFrame.getByText('Download Label').first();
+    await this.page.waitForLoadState('load');
+    await expect(successBadge).toBeVisible({ timeout: 40000 });
+    await expect(downloadLink).toBeVisible({ timeout: 40000 });
+    console.log('Return label generated and validated successfully');
   }
 }
+
