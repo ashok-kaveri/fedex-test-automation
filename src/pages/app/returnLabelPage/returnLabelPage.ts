@@ -1,12 +1,8 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameContentLocators, AppFrameHelper } from '../../../helpers/appFrameHelper';
+import { BasePage } from '../../basePage';
 
 // Page Object for Order Summary Page - Displayed after successful label generation
-export class ReturnLabelPage {
-  readonly page: Page;
-  private readonly appFrame: FrameLocator;
-  private readonly appContent: AppFrameContentLocators;
-
+export class ReturnLabelPage extends BasePage {
   // Locators
   readonly returnLabelPageTitle: Locator;
   readonly returnQuantityInput: Locator;
@@ -17,9 +13,7 @@ export class ReturnLabelPage {
   readonly generateReturnLabelButton: Locator;
 
   constructor(page: Page) {
-    this.page = page;
-    this.appFrame = AppFrameHelper.getAppFrame(page);
-    this.appContent = new AppFrameContentLocators(this.appFrame);
+    super(page);
 
     // Initialize locators
     this.returnLabelPageTitle = this.appFrame.locator(`div.Polaris-Page-Header__TitleWrapper > h1`);

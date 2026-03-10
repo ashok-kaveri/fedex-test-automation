@@ -1,11 +1,7 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameContentLocators, AppFrameHelper } from '../../../helpers/appFrameHelper';
+import { BasePage } from '../../basePage';
 
-export class PickupPage {
-  readonly page: Page;
-  private readonly appFrame: FrameLocator;
-  private readonly appContent: AppFrameContentLocators;
-
+export class PickupPage extends BasePage {
   // Existing Locators
   readonly pickupHeading: Locator;
   readonly requestPickupButton: Locator;
@@ -22,14 +18,18 @@ export class PickupPage {
   readonly paginationInfo: Locator;
   private readonly requestedTimeDisplayFormatter: Intl.DateTimeFormat;
   readonly statusInPickupLinkPage: Locator;
+  readonly pickUpDetailsHeading: Locator;
+  readonly navigateToPickupDetailsLink: Locator;
 
   constructor(page: Page) {
-    this.page = page;
-    this.appFrame = AppFrameHelper.getAppFrame(page);
-    this.appContent = new AppFrameContentLocators(this.appFrame);
+    super(page);
 
     this.pickupHeading = this.appFrame.getByRole('heading', {
       name: 'Pickups',
+    });
+
+    this.pickUpDetailsHeading = this.appFrame.getByRole('heading', {
+      name: 'Pickup Details',
     });
 
     this.requestPickupButton = this.appFrame.getByRole('button', {
@@ -75,30 +75,39 @@ export class PickupPage {
     });
 
     this.statusInPickupLinkPage = this.appFrame.locator('p.Polaris-Text--subdued').filter({ hasText: 'SUCCESS' });
+    this.navigateToPickupDetailsLink = this.appFrame.locator('[data-primary-link="true"]');
   }
 
-  async verifyPickupField(label: string, expectedValue?: string | RegExp): Promise<string> {
+  private getPickupRowWithOrderID(orderID: string): Locator {
+    return this.appFrame.locator('tr.Polaris-IndexTable__TableRow').filter({ hasText: orderID }).first();
+  }
+
+  private getPickupPageColumns(row: any) {
+    return {
+      pickupNumber: row.locator('td').nth(1),
+      status: row.locator('td').nth(2),
+      requestedTime: row.locator('td').nth(3),
+      orders: row.locator('td').nth(5),
+    };
+  }
+
+  async verifyPickupDetails(label: string, expectedValue?: string | RegExp): Promise<string> {
     const labelLocator = this.appFrame.locator('p.Polaris-Text--semibold').filter({ hasText: label }).first();
-
     await expect(labelLocator).toBeVisible({ timeout: 10000 });
-
     const valueLocator = labelLocator.locator('xpath=ancestor::div[contains(@class,"Polaris-Grid-Cell")]').locator('xpath=following-sibling::div[1]').locator('p, button').first();
 
     await expect(valueLocator).toBeVisible({ timeout: 10000 });
-
     if (expectedValue !== undefined) {
       await expect(valueLocator).toHaveText(expectedValue);
     }
-
     return (await valueLocator.innerText()).trim();
   }
 
   async clickRowByOrderId(orderId: string): Promise<void> {
-    const formattedOrderId = orderId.startsWith('#') ? orderId : `#${orderId}`;
-    const row = this.appFrame.locator('tr.Polaris-IndexTable__TableRow').filter({ hasText: formattedOrderId }).first();
-    await row.waitFor({ state: 'visible' });
-    await row.click();
-    await expect(this.appFrame.locator('text=Pickup Confirmation Number')).toBeVisible({ timeout: 10000 });
+    const row = this.getPickupRowWithOrderID(orderId);
+    await expect(row).toBeVisible();
+    await row.locator('[data-primary-link="true"]').click();
+    await expect(this.pickUpDetailsHeading).toBeVisible();
   }
 
   private parseRequestedTimeWithCurrentYear(requestedTime: string): Date {
@@ -151,53 +160,24 @@ export class PickupPage {
   async requestPickup(): Promise<void> {
     await this.requestPickupButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.requestPickupButton.click();
-
     await this.confirmYesButton.waitFor({ state: 'visible', timeout: 8000 });
     await this.confirmYesButton.click();
   }
 
-  async verifyPickupPage(): Promise<void> {
-    await expect(this.pickupHeading).toContainText('Pickups', {
-      timeout: 10000,
-    });
-  }
-
-  async openPickupDetails(orderID: string): Promise<void> {
-    const orderRow = this.getOrderRow(orderID);
-    await orderRow.waitFor({ state: 'visible', timeout: 10000 });
-    await orderRow.click();
-  }
-
-  async verifyPickupDetails(orderID: string): Promise<void> {
-    await expect(this.pickupHeading).toContainText('Pickup Details', {
-      timeout: 10000,
-    });
-    await expect(this.appContent.getAppFrameMain()).toContainText(orderID, {
-      timeout: 5000,
-    });
-  }
-
-  async verifyPickupStatus(expectedStatus: string): Promise<void> {
-    await expect(this.appContent.getAppFrameMain()).toContainText(expectedStatus, { timeout: 8000 });
-  }
-
-  async verifyOrderStatus(orderID: string, expectedStatus: string): Promise<void> {
-    const orderRow = this.getOrderRow(orderID);
-    await expect(orderRow).toBeVisible({ timeout: 15000 });
-  }
-
-  async processPickupRow(orderID: any, requestPickupTriggeredAt?: Date): Promise<string> {
-    // await this.page.pause();
-    const row = this.appFrame.locator('tr.Polaris-IndexTable__TableRow').filter({ hasText: orderID }).first();
-
+  async verifyPickupRowColumns(orderID: any, requestPickupTriggeredAt?: Date): Promise<string> {
+    const row = this.getPickupRowWithOrderID(orderID);
     await expect(row).toBeVisible();
 
-    const pickupNumber = await row.locator('td').nth(1).innerText();
-    const status = await row.locator('td').nth(2).innerText();
-    // expect(status.trim().toLowerCase()).not.toContain('failed');
+    const columns = this.getPickupPageColumns(row);
+
+    const status = await columns.status.innerText();
     expect(status).toContain('Success');
-    const requestedTime = await row.locator('td').nth(3).innerText();
-    const orders = await row.locator('td').nth(5).innerText();
+
+    const pickupNumber = await columns.pickupNumber.innerText();
+
+    const requestedTime = await columns.requestedTime.innerText();
+
+    const orders = await columns.orders.innerText();
     expect(orders).toContain(orderID);
 
     if (requestPickupTriggeredAt) {
@@ -205,15 +185,10 @@ export class PickupPage {
       const parsedRequestedMinute = this.parseRequestedTimeWithCurrentYear(displayedRequestedTime);
       const distanceMs = this.getMinimumDistanceToMinuteMs(requestPickupTriggeredAt, parsedRequestedMinute);
 
-      if (distanceMs > 0) {
-        console.log(`Time difference from requested minute: ${distanceMs}ms`);
-      } else {
-        console.log(`Time in Pickup Page is same as requested time: ${displayedRequestedTime}`);
-      }
-
       expect(distanceMs).toBeLessThanOrEqual(40_000);
       expect(displayedRequestedTime).toBe(this.requestedTimeDisplayFormatter.format(requestPickupTriggeredAt));
     }
+
     return pickupNumber;
   }
 }

@@ -1,21 +1,25 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
+<<<<<<< HEAD
 import { ShopifyAdminPage } from '../../src/pages/shopify/ShopifyAdminPage';
 import { GenerateLabelManuallyPage } from '../../src/pages/app/ManualLabelPage/ManualLabelPage';
 import { OrderSummaryPage } from '../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
 import { ShippingPage } from '../../src/pages/app/ShippingPage/ShippingPage';
 import { ReturnLabelPage } from '../../src/pages/app/returnLabelPage/returnLabelPage';
 
+=======
+>>>>>>> main
 
 const store = process.env.STORE;
 
 if (!store) {
-    throw new Error('STORE environment variable is required');
+  throw new Error('STORE environment variable is required');
 }
 
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Return Label Generation Flow', () => {
+<<<<<<< HEAD
     let sharedOrderID: string;
     let sharedPage: any;
     let sharedContext: any;
@@ -25,11 +29,16 @@ test.describe('Return Label Generation Flow', () => {
     let shopifyAdminPage: ShopifyAdminPage;
     let orderUploader: ShopifyOrderUploader;
     let returnLabelPage: ReturnLabelPage;
+=======
+  let sharedOrderID: string;
+  let orderUploader: ShopifyOrderUploader;
+>>>>>>> main
 
-    test.beforeAll(async ({ browser }) => {
-        sharedContext = await browser.newContext({ storageState: 'auth.json' });
-        sharedPage = await sharedContext.newPage();
+  test.beforeAll(async () => {
+    orderUploader = new ShopifyOrderUploader();
+  });
 
+<<<<<<< HEAD
         manualLabelPage = new GenerateLabelManuallyPage(sharedPage);
         shippingPage = new ShippingPage(sharedPage);
         orderSummaryPage = new OrderSummaryPage(sharedPage);
@@ -70,6 +79,21 @@ test.describe('Return Label Generation Flow', () => {
         console.log('Return label generated successfully for the order fulfilled from the app');
     });
 
+=======
+  test('Create an order from API', async () => {
+    const orderID = (await orderUploader.uploadOrder()) as string;
+    console.log('Order ID:', orderID);
+    expect(orderID).toBeTruthy();
+    sharedOrderID = orderID;
+  });
+
+  test('Navigate to Shopify order and generate label manually', async ({ pages }) => {
+    test.setTimeout(60000);
+    await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
+    await pages.manualLabelPage.generateLabelInApp();
+    await pages.orderSummaryPage.verifyLabelGenerated();
+  });
+>>>>>>> main
 });
 
 

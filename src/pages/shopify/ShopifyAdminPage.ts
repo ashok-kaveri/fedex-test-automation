@@ -1,9 +1,8 @@
 import { Page, Locator } from '@playwright/test';
 import { expect } from '@playwright/test';
+import { BasePage } from '../basePage';
 
-export class ShopifyAdminPage {
-  readonly page: Page;
-
+export class ShopifyAdminPage extends BasePage {
   // Locators
   readonly searchButton: Locator;
   readonly searchContainer: Locator;
@@ -18,7 +17,7 @@ export class ShopifyAdminPage {
   readonly generateReturnLabelLink: Locator;
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
 
     // Initialize locators
     this.searchButton = page.getByRole('button', { name: /search/i });
@@ -40,10 +39,7 @@ export class ShopifyAdminPage {
 
   // Helper method for dynamic locators
   getOrderLink(orderID: string): Locator {
-    return this.searchResults.locator(
-      `a[role="option"][href*="/orders/"]`,
-      { hasText: orderID }
-    );
+    return this.searchResults.locator(`a[role="option"][href*="/orders/"]`, { hasText: orderID });
   }
 
   // Navigate to Shopify admin store
@@ -53,7 +49,7 @@ export class ShopifyAdminPage {
   }
 
   // Search and open order by ID with retry logic
-  async searchAndOpenOrder(orderID: string, maxRetries: number = 3): Promise<void> {
+  async searchAndOpenOrder(orderID: string, maxRetries: number = 4): Promise<void> {
     await this.searchButton.click();
     await this.ordersButton.click();
     await this.searchInput.fill(orderID);
@@ -132,3 +128,4 @@ export class ShopifyAdminPage {
 
 
 } 
+

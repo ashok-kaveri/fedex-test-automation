@@ -1,15 +1,14 @@
 import { Page, Locator } from '@playwright/test';
+import { BasePage } from '../basePage';
 
 // Page Object for Account Selection - Handles "Choose an account" page interactions
-export class ShopifyAccountSelectorPage {
-  readonly page: Page;
-
+export class ShopifyAccountSelectorPage extends BasePage {
   // Locators
   readonly heading: Locator;
   readonly accountCards: Locator;
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
 
     // Initialize locators
     this.heading = page.getByRole('heading', { name: 'Choose an account' });
