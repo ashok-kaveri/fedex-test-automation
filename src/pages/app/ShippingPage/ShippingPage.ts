@@ -16,6 +16,11 @@ export class ShippingPage extends BasePage {
   readonly requestPickupButton: Locator;
   readonly headers: Locator;
   readonly refreshButton: Locator;
+  readonly clickOrderNumber: Locator;
+  readonly returnFailureTitleForUnfulfilledOrder: Locator;
+  readonly returnFailureDescriptionForUnfulfilledOrder: Locator;
+  // readonly productsTab: Locator;
+
   readonly yesBtnInPopUpForRequestPickup: Locator;
 
   constructor(page: Page) {
@@ -31,6 +36,12 @@ export class ShippingPage extends BasePage {
     this.selectAllCell = this.appFrame.getByRole('cell', { name: 'Select all orders' });
     this.selectAllCheckbox = this.appFrame.getByRole('checkbox', { name: 'Select all orders' });
     this.requestPickupButton = this.appFrame.getByRole('button', { name: 'Request Pick Up' });
+    this.clickOrderNumber = this.appFrame.locator('a[class="orderId"]');
+    this.returnFailureTitleForUnfulfilledOrder = this.appFrame.getByText('Failed to generate Return Label');
+    this.returnFailureDescriptionForUnfulfilledOrder = this.appFrame.getByText('Sorry, you cannot generate a return label for this order because it is not yet fulfilled. Please wait until the order is fulfilled to proceed or select a fulfilled order.');
+    // this.productsTab = page.getByRole('link', { name: 'Products' }).nth(1);
+
+    // From second file
     this.refreshButton = this.appFrame.locator('button:has-text("Refresh")');
     this.headers = this.appFrame.locator('table thead th');
     this.yesBtnInPopUpForRequestPickup = this.appFrame.getByRole('button', { name: 'Yes' });
@@ -210,4 +221,26 @@ export class ShippingPage extends BasePage {
   getLastRequestPickupTriggeredAt() {
     return this.lastRequestPickupTriggeredAt;
   }
+
+
+  // ================= click order Number =================
+
+  async orderClick() {
+    // Using 'load' instead of 'networkidle' is much faster and usually sufficient
+    await this.page.waitForLoadState('load');
+    await this.clickOrderNumber.first().waitFor({ state: 'visible', timeout: 30000 });
+    await this.clickOrderNumber.first().click();
+  }
+  // =================Validating the Return failure message for the unfulfilled order =================
+  async validateReturnFailureMessageForUnfulfilledOrder() {
+    await expect(this.returnFailureTitleForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+    await expect(this.returnFailureDescriptionForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+  }
+
+  // ================= Navigate to Products tab =================
+  async navigateToProductsPage(): Promise<void> {
+    await this.page.goto(`https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/products`);
+  }
+
+
 }

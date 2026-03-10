@@ -1,4 +1,5 @@
 import { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { BasePage } from '../basePage';
 
 export class ShopifyAdminPage extends BasePage {
@@ -11,6 +12,9 @@ export class ShopifyAdminPage extends BasePage {
   readonly moreActionsButton: Locator;
   readonly generateLabelLink: Locator;
   readonly autoGenerateLabel: Locator;
+  readonly markAsFulfilledButton: Locator;
+  readonly fulfillmentStatusBadge: Locator;
+  readonly generateReturnLabelLink: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -24,6 +28,13 @@ export class ShopifyAdminPage extends BasePage {
     this.moreActionsButton = page.getByRole('button', { name: 'More actions' }).first();
     this.generateLabelLink = page.getByRole('link', { name: 'Generate Label', exact: true });
     this.autoGenerateLabel = page.getByRole('link', { name: 'Auto-Generate Label', exact: true });
+    this.markAsFulfilledButton = page.getByRole('button', { name: 'Mark as fulfilled' });
+    // this.fulfillmentStatusBadge = page.locator('s-internal-badge:nth-child(4) > .badge');
+    this.fulfillmentStatusBadge = page.getByText('CompletePaidCompleteFulfilledArchived');
+    this.generateReturnLabelLink = page.getByRole('link', { name: 'Generate Return Label', exact: true });
+
+
+
   }
 
   // Helper method for dynamic locators
@@ -84,6 +95,20 @@ export class ShopifyAdminPage extends BasePage {
     await this.autoGenerateLabel.click();
   }
 
+  //Click on Generate Return Label
+  async clickOnGenerateReturnLabel(): Promise<void> {
+    await this.generateReturnLabelLink.click();
+  }
+
+
+  // fulfilling order from Shopify Order Summary page
+  async confirmOrderFulfillment(): Promise<void> {
+    await this.markAsFulfilledButton.click();
+    await this.markAsFulfilledButton.click();
+    await expect(this.fulfillmentStatusBadge).toBeVisible({ timeout: 20000 });
+    await expect(this.fulfillmentStatusBadge).toContainText('Fulfilled');
+  }
+
   //generic method to navigate to order and click on generate label manually in shopify admin
   async navigateToOrderInShopifyAndClickGenerateLabel(orderID: string): Promise<void> {
     await this.navigateToStore(process.env.STORE!);
@@ -91,4 +116,16 @@ export class ShopifyAdminPage extends BasePage {
     await this.openMoreActions();
     await this.clickGenerateLabelLink();
   }
-}
+
+  async fulfillOrderInShopify(orderID: string) {
+    await this.navigateToStore(process.env.STORE!);
+    await this.searchAndOpenOrder(orderID, 5);
+    await this.confirmOrderFulfillment();
+    await this.openMoreActions();
+    await this.clickOnGenerateReturnLabel();
+    
+  }
+
+
+} 
+

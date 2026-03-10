@@ -12,6 +12,10 @@ export class GenerateLabelManuallyPage extends BasePage {
   readonly radioButtons: Locator;
   readonly failedRatesBox: Locator;
   readonly clickBackButton: Locator;
+  readonly xmlRequestContentArea: Locator;
+  readonly fetchXMLMenuButton: Locator;
+  readonly viewXmlMenuLogItem: Locator;
+  readonly XmlCloseButton: Locator;
   readonly failedRatesMenuButton: Locator;
   readonly viewXmlMenuItem: Locator;
   readonly xmlViewerModal: Locator;
@@ -32,6 +36,10 @@ export class GenerateLabelManuallyPage extends BasePage {
     this.radioButtons = this.appFrame.locator('input[type="radio"][name]');
     this.failedRatesBox = this.appFrame.locator('div.Polaris-Box').filter({ hasText: 'Failed to fetch rates' });
     this.clickBackButton = this.appFrame.getByRole('button', { name: 'Orders' });
+    this.fetchXMLMenuButton = this.appFrame.getByRole('button').filter({ hasText: /^$/ }).nth(5);
+    this.viewXmlMenuLogItem = this.appFrame.getByRole('menuitem', { name: 'View XML' });
+    this.XmlCloseButton = this.appFrame.locator('button.Polaris-Button--primary').filter({ hasText: 'Close' });
+    this.xmlRequestContentArea = this.appFrame.locator('pre').filter({ hasText: '<?xml version="1.0" encoding' });
 
     // XML viewer modal locators
     this.xmlViewerModal = this.appFrame.locator('div[role="dialog"][aria-modal="true"]');
@@ -191,5 +199,40 @@ export class GenerateLabelManuallyPage extends BasePage {
   async clickBackButtonInManualLabelGenerationPage(): Promise<void> {
     await this.clickBackButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.clickBackButton.click();
+  }
+
+  // Generic method to get XML request content for verification in tests
+  async getXmlRequestContent(): Promise<string> {
+    await this.fetchXMLMenuButton.click();
+    await this.viewXmlMenuLogItem.waitFor({ state: 'visible', timeout: 5000 });
+    await this.viewXmlMenuLogItem.click();
+    await this.xmlRequestContentArea.waitFor({ state: 'visible', timeout: 5000 });
+    const xmlContent = await this.xmlRequestContentArea.textContent() || '';
+
+    await this.XmlCloseButton.waitFor({ state: 'attached' });
+    await this.XmlCloseButton.scrollIntoViewIfNeeded();
+    await this.XmlCloseButton.click({ force: true });
+
+    return xmlContent;
+  }
+
+  // Deprecated: use getXmlRequestContent instead. Returning content for backward compatibility in the transition.
+  async verifySignatureOptionInXmlRequest(): Promise<string> {
+    return await this.getXmlRequestContent();
+  }
+
+  // Returns XML content to verify dry ice details in test file
+  async verifyDryIceInXmlRequest(): Promise<string> {
+    return await this.getXmlRequestContent();
+  }
+
+  // Returns XML content to verify alcohol details in test file
+  async verifyAlcoholInXmlRequest(): Promise<string> {
+    return await this.getXmlRequestContent();
+  }
+
+  // Returns XML content to verify battery details in test file
+  async verifyBatteryInXmlRequest(): Promise<string> {
+    return await this.getXmlRequestContent();
   }
 }
