@@ -151,6 +151,7 @@ export class SideDockPage {
   }
 
   async addInsuranceDetails({ liabilityType, insuranceType, percentage }) {
+    await this.thirdPartyInsuranceCheckbox.check();
     await this.insuranceEditButton.click();
     await this.modalContainer.waitFor({ state: 'visible' });
     await this.includeInsuranceCheckbox.check();
