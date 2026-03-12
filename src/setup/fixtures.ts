@@ -12,7 +12,6 @@ import { PackagingSettingsPage } from '../pages/app/settings/packagingSettingsPa
 import { ProductsPage } from '../pages/app/Products/productsPage';
 import { SideDockPage } from '../pages/app/ManualLabelPage/SideDockConfig';
 
-
 export type Pages = {
   sharedPage: Page;
   shopifyAdmin: ShopifyAdminPage;
@@ -25,7 +24,6 @@ export type Pages = {
   productsPage: ProductsPage;
   sideDockPage: SideDockPage;
 };
-
 export const test = baseTest.extend<{ pages: Pages }>({
   pages: [
     async ({ browser }: { browser: Browser }, use: (r: Pages) => Promise<void>) => {
@@ -33,10 +31,8 @@ export const test = baseTest.extend<{ pages: Pages }>({
       if (!fs.existsSync(storagePath)) {
         throw new Error('auth.json not found. Run the login --npx playwright test --project="setup" --headed ');
       }
-
       const context = await browser.newContext({ storageState: storagePath });
       const page = await context.newPage();
-
       const pages: Pages = {
         sharedPage: page,
         shopifyAdmin: new ShopifyAdminPage(page),
@@ -49,13 +45,10 @@ export const test = baseTest.extend<{ pages: Pages }>({
         productsPage: new ProductsPage(page),
         sideDockPage: new SideDockPage(page),
       };
-
       await use(pages);
-
       await context.close();
     },
     { scope: 'worker' },
   ] as unknown as any,
 });
-
 export const expect = test.expect;

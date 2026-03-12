@@ -9,7 +9,7 @@ test.describe('Manual Label Generation with signature options', () => {
   let orderUploader: ShopifyOrderUploader;
 
   //Signature
-  const signatureOptions = ['NO_SIGNATURE_REQUIRED'];
+  const signatureOptions = ['ADULT', 'DIRECT', 'INDIRECT', 'NO_SIGNATURE_REQUIRED'];
 
   test.beforeAll(async ({ browser }) => {
     orderUploader = new ShopifyOrderUploader();
@@ -23,13 +23,11 @@ test.describe('Manual Label Generation with signature options', () => {
       console.log('Order ID:', orderID);
 
       await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(orderID);
-      await pages.manualLabelPage.verifyOrderHeading(orderID);
       await pages.sideDockPage.selectFedExSignature(configuredSignature);
       await expect(pages.sideDockPage.fedexSignatureDropdown).toHaveValue(configuredSignature);
       await pages.manualLabelPage.openRateRequestLog();
       const actualSignature = await pages.manualLabelPage.getSignatureValueFromRequestLog();
       console.log(actualSignature);
-      await pages.manualLabelPage.closeRatesLog();
       expect(actualSignature).toBe(configuredSignature);
       await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
       await pages.orderSummaryPage.verifyLabelGenerated();

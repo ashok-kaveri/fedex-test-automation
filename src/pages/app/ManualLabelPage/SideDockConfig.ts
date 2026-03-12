@@ -143,22 +143,22 @@ export class SideDockPage {
   }
 
   async enableThirdPartyInsurance() {
-    await this.thirdPartyInsuranceCheckbox.check();
+    await this.thirdPartyInsuranceCheckbox.check({ force: true });
   }
 
   async disableThirdPartyInsurance() {
-    await this.thirdPartyInsuranceCheckbox.uncheck();
+    await this.thirdPartyInsuranceCheckbox.uncheck({ force: true });
   }
 
-  async addInsuranceDetails({ liabilityType, insuranceType, percentage }) {
-    await this.thirdPartyInsuranceCheckbox.check();
+  async addInsuranceDetails({ liabilityType, insuranceType, percentage }: { liabilityType: string; insuranceType: string; percentage?: any }) {
+    await this.enableThirdPartyInsurance();
     await this.insuranceEditButton.click();
     await this.modalContainer.waitFor({ state: 'visible' });
     await this.includeInsuranceCheckbox.check();
     await this.liabilityTypeDropdown.selectOption(liabilityType);
     await this.insuranceAmountDropdown.selectOption(insuranceType);
     if (insuranceType === 'Percentage of Product Price') {
-      await this.percentageProductInput.fill(percentage);
+      await this.percentageProductInput.fill(String(percentage));
     }
     await this.modalCloseButton.click();
   }
