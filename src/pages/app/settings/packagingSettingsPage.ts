@@ -1,4 +1,4 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from '../../basePage';
 
 // Page Object for Order Summary Page - Displayed after successful label generation
@@ -101,10 +101,22 @@ export class PackagingSettingsPage extends BasePage {
   }
 
   async settingsDropDownUsingLabel(label: string, value: string) {
-    await this.appFrame.getByLabel(label).selectOption({ label: value });
+    const dropdown = this.appFrame.getByLabel(label);
+
+    await dropdown.selectOption(value);
+
+    // wait until Polaris UI updates visible text
+    // eslint-disable-next-line no-restricted-syntax
+    const container = dropdown.locator('..');
+    // eslint-disable-next-line no-restricted-syntax
+    await expect(container.locator('.Polaris-Select__SelectedOption')).toBeVisible();
+
+    // trigger blur so React registers change
+    await dropdown.blur();
   }
 
   async clickSettingsButtonUsingLabel(label: string, buttonName: string) {
+    // eslint-disable-next-line no-restricted-syntax
     const card = this.appFrame.locator('.Polaris-FormLayout__Item').filter({ has: this.appFrame.getByLabel(label) });
     await card.getByRole('button', { name: buttonName }).click();
   }
@@ -112,25 +124,23 @@ export class PackagingSettingsPage extends BasePage {
   async clickSettingsButtonUsingHeading(heading: string, buttonName: string) {
     const headingLocator = this.appFrame.getByRole('heading', { name: heading });
 
+    // eslint-disable-next-line no-restricted-syntax
     const section = headingLocator.locator('..').locator('..').locator('..'); // climb until container
 
     await section.getByRole('button', { name: buttonName, exact: true }).click();
   }
 
-  async setVolumetricWeight(enable: boolean) {
-    if (enable) {
-      await this.volumetricWeightCheckbox.check({ force: true });
-    } else {
-      await this.volumetricWeightCheckbox.uncheck({ force: true });
-    }
-  }
+  
 
-  async setStackProductsInBoxes(enable: boolean) {
-    if (enable) {
-      await this.stackProductsInBoxes.check({ force: true });
-    } else {
-      await this.stackProductsInBoxes.uncheck({ force: true });
+  async setCheckbox(labelText: string, enable: boolean) {
+    const checkbox = this.appFrame.getByRole('checkbox', { name: labelText });
+
+    if ((await checkbox.isChecked()) !== enable) {
+      await this.page.waitForTimeout(1500);
+      await this.appFrame.getByText(labelText).click();
     }
+
+    enable ? await expect(checkbox).toBeChecked() : await expect(checkbox).not.toBeChecked();
   }
 
   async setAdditionalWeight(enable: boolean) {
@@ -151,7 +161,8 @@ export class PackagingSettingsPage extends BasePage {
 
   async restoreFedExBoxes() {
     await this.restoreFedexBoxesButton.click();
-    await this.fedexBoxesHeader.waitFor({ timeout: 2000 });
+    // await this.fedexBoxesHeader.waitFor({ timeout: 2000 });
+    await this.expectToast('Restored carrier boxes');
   }
 
   async keepOnlyBoxes(allowedBoxes: Record<string, number[]>): Promise<void> {
@@ -164,6 +175,7 @@ export class PackagingSettingsPage extends BasePage {
     // First pass: decide what to delete
     for (let i = 0; i < total; i++) {
       const row = rows.nth(i);
+      // eslint-disable-next-line no-restricted-syntax
       const boxName = (await row.locator('th').textContent())?.trim() || '';
 
       occurrenceMap[boxName] = (occurrenceMap[boxName] || 0) + 1;
@@ -182,6 +194,7 @@ export class PackagingSettingsPage extends BasePage {
       const row = this.boxesTable.nth(index);
 
       const initialCount = await this.boxesTable.count();
+      // eslint-disable-next-line no-restricted-syntax
       await row.locator('button').last().click();
 
       await expect(this.boxesTable).toHaveCount(initialCount - 1);
@@ -193,12 +206,6 @@ export class PackagingSettingsPage extends BasePage {
     // Wait for modal title
     await expect(this.addPackageModalTitle).toBeVisible();
   }
-
-  // async fillField(label: string, value: string | number, index: number = 0) {
-  //   const input = this.appFrame.getByLabel(label).nth(index);
-  //   await input.clear();
-  //   await input.fill(String(value));
-  // }
 
   async addCustomBox(data: {
     name: string;

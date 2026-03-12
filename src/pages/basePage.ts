@@ -14,6 +14,7 @@ export class BasePage {
   readonly appFrameMain: Locator;
   readonly loadingSpinner: Locator;
   readonly appButton: Locator;
+  readonly skeletonLoader: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -24,6 +25,7 @@ export class BasePage {
     this.appFrameMain = this.appContent.getAppFrameMain();
     this.loadingSpinner = this.appFrame.locator('[class*="spinner"], [class*="loading"]');
     this.appButton = this.page.getByRole('link', { name: 'QA Ship Rate & Track for FedEx' });
+    this.skeletonLoader = this.page.locator('.skeleton-loader');
   }
 
   //Wait for loading spinner to disappear
@@ -46,6 +48,7 @@ export class BasePage {
   }
 
   async selectAppMenu(route: string) {
+    // eslint-disable-next-line no-restricted-syntax
     const link = this.page.locator(`a[href*="/apps/testing-553/${route}"]`);
     await link.waitFor({ state: 'visible', timeout: 5000 });
     await link.click({ force: true });
@@ -56,7 +59,21 @@ export class BasePage {
   }
 
   async expectToast(message: string) {
+    // eslint-disable-next-line no-restricted-syntax
     const toast = this.appFrame.locator(`text=${message}`);
-    await toast.waitFor({ state: 'visible', timeout: 5000 });
+    // await toast.waitFor({ state: 'visible', timeout: 5000 });
+    await expect(toast).toBeVisible({ timeout: 5000 });
+  }
+
+  async selectShopifyMenuOption(option: string) {
+    const menuOption = this.page.getByRole('link', { name: option });
+    await menuOption.waitFor({ state: 'visible', timeout: 5000 });
+    await menuOption.click();
+  }
+
+  async clickButtonByName(buttonName: string) {
+    const button = this.page.getByRole('button', { name: buttonName }).first();
+    await button.waitFor({ state: 'visible', timeout: 5000 });
+    await button.click();
   }
 }

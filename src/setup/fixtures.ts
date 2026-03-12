@@ -10,6 +10,8 @@ import { PickupPage } from '../pages/app/PickupPage/PickupPage';
 import { ReturnLabelPage } from '../pages/app/returnLabelPage/returnLabelPage';
 import { PackagingSettingsPage } from '../pages/app/settings/packagingSettingsPage';
 import { ProductsPage } from '../pages/app/Products/productsPage_M';
+import { ShopifyProductsSummaryPage } from '../pages/shopify/ShopifyProductsSummeryPage';
+import { ShopifyProductPage } from '../pages/shopify/ShopifyProductPage';
 export type Pages = {
   sharedPage: Page;
   shopifyAdmin: ShopifyAdminPage;
@@ -20,6 +22,8 @@ export type Pages = {
   returnLabelPage: ReturnLabelPage;
   packagingSettingsPage: PackagingSettingsPage;
   productsPage: ProductsPage;
+  shopifyProductsSummary: ShopifyProductsSummaryPage;
+  shopifyProductPage: ShopifyProductPage;
 };
 export const test = baseTest.extend<{ pages: Pages }>({
   pages: [
@@ -40,11 +44,13 @@ export const test = baseTest.extend<{ pages: Pages }>({
         returnLabelPage: new ReturnLabelPage(page),
         packagingSettingsPage: new PackagingSettingsPage(page),
         productsPage: new ProductsPage(page),
+        shopifyProductsSummary: new ShopifyProductsSummaryPage(page),
+        shopifyProductPage: new ShopifyProductPage(page),
       };
       await use(pages);
       await context.close();
     },
     { scope: 'worker' },
-  ] as unknown as any,
+  ],
 });
 export const expect = test.expect;
