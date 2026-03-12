@@ -51,6 +51,6 @@ export const test = baseTest.extend<{ pages: Pages }>({
       await context.close();
     },
     { scope: 'worker' },
-  ],
+  ] as unknown as any,
 });
 export const expect = test.expect;
