@@ -10,6 +10,8 @@ import { PickupPage } from '../pages/app/PickupPage/PickupPage';
 import { ReturnLabelPage } from '../pages/app/returnLabelPage/returnLabelPage';
 import { PackagingSettingsPage } from '../pages/app/settings/packagingSettingsPage';
 import { ProductsPage } from '../pages/app/Products/productsPage';
+import { BasePage } from '../pages/basePage';
+
 export type Pages = {
   sharedPage: Page;
   shopifyAdmin: ShopifyAdminPage;
@@ -20,6 +22,7 @@ export type Pages = {
   returnLabelPage: ReturnLabelPage;
   packagingSettingsPage: PackagingSettingsPage;
   productsPage: ProductsPage;
+  basePage: BasePage;
 };
 export const test = baseTest.extend<{ pages: Pages }>({
   pages: [
@@ -40,6 +43,7 @@ export const test = baseTest.extend<{ pages: Pages }>({
         returnLabelPage: new ReturnLabelPage(page),
         packagingSettingsPage: new PackagingSettingsPage(page),
         productsPage: new ProductsPage(page),
+        basePage: new BasePage(page),
       };
       await use(pages);
       await context.close();

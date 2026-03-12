@@ -1,5 +1,7 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, FrameLocator, Locator, expect, BrowserContext } from '@playwright/test';
 import { BasePage } from '../../basePage';
+import axios from 'axios';
+const { PDFParse } = require('pdf-parse');
 
 // Page Object for Order Summary Page - Displayed after successful label generation
 export class OrderSummaryPage extends BasePage {
@@ -49,5 +51,6 @@ export class OrderSummaryPage extends BasePage {
     await this.printDocumentsButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.printDocumentsButton.click();
 }
+
 
 }
