@@ -43,6 +43,7 @@ export default defineConfig({
     },
     {
       name: 'Google Chrome',
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
         channel: 'chrome',
@@ -52,6 +53,7 @@ export default defineConfig({
     },
     {
       name: 'Safari',
+      dependencies: ['setup'],
       use: {
         browserName: 'webkit',
         ...devices['Desktop Safari'],
@@ -60,6 +62,7 @@ export default defineConfig({
     },
     {
       name: 'Firefox',
+      dependencies: ['setup'],
       use: {
         browserName: 'firefox',
         ...devices['Desktop Firefox'],

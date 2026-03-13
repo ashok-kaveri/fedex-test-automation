@@ -9,9 +9,6 @@ test.describe('Manual Label Generation Flow', () => {
 
   test.beforeAll(async () => {
     orderUploader = new ShopifyOrderUploader();
-  });
-
-  test('Create an order from API', async () => {
     const orderID = (await orderUploader.uploadOrder()) as string;
     console.log('Order ID:', orderID);
     expect(orderID).toBeTruthy();

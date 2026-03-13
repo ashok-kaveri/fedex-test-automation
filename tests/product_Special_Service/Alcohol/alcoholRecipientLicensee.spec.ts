@@ -1,11 +1,5 @@
-import { test, expect, Page, BrowserContext } from '@playwright/test';
-import { ProductPage } from '../../../src/pages/app/productsPage/productsPage';
-import { ProductSummaryPage } from '../../../src/pages/app/productsPage/productSummaryPage';
+import { test, expect } from '../../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../../../src/pages/shopify/ShopifyAdminPage';
-import { ShippingPage } from '../../../src/pages/app/ShippingPage/ShippingPage';
-import { GenerateLabelManuallyPage } from '../../../src/pages/app/ManualLabelPage/ManualLabelPage';
-import { OrderSummaryPage } from '../../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
 import axios from 'axios';
 
 const { PDFParse } = require('pdf-parse');
@@ -20,116 +14,95 @@ const ALCOHOL_RECIPIENT_TYPE = 'LICENSEE';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Label Generation For Alcohol — Recipient Type: Consumer', () => {
+test.describe('Label Generation For Alcohol — Recipient Type: Licensee', () => {
+  // ── Shared State ──────────────────────────────────────────────────────────
+  let sharedOrderID: string;
+  let capturedDocumentUrl: string = '';
 
-    // ── Shared State ──────────────────────────────────────────────────────────
-    let sharedOrderID: string;
-    let sharedPage: Page;
-    let sharedContext: BrowserContext;
-    let capturedDocumentUrl: string = '';
+  // ── Page Objects ──────────────────────────────────────────────────────────
+  let orderUploader: ShopifyOrderUploader;
 
-    // ── Page Objects ──────────────────────────────────────────────────────────
-    let orderUploader: ShopifyOrderUploader;
-    let productPage: ProductPage;
-    let productSummaryPage: ProductSummaryPage;
-    let shopifyAdminPage: ShopifyAdminPage;
-    let shippingPage: ShippingPage;
-    let manualLabelPage: GenerateLabelManuallyPage;
-    let orderSummaryPage: OrderSummaryPage;
+  // ── Hooks ─────────────────────────────────────────────────────────────────
 
-    // ── Hooks ─────────────────────────────────────────────────────────────────
+  test.beforeAll(async () => {
+    orderUploader = new ShopifyOrderUploader();
+  });
 
-    test.beforeAll(async ({ browser }) => {
-        sharedContext = await browser.newContext({ storageState: 'auth.json' });
-        sharedPage   = await sharedContext.newPage();
+  test.afterAll(async ({ pages }) => {
+    await pages.shippingPage.navigateToProductsPage();
+    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productSummaryPage.disableSpecialService('alcohol');
+    await expect(pages.productSummaryPage.isAlcoholLabel).not.toBeChecked();
+    console.log('✔ Alcohol is disabled');
+  });
 
-        orderUploader      = new ShopifyOrderUploader();
-        shopifyAdminPage   = new ShopifyAdminPage(sharedPage);
-        shippingPage       = new ShippingPage(sharedPage);
-        productPage        = new ProductPage(sharedPage);
-        productSummaryPage = new ProductSummaryPage(sharedPage);
-        manualLabelPage    = new GenerateLabelManuallyPage(sharedPage);
-        orderSummaryPage   = new OrderSummaryPage(sharedPage);
-    });
+  // ── Tests ─────────────────────────────────────────────────────────────────
 
-    test.afterAll(async () => {
-        await shippingPage.navigateToProductsPage();
-        await productPage.searchAndSelectProduct('Simple 1');
-        await productSummaryPage.disableSpecialService('alcohol');
-        await expect(productSummaryPage.isAlcoholLabel).not.toBeChecked();
-        console.log('✔ Alcohol is disabled');
-        await sharedPage?.close();
-        await sharedContext?.close();
-    });
+  test('Step 1 | Enable Alcohol with recipient type Licensee on product', async ({ pages }) => {
+    test.setTimeout(120_000);
 
-    // ── Tests ─────────────────────────────────────────────────────────────────
+    await pages.shippingPage.navigateToProductsPage();
+    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productSummaryPage.updateProductAlcohol(ALCOHOL_RECIPIENT_TYPE);
 
-    test('Step 1 | Enable Alcohol with recipient type Consumer on product', async () => {
-        test.setTimeout(120_000);
+    await expect(pages.productSummaryPage.alcoholRecipientTypeDropdown).toHaveValue(ALCOHOL_RECIPIENT_TYPE);
+    console.log(`✔ Alcohol recipient type set to: ${ALCOHOL_RECIPIENT_TYPE}`);
+  });
 
-        await shippingPage.navigateToProductsPage();
-        await productPage.searchAndSelectProduct('Simple 1');
-        await productSummaryPage.updateProductAlcohol(ALCOHOL_RECIPIENT_TYPE);
+  test('Step 2 | Create order via API with alcohol product', async () => {
+    const orderID = (await orderUploader.uploadOrder()) as string;
+    expect(orderID).toBeTruthy();
 
-        await expect(productSummaryPage.alcoholRecipientTypeDropdown).toHaveValue(ALCOHOL_RECIPIENT_TYPE);
-        console.log(`✔ Alcohol recipient type set to: ${ALCOHOL_RECIPIENT_TYPE}`);
-    });
+    sharedOrderID = orderID;
+    console.log(`✔ Order created — ID: ${sharedOrderID}`);
+  });
 
-    test('Step 2 | Create order via API with alcohol product', async () => {
-        const orderID = (await orderUploader.uploadOrder()) as string;
-        expect(orderID).toBeTruthy();
+  test('Step 3 | Manually generate label and verify Alcohol XML payload', async ({ pages }) => {
+    test.setTimeout(90_000);
 
-        sharedOrderID = orderID;
-        console.log(`✔ Order created — ID: ${sharedOrderID}`);
-    });
+    await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
+    await pages.manualLabelPage.waitUntilGeneratePackageButtonVisible();
+    await pages.manualLabelPage.generatePackages();
+    await pages.manualLabelPage.getShippingRates();
 
-    test('Step 3 | Manually generate label and verify Alcohol XML payload', async () => {
-        test.setTimeout(90_000);
+    const xmlContent = await pages.manualLabelPage.verifyAlcoholInXmlRequest();
 
-        await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-        await manualLabelPage.waitUntilGeneratePackageButtonVisible();
-        await manualLabelPage.generatePackages();
-        await manualLabelPage.getShippingRates();
+    expect(xmlContent).toContain('<ns:SpecialServiceTypes>ALCOHOL</ns:SpecialServiceTypes>');
+    expect(xmlContent).toContain('<ns:AlcoholDetail>');
+    expect(xmlContent).toContain(`<ns:RecipientType>${ALCOHOL_RECIPIENT_TYPE}</ns:RecipientType>`);
+    console.log(`✔ XML confirmed — ALCOHOL service present with recipient type: ${ALCOHOL_RECIPIENT_TYPE}`);
 
-        const xmlContent = await manualLabelPage.verifyAlcoholInXmlRequest();
+    await pages.manualLabelPage.selectFirstShippingService();
+    await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
+    await pages.orderSummaryPage.verifyLabelGenerated();
+  });
 
-        expect(xmlContent).toContain('<ns:SpecialServiceTypes>ALCOHOL</ns:SpecialServiceTypes>');
-        expect(xmlContent).toContain('<ns:AlcoholDetail>');
-        expect(xmlContent).toContain(`<ns:RecipientType>${ALCOHOL_RECIPIENT_TYPE}</ns:RecipientType>`);
-        console.log(`✔ XML confirmed — ALCOHOL service present with recipient type: ${ALCOHOL_RECIPIENT_TYPE}`);
+  test('Step 4 | Print label and capture document URL', async ({ pages }) => {
+    const newPagePromise = pages.sharedPage.context().waitForEvent('page');
+    await pages.orderSummaryPage.clickPrintDocuments();
 
-        await manualLabelPage.selectFirstShippingService();
-        await manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
-        await orderSummaryPage.verifyLabelGenerated();
-    });
+    const newPage = await newPagePromise;
+    await newPage.waitForLoadState('load');
 
-    test('Step 4 | Print label and capture document URL', async () => {
-        const newPagePromise = sharedContext.waitForEvent('page');
-        await orderSummaryPage.clickPrintDocuments();
+    capturedDocumentUrl = new URL(newPage.url()).searchParams.get('document') ?? '';
 
-        const newPage = await newPagePromise;
-        await newPage.waitForLoadState('load');
+    expect(capturedDocumentUrl).toBeTruthy();
+    console.log(`✔ Captured document URL: ${capturedDocumentUrl}`);
+  });
 
-        capturedDocumentUrl = new URL(newPage.url()).searchParams.get('document') ?? '';
+  // Step 5 is skipped pending PDF text verification for Alcohol label
+  // Re-enable once the label is confirmed to contain "ALCOHOL" text
+  // test.skip('Step 5 | Verify "ALCOHOL" text is present in generated FedEx label PDF', async () => {
+  //     expect(capturedDocumentUrl).toBeTruthy();
 
-        expect(capturedDocumentUrl).toBeTruthy();
-        console.log(`✔ Captured document URL: ${capturedDocumentUrl}`);
-    });
+  //     const response = await axios.get(capturedDocumentUrl, { responseType: 'arraybuffer' });
+  //     const parser = new PDFParse({ data: response.data });
+  //     const pdfData = await parser.getText();
 
-    // Step 5 is skipped pending PDF text verification for Alcohol label
-    // Re-enable once the label is confirmed to contain "ALCOHOL" text
-    // test.skip('Step 5 | Verify "ALCOHOL" text is present in generated FedEx label PDF', async () => {
-    //     expect(capturedDocumentUrl).toBeTruthy();
-
-    //     const response = await axios.get(capturedDocumentUrl, { responseType: 'arraybuffer' });
-    //     const parser = new PDFParse({ data: response.data });
-    //     const pdfData = await parser.getText();
-
-    //     console.log('✔ PDF text extracted successfully');
-    //     expect(pdfData.text).toContain('ALCOHOL');
-    //     console.log('✔ "ALCOHOL" text confirmed in FedEx label');
-    // });
-
+  //     console.log('✔ PDF text extracted successfully');
+  //     expect(pdfData.text).toContain('ALCOHOL');
+  //     console.log('✔ "ALCOHOL" text confirmed in FedEx label');
+  // });
 });
 
 // npx playwright test tests/product_Special_Service/Alcohol/alcoholRecipientLicensee.spec.ts --project="Google Chrome" --headed
