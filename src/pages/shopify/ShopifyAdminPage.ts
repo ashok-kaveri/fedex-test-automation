@@ -32,9 +32,6 @@ export class ShopifyAdminPage extends BasePage {
     // this.fulfillmentStatusBadge = page.locator('s-internal-badge:nth-child(4) > .badge');
     this.fulfillmentStatusBadge = page.getByText('CompletePaidCompleteFulfilledArchived');
     this.generateReturnLabelLink = page.getByRole('link', { name: 'Generate Return Label', exact: true });
-
-
-
   }
 
   // Helper method for dynamic locators
@@ -52,6 +49,7 @@ export class ShopifyAdminPage extends BasePage {
 
   // Search and open order by ID with retry logic
   async searchAndOpenOrder(orderID: string, maxRetries: number = 4): Promise<void> {
+    await this.page.waitForTimeout(3000);
     await this.searchButton.click();
     await this.ordersButton.click();
     await this.searchInput.fill(orderID);
@@ -102,7 +100,6 @@ export class ShopifyAdminPage extends BasePage {
     await this.generateReturnLabelLink.click();
   }
 
-
   // fulfilling order from Shopify Order Summary page
   async confirmOrderFulfillment(): Promise<void> {
     await this.markAsFulfilledButton.click();
@@ -125,9 +122,5 @@ export class ShopifyAdminPage extends BasePage {
     await this.confirmOrderFulfillment();
     await this.openMoreActions();
     await this.clickOnGenerateReturnLabel();
-    
   }
-
-
-} 
-
+}
