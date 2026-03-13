@@ -41,7 +41,7 @@ setup('Write login session data', async ({ page }) => {
   console.log('🔐 Performing login...');
   
   await page.goto(`https://admin.shopify.com/store/${store}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.waitForTimeout(3000);
+  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
   
   // Check if account selector page appears
   const accountSelector = new ShopifyAccountSelectorPage(page);
@@ -49,7 +49,7 @@ setup('Write login session data', async ({ page }) => {
   
   if (accountPageVisible) {
     await accountSelector.selectAccountByText(userEmail || '');
-    await page.waitForTimeout(5000);
+    await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
     
     if (page.url().includes('admin.shopify.com/store/')) {
       await page.context().storageState({ path: STORAGE_PATH });
@@ -72,7 +72,7 @@ setup('Write login session data', async ({ page }) => {
   if (emailInputVisible && continueBtnVisible) {
     await emailInput.fill(userEmail || '');
     await continueWithEmailButton.click();
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {});
     
     // Handle CAPTCHA if present
     const captchaHandler = new CaptchaHandler(page);
@@ -81,18 +81,15 @@ setup('Write login session data', async ({ page }) => {
   
   // Fill password
   await passwordInput.waitFor({ state: 'visible', timeout: 15000 });
-  await page.waitForTimeout(1000);
+  await passwordInput.waitFor({ state: 'attached' });
   
   await passwordInput.click();
-  await page.waitForTimeout(300);
   await passwordInput.fill(userPassword || '');
-  await page.waitForTimeout(300);
   
   const passwordValue = await passwordInput.inputValue();
   
   if (passwordValue.length === 0) {
     await passwordInput.click();
-    await page.waitForTimeout(500);
     await passwordInput.pressSequentially(userPassword || '', { delay: 50 });
     
     const retryValue = await passwordInput.inputValue();
@@ -104,7 +101,7 @@ setup('Write login session data', async ({ page }) => {
   
   // Click the Log in button
   await loginButton.click();
-  await page.waitForTimeout(3000);
+  await page.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {});
   
   // Check for error messages
   const errorCount = await errorMessage.count();

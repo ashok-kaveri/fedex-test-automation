@@ -8,6 +8,7 @@ node_modules/
 /playwright/.auth/
 /tests/traces/
 smart-report.html
+**/smart-report.html
 test-history.json
 reports/playwright-report/
 package-lock.json
@@ -17,6 +18,9 @@ yarn.lock
 .env
 auth.json
 *.log
+
+# Debug artifacts
+debug_label.pdf
 
 # IDE
 .vscode/

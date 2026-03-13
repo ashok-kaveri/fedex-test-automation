@@ -1,51 +1,51 @@
-import { Page, BrowserContext } from '@playwright/test';
-import { ProductPage } from '../../../src/pages/app/productsPage/productsPage';
-import { ProductSummaryPage } from '../../../src/pages/app/productsPage/productSummaryPage';
-import ShopifyOrderUploader from '../../../src/helpers/createOrder';
 import { test, expect } from '../../../src/setup/fixtures';
+import ShopifyOrderUploader from '../../../src/helpers/createOrder';
+import { Page, BrowserContext } from '@playwright/test';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test Suite: Label Generation For Alcohol — Recipient Type: Licensee
+// Run: npx playwright test tests/product_Special_Service/Alcohol/alcoholRecipientLicensee.spec.ts
+//      --project="Google Chrome" --headed
+// ─────────────────────────────────────────────────────────────────────────────
+
 const ALCOHOL_RECIPIENT_TYPE = 'LICENSEE';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Label Generation For Alcohol — Recipient Type: Consumer', () => {
+test.describe('Label Generation For Alcohol — Recipient Type: Licensee', () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
-  let sharedPage: Page;
+  let capturedDocumentUrl: string = '';
   let sharedContext: BrowserContext;
 
   // ── Page Objects ──────────────────────────────────────────────────────────
   let orderUploader: ShopifyOrderUploader;
-  let productPage: ProductPage;
-  let productSummaryPage: ProductSummaryPage;
 
   // ── Hooks ─────────────────────────────────────────────────────────────────
 
   test.beforeAll(async ({ pages }) => {
     orderUploader = new ShopifyOrderUploader();
-    productPage = new ProductPage(pages.sharedPage);
-    productSummaryPage = new ProductSummaryPage(pages.sharedPage);
     sharedContext = pages.sharedPage.context();
-    sharedPage = pages.sharedPage;
   });
 
-  test.afterAll(async ({pages}) => {
+  test.afterAll(async ({ pages }) => {
     await pages.shippingPage.navigateToProductsPage();
-    await productPage.searchAndSelectProduct('BLAZER');
-    await productSummaryPage.disableSpecialService('alcohol');
-    expect(await productSummaryPage.isAlcoholCheckbox.isChecked()).toBe(false);
+    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productSummaryPage.disableSpecialService('alcohol');
+    await expect(pages.productSummaryPage.isAlcoholLabel).not.toBeChecked();
     console.log('✔ Alcohol is disabled');
   });
 
   // ── Tests ─────────────────────────────────────────────────────────────────
 
-  test('Step 1 | Enable Alcohol with recipient type Licensee on product', async ({pages}) => {
+  test('Step 1 | Enable Alcohol with recipient type Licensee on product', async ({ pages }) => {
     test.setTimeout(120_000);
 
     await pages.shippingPage.navigateToProductsPage();
-    await productPage.searchAndSelectProduct('BLAZER');
-    await productSummaryPage.updateProductAlcohol(ALCOHOL_RECIPIENT_TYPE);
+    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productSummaryPage.updateProductAlcohol(ALCOHOL_RECIPIENT_TYPE);
 
-    await expect(productSummaryPage.alcoholRecipientTypeDropdown).toHaveValue(ALCOHOL_RECIPIENT_TYPE);
+    await expect(pages.productSummaryPage.alcoholRecipientTypeDropdown).toHaveValue(ALCOHOL_RECIPIENT_TYPE);
     console.log(`✔ Alcohol recipient type set to: ${ALCOHOL_RECIPIENT_TYPE}`);
   });
 
@@ -57,7 +57,7 @@ test.describe('Label Generation For Alcohol — Recipient Type: Consumer', () =>
     console.log(`✔ Order created — ID: ${sharedOrderID}`);
   });
 
-  test('Step 3 | Manually generate label and verify Alcohol XML payload', async ({pages}) => {
+  test('Step 3 | Manually generate label and verify Alcohol XML payload', async ({ pages }) => {
     test.setTimeout(90_000);
 
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);

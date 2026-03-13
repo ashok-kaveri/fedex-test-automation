@@ -32,9 +32,6 @@ export class ShopifyAdminPage extends BasePage {
     // this.fulfillmentStatusBadge = page.locator('s-internal-badge:nth-child(4) > .badge');
     this.fulfillmentStatusBadge = page.getByText('CompletePaidCompleteFulfilledArchived');
     this.generateReturnLabelLink = page.getByRole('link', { name: 'Generate Return Label', exact: true });
-
-
-
   }
 
   // Helper method for dynamic locators
@@ -45,11 +42,14 @@ export class ShopifyAdminPage extends BasePage {
   // Navigate to Shopify admin store
   async navigateToStore(storeName: string): Promise<void> {
     await this.page.goto(`https://admin.shopify.com/store/${storeName}`);
-    await this.searchButton.waitFor({ state: 'visible' });
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForLoadState('networkidle');
+    await this.searchButton.waitFor({ state: 'visible', timeout: 30000 });
   }
 
   // Search and open order by ID with retry logic
   async searchAndOpenOrder(orderID: string, maxRetries: number = 4): Promise<void> {
+    await this.page.waitForTimeout(3000);
     await this.searchButton.click();
     await this.ordersButton.click();
     await this.searchInput.fill(orderID);

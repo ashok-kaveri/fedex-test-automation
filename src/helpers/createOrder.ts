@@ -1,5 +1,5 @@
-import axios from "axios";
 import * as dotenv from "dotenv";
+import type { APIRequestContext } from '@playwright/test';
 dotenv.config({ quiet: true });
 
 const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || "";
@@ -77,9 +77,11 @@ interface LineItem {
 class ShopifyOrderUploader {
   private readonly apiUrl: string;
   private lastOrderId: string | null = null;
+  private apiContext?: APIRequestContext;
 
-  constructor() {
+  constructor(apiContext?: APIRequestContext) {
     this.apiUrl = `https://${SHOPIFY_STORE_NAME}.myshopify.com/admin/api/${SHOPIFY_API_VERSION}/orders.json`;
+    this.apiContext = apiContext;
   }
 
   // Standard order with address type selection
@@ -133,15 +135,39 @@ class ShopifyOrderUploader {
     label: string
   ): Promise<string | null> {
     const payload = this.buildOrderPayload(user, lineItems);
+    
     try {
-      const { data } = await axios.post(this.apiUrl, payload, {
-        headers: {
-          "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
-          "Content-Type": "application/json",
-        },
-      });
-      this.lastOrderId = data.order.id;
-      return data.order.name;
+      // Use Playwright request if available, fallback to axios for backward compatibility
+      if (this.apiContext) {
+        const response = await this.apiContext.post(this.apiUrl, {
+          headers: {
+            "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
+            "Content-Type": "application/json",
+          },
+          data: payload,
+        });
+        
+        if (!response.ok()) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error(`${label} creation failed:`, errorData);
+          return null;
+        }
+        
+        const data = await response.json();
+        this.lastOrderId = data.order.id;
+        return data.order.name;
+      } else {
+        // Fallback to axios for backward compatibility
+        const axios = require('axios');
+        const { data } = await axios.post(this.apiUrl, payload, {
+          headers: {
+            "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
+            "Content-Type": "application/json",
+          },
+        });
+        this.lastOrderId = data.order.id;
+        return data.order.name;
+      }
     } catch (err: any) {
       console.error(
         `${label} creation failed:`,

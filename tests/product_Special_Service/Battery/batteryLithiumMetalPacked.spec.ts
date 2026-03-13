@@ -1,8 +1,16 @@
-import { Page, BrowserContext } from '@playwright/test';
-import { ProductPage } from '../../../src/pages/app/productsPage/productsPage';
-import { ProductSummaryPage } from '../../../src/pages/app/productsPage/productSummaryPage';
-import ShopifyOrderUploader from '../../../src/helpers/createOrder';
 import { test, expect } from '../../../src/setup/fixtures';
+import ShopifyOrderUploader from '../../../src/helpers/createOrder';
+import { Page, BrowserContext } from '@playwright/test';
+
+import axios from 'axios';
+
+const { PDFParse } = require('pdf-parse');
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Test Suite: Label Generation For Lithium Metal (Packed With Equipment)
+// Run: npx playwright test tests/product_Special_Service/Battery/batteryLithiumIonContained.spec.ts
+//      --project="Google Chrome" --headed
+// ─────────────────────────────────────────────────────────────────────────────
 
 const BATTERY_MATERIAL = 'LITHIUM_METAL';
 const BATTERY_PACKING = 'PACKED_WITH_EQUIPMENT';
@@ -12,43 +20,38 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
-  let sharedPage: Page;
-  let sharedContext: BrowserContext;
+  let capturedDocumentUrl: string = '';
+   let sharedContext: BrowserContext;
 
   // ── Page Objects ──────────────────────────────────────────────────────────
   let orderUploader: ShopifyOrderUploader;
-  let productPage: ProductPage;
-  let productSummaryPage: ProductSummaryPage;
 
   // ── Hooks ─────────────────────────────────────────────────────────────────
 
   test.beforeAll(async ({ pages }) => {
     orderUploader = new ShopifyOrderUploader();
-    productPage = new ProductPage(pages.sharedPage);
-    productSummaryPage = new ProductSummaryPage(pages.sharedPage);
     sharedContext = pages.sharedPage.context();
-    sharedPage = pages.sharedPage;
   });
 
-  test.afterAll(async ({pages}) => {
+  test.afterAll(async ({ pages }) => {
     await pages.shippingPage.navigateToProductsPage();
-    await productPage.searchAndSelectProduct('BLAZER');
-    await productSummaryPage.disableSpecialService('battery');
-    expect(await productSummaryPage.isBatteryCheckbox.isChecked()).toBe(false);
+    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productSummaryPage.disableSpecialService('battery');
+    await expect(pages.productSummaryPage.isBatteryLabel).not.toBeChecked();
     console.log('✔ Battery is disabled');
   });
 
   // ── Tests ─────────────────────────────────────────────────────────────────
 
-  test('Step 1 | Enable Lithium Ion (Contained In Equipment) battery on product', async ({pages}) => {
+  test('Step 1 | Enable Lithium Ion (Contained In Equipment) battery on product', async ({ pages }) => {
     test.setTimeout(120_000);
 
     await pages.shippingPage.navigateToProductsPage();
-    await productPage.searchAndSelectProduct('BLAZER');
-    await productSummaryPage.updateProductBattery(BATTERY_MATERIAL, BATTERY_PACKING);
+    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productSummaryPage.updateProductBattery(BATTERY_MATERIAL, BATTERY_PACKING);
 
-    await expect(productSummaryPage.batteryMaterialTypeDropdown).toHaveValue(BATTERY_MATERIAL);
-    await expect(productSummaryPage.batteryPackingTypeDropdown).toHaveValue(BATTERY_PACKING);
+    await expect(pages.productSummaryPage.batteryMaterialTypeDropdown).toHaveValue(BATTERY_MATERIAL);
+    await expect(pages.productSummaryPage.batteryPackingTypeDropdown).toHaveValue(BATTERY_PACKING);
     console.log(`✔ Battery settings updated — Material: ${BATTERY_MATERIAL}, Packing: ${BATTERY_PACKING}`);
   });
 
@@ -60,7 +63,7 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
     console.log(`✔ Order created — ID: ${sharedOrderID}`);
   });
 
-  test('Step 3 | Manually generate label and verify Battery XML payload', async ({pages}) => {
+  test('Step 3 | Manually generate label and verify Battery XML payload', async ({ pages }) => {
     test.setTimeout(90_000);
 
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);

@@ -12,6 +12,10 @@ import { PackagingSettingsPage } from '../pages/app/settings/packagingSettingsPa
 import { ProductsPage } from '../pages/app/Products/productsPage';
 import { BasePage } from '../pages/basePage';
 
+import { SideDockPage } from '../pages/app/ManualLabelPage/SideDockConfig';
+
+import { ProductPage } from '../pages/app/productsPage/productsPage';
+import { ProductSummaryPage } from '../pages/app/productsPage/productSummaryPage';
 export type Pages = {
   sharedPage: Page;
   shopifyAdmin: ShopifyAdminPage;
@@ -23,6 +27,9 @@ export type Pages = {
   packagingSettingsPage: PackagingSettingsPage;
   productsPage: ProductsPage;
   basePage: BasePage;
+  sideDockPage: SideDockPage;
+  productPage: ProductPage;
+  productSummaryPage: ProductSummaryPage;
 };
 export const test = baseTest.extend<{ pages: Pages }>({
   pages: [
@@ -44,6 +51,9 @@ export const test = baseTest.extend<{ pages: Pages }>({
         packagingSettingsPage: new PackagingSettingsPage(page),
         productsPage: new ProductsPage(page),
         basePage: new BasePage(page),
+        sideDockPage: new SideDockPage(page),
+        productPage: new ProductPage(page),
+        productSummaryPage: new ProductSummaryPage(page),
       };
       await use(pages);
       await context.close();
