@@ -37,9 +37,34 @@ export class ShopifyProductPage extends BasePage {
     this.grid = this.page.locator('[role="grid"]');
 
     this.checkedCheckboxes = this.page.locator('input[type="checkbox"]:checked:not(:disabled)');
+
     this.allRows = this.page.locator('[role="row"]');
+
     this.rowTextInputFilter = this.page.locator('input[type="text"]');
+
     this.columnHeaders = this.page.locator('[role="columnheader"]');
+  }
+
+  // ================= DYNAMIC LOCATORS =================
+
+  private productValueInput(productName: string) {
+    return this.page.locator(`input[value="${productName}"]`);
+  }
+
+  private gridCellByIndex(row: Locator, index: number) {
+    return row.locator(`[role="gridcell"][aria-colindex="${index}"]`);
+  }
+
+  private gridCellInput(cell: Locator) {
+    return cell.locator('input');
+  }
+
+  private gridCellSelect(cell: Locator) {
+    return cell.locator('select');
+  }
+
+  private removeTagButtons(cell: Locator) {
+    return cell.locator('button[aria-label^="Remove"]');
   }
 
   // ================= ACTION METHODS =================
@@ -85,11 +110,10 @@ export class ShopifyProductPage extends BasePage {
     const { enable = [], disableAll = false } = options;
 
     if (disableAll) {
-      const checkedBoxes = this.checkedCheckboxes;
-      const count = await checkedBoxes.count();
+      const count = await this.checkedCheckboxes.count();
 
       for (let i = 0; i < count; i++) {
-        await checkedBoxes.nth(i).click();
+        await this.checkedCheckboxes.nth(i).click();
       }
     }
 
@@ -112,20 +136,19 @@ export class ShopifyProductPage extends BasePage {
     });
 
     if (!productName) return rows;
+
     return rows.filter({
-      // eslint-disable-next-line no-restricted-syntax
-      has: this.page.locator(`input[value="${productName}"]`),
+      has: this.productValueInput(productName),
     });
   }
 
   // ================= COLUMN HELPER =================
 
   private async getColumnIndex(columnName: string): Promise<number> {
-    const headers = this.columnHeaders;
-    const count = await headers.count();
+    const count = await this.columnHeaders.count();
 
     for (let i = 0; i < count; i++) {
-      const text = await headers.nth(i).textContent();
+      const text = await this.columnHeaders.nth(i).textContent();
 
       if (text?.trim().includes(columnName)) {
         return i + 1;
@@ -137,8 +160,7 @@ export class ShopifyProductPage extends BasePage {
 
   private async getCell(row: Locator, columnName: string) {
     const index = await this.getColumnIndex(columnName);
-    // eslint-disable-next-line no-restricted-syntax
-    return row.locator(`[role="gridcell"][aria-colindex="${index}"]`);
+    return this.gridCellByIndex(row, index);
   }
 
   // ================= BULK EDIT FUNCTIONS =================
@@ -151,15 +173,14 @@ export class ShopifyProductPage extends BasePage {
 
     for (let i = 0; i < count; i++) {
       const row = rows.nth(i);
-      // eslint-disable-next-line no-restricted-syntax
-      const cell = row.locator(`[role="gridcell"][aria-colindex="${columnIndex}"]`);
+      const cell = this.gridCellByIndex(row, columnIndex);
 
       await cell.dblclick({ force: true });
-      // eslint-disable-next-line no-restricted-syntax
-      const input = cell.locator('input');
+
+      const input = this.gridCellInput(cell);
       await input.waitFor();
-      // eslint-disable-next-line no-restricted-syntax
-      const removeButtons = cell.locator('button[aria-label^="Remove"]');
+
+      const removeButtons = this.removeTagButtons(cell);
       const existingCount = await removeButtons.count();
 
       for (let j = 0; j < existingCount; j++) {
@@ -184,8 +205,8 @@ export class ShopifyProductPage extends BasePage {
     for (let i = 0; i < count; i++) {
       const row = rows.nth(i);
       const cell = await this.getCell(row, 'Base price');
-      // eslint-disable-next-line no-restricted-syntax
-      await cell.locator('input').fill(price);
+
+      await this.gridCellInput(cell).fill(price);
     }
   }
 
@@ -196,8 +217,8 @@ export class ShopifyProductPage extends BasePage {
     for (let i = 0; i < count; i++) {
       const row = rows.nth(i);
       const cell = await this.getCell(row, 'SKU');
-      // eslint-disable-next-line no-restricted-syntax
-      await cell.locator('input').fill(sku);
+
+      await this.gridCellInput(cell).fill(sku);
     }
   }
 
@@ -208,12 +229,11 @@ export class ShopifyProductPage extends BasePage {
     for (let i = 0; i < count; i++) {
       const row = rows.nth(i);
       const cell = await this.getCell(row, 'Weight');
-      // eslint-disable-next-line no-restricted-syntax
-      await cell.locator('input').fill(weight);
+
+      await this.gridCellInput(cell).fill(weight);
 
       if (unit) {
-        // eslint-disable-next-line no-restricted-syntax
-        await cell.locator('select').selectOption({ label: unit });
+        await this.gridCellSelect(cell).selectOption({ label: unit });
       }
     }
   }
@@ -224,10 +244,9 @@ export class ShopifyProductPage extends BasePage {
 
     for (let i = 0; i < count; i++) {
       const row = rows.nth(i);
-      // eslint-disable-next-line no-restricted-syntax
       const cell = await this.getCell(row, 'Harmonized system code');
-      // eslint-disable-next-line no-restricted-syntax
-      await cell.locator('input').fill(hsCode);
+
+      await this.gridCellInput(cell).fill(hsCode);
     }
   }
 
@@ -239,12 +258,11 @@ export class ShopifyProductPage extends BasePage {
 
     for (let i = 0; i < count; i++) {
       const row = rows.nth(i);
-      // eslint-disable-next-line no-restricted-syntax
-      const cell = row.locator(`[role="gridcell"][aria-colindex="${columnIndex}"]`);
-      // eslint-disable-next-line no-restricted-syntax
+      const cell = this.gridCellByIndex(row, columnIndex);
+
       await cell.click();
-      // eslint-disable-next-line no-restricted-syntax
-      const select = cell.locator('select');
+
+      const select = this.gridCellSelect(cell);
 
       await select.selectOption({ value: country });
 

@@ -18,7 +18,6 @@ export class ShopifyProductsSummaryPage extends BasePage {
   readonly priceInput: Locator;
 
   // Inventory
-  readonly inventoryQuantityInput: Locator;
   readonly inventoryTrackedCheckbox: Locator;
 
   // SKU / Barcode
@@ -67,9 +66,9 @@ export class ShopifyProductsSummaryPage extends BasePage {
 
     // ================= INVENTORY =================
 
-    this.inventoryQuantityInput = this.page.locator('input[name="inventoryLevels[0]"]');
-
-    this.inventoryTrackedCheckbox = this.page.getByRole('checkbox', { name: 'Inventory tracked' });
+    this.inventoryTrackedCheckbox = this.page.getByRole('checkbox', {
+      name: 'Inventory tracked',
+    });
 
     // ================= SKU / BARCODE =================
 
@@ -93,11 +92,19 @@ export class ShopifyProductsSummaryPage extends BasePage {
 
     // ================= CUSTOMS =================
 
-    this.countryOfOriginButton = this.page.getByRole('button', { name: 'Country of origin' });
+    this.countryOfOriginButton = this.page.getByRole('button', {
+      name: 'Country of origin',
+    });
 
     this.countryOfOriginDropdown = this.page.locator('select[name="countryCodeOfOrigin"]');
 
     this.hsCodeInput = this.page.locator('input[name="harmonizedSystemCode"]');
+  }
+
+  // ================= DYNAMIC LOCATORS =================
+
+  getInventoryInput(locationNumber: string): Locator {
+    return this.page.locator(`input[name="inventoryLevels[${locationNumber}]"]`);
   }
 
   // ================= ACTION METHODS =================
@@ -107,10 +114,8 @@ export class ShopifyProductsSummaryPage extends BasePage {
   }
 
   async setDescription(text: string) {
-    const editor = this.descriptionBody;
-
-    await editor.click();
-    await editor.fill(text);
+    await this.descriptionBody.click();
+    await this.descriptionBody.fill(text);
   }
 
   async setPrice(price: string) {
@@ -126,8 +131,7 @@ export class ShopifyProductsSummaryPage extends BasePage {
   }
 
   async setInventory(locationNumber: string, quantity: string) {
-    // eslint-disable-next-line no-restricted-syntax
-    await this.page.locator(`input[name="inventoryLevels[${locationNumber}]"]`).fill(quantity);
+    await this.getInventoryInput(locationNumber).fill(quantity);
   }
 
   async setWeight(weight: string, unit?: 'kg' | 'lb' | 'g' | 'oz') {
@@ -149,7 +153,6 @@ export class ShopifyProductsSummaryPage extends BasePage {
     await this.skuButton.click();
 
     if (sku) await this.skuInput.fill(sku);
-
     if (barcode) await this.barcodeInput.fill(barcode);
   }
 
