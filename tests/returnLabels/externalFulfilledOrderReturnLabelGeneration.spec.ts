@@ -1,28 +1,24 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../../src/pages/shopify/ShopifyAdminPage';
-import { ReturnLabelPage } from '../../src/pages/app/returnLabelPage/returnLabelPage';
+
+const store = process.env.STORE;
+
+if (!store) {
+  throw new Error('STORE environment variable is required');
+}
+
+test.describe.configure({ mode: 'serial' });
 
 test.describe('Return Label Generation For External Fulfilled Order', () => {
     let sharedOrderID: string;
     let sharedPage: any;
     let sharedContext: any;
-    let shopifyAdminPage: ShopifyAdminPage;
     let orderUploader: ShopifyOrderUploader;
-    let returnLabelPage: ReturnLabelPage;
-
-    test.beforeAll(async ({ browser }) => {
-        sharedContext = await browser.newContext({ storageState: 'auth.json' });
-        sharedPage = await sharedContext.newPage();
-
-        shopifyAdminPage = new ShopifyAdminPage(sharedPage);
+ 
+    test.beforeAll(async ({ pages }) => {
         orderUploader = new ShopifyOrderUploader();
-        returnLabelPage = new ReturnLabelPage(sharedPage);
-    });
-
-    test.afterAll(async () => {
-        await sharedPage?.close();
-        await sharedContext?.close();
+        sharedContext = pages.sharedPage.context();
+        sharedPage = pages.sharedPage;
     });
 
     test('Create an order from API', async () => {
@@ -32,12 +28,20 @@ test.describe('Return Label Generation For External Fulfilled Order', () => {
         sharedOrderID = orderID;
     });
 
-    test('External Fulfill the order and Generate Return Label', async () => {
-        test.setTimeout(120000);
-        await shopifyAdminPage.fulfillOrderInShopify(sharedOrderID);
-        await returnLabelPage.returnLabelGeneration();  
-        console.log('Return label generated successfully for externally fulfilled order');
+    test('External Fulfill the order and Generate Return Label', async ({pages}) => {
+    test.setTimeout(120000);
+    
+    const fulfillmentStatus = await pages.shopifyAdmin.fulfillOrderInShopify(sharedOrderID);
+    expect(fulfillmentStatus).toContain('Fulfilled');
+    console.log('✔ Order fulfilled with status:', fulfillmentStatus);
+
+    await pages.returnLabelPage.returnLabelGeneration();
+    await pages.sharedPage.waitForLoadState('load');
+    await expect(pages.returnLabelPage.successBadge).toBeVisible({ timeout: 40000 });
+    await expect(pages.returnLabelPage.downloadLink).toBeVisible({ timeout: 40000 });
+    console.log('✔ Return label generated successfully for externally fulfilled order');
+
     });
 });
 
-// tests/returnLabels/externalFulfilledOrderReturnLabelGeneration.spec.ts
+// npx playwright test tests/returnLabels/externalFulfilledOrderReturnLabelGeneration.spec.ts --project="Google Chrome" --headed       

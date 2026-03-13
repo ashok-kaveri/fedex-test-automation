@@ -21,7 +21,7 @@ export class OrderSummaryPage extends BasePage {
     this.returnPackageButton = this.appFrame.getByRole('button', { name: 'Return Packages' });
     this.printDocumentsButton = this.appFrame.getByRole('button', { name: 'Print Documents' });
     
-    this.returnPackageButton = this.appFrame.locator('button').filter({ hasText: 'Return Packages' });
+    this.returnPackageButton = this.appFrame.getByRole('button', { name: 'Return Packages', exact: true });
     this.labelGeneratedStatus = this.appFrame.locator('text=label generated');
   }
 
@@ -40,9 +40,9 @@ export class OrderSummaryPage extends BasePage {
 
   // Verify return package section is displayed
   async navigatingToReturnLabelPage() {
-    await expect(this.returnPackagesection).toBeVisible({ timeout: 5000 });
+    await this.returnPackagesection.waitFor({ state: 'visible', timeout: 15000 });
     await this.returnPackagesection.click();
-    await expect(this.returnPackageButton).toBeVisible({ timeout: 5000 });
+    await this.returnPackageButton.waitFor({ state: 'visible', timeout: 15000 });
     await this.returnPackageButton.click();
   }
 

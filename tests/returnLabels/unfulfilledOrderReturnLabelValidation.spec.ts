@@ -1,31 +1,12 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../../src/pages/shopify/ShopifyAdminPage';
-import { ReturnLabelPage } from '../../src/pages/app/returnLabelPage/returnLabelPage';
-import { ShippingPage } from '../../src/pages/app/ShippingPage/ShippingPage';
 
 test.describe('Return Label Generation For External Fulfilled Order', () => {
     let sharedOrderID: string;
-    let sharedPage: any;
-    let sharedContext: any;
-    let shopifyAdminPage: ShopifyAdminPage;
     let orderUploader: ShopifyOrderUploader;
-    let returnLabelPage: ReturnLabelPage;
-    let shippingPage: ShippingPage;
-
-    test.beforeAll(async ({ browser }) => {
-        sharedContext = await browser.newContext({ storageState: 'auth.json' });
-        sharedPage = await sharedContext.newPage();
-
-        shopifyAdminPage = new ShopifyAdminPage(sharedPage);
+    
+    test.beforeAll(async () => {
         orderUploader = new ShopifyOrderUploader();
-        returnLabelPage = new ReturnLabelPage(sharedPage);
-        shippingPage = new ShippingPage(sharedPage);
-    });
-
-    test.afterAll(async () => {
-        await sharedPage?.close();
-        await sharedContext?.close();
     });
 
     test('Create an order from API', async () => {
@@ -35,18 +16,19 @@ test.describe('Return Label Generation For External Fulfilled Order', () => {
         sharedOrderID = orderID;
     });
 
-    test('External Fulfill the order and Generate Return Label', async () => {
+    test('External Fulfill the order and Generate Return Label', async ({pages}) => {
         test.setTimeout(120000);
-        await shopifyAdminPage.navigateToStore(process.env.STORE!);
-        await shopifyAdminPage.searchAndOpenOrder(sharedOrderID, 5);
-        await shopifyAdminPage.openMoreActions();
-        await shopifyAdminPage.clickOnGenerateReturnLabel();
-        await shippingPage.validateReturnFailureMessageForUnfulfilledOrder();  
-        console.log('Return Failure message validated successfully for unfulfilled order');
+        await pages.shopifyAdmin.navigateToStore(process.env.STORE!);
+        await pages.shopifyAdmin.searchAndOpenOrder(sharedOrderID, 5);
+        await pages.shopifyAdmin.openMoreActions();
+        await pages.shopifyAdmin.clickOnGenerateReturnLabel();
+        const returnFailure = await pages.shippingPage.validateReturnFailureMessageForUnfulfilledOrder();
+        await expect(returnFailure.title).toBeVisible({ timeout: 10000 });
+        await expect(returnFailure.description).toBeVisible({ timeout: 10000 });
     });
 });
 
 
-// tests/returnLabels/unfulfilledOrderReturnLabelValidation.spec.ts
+// npx playwright test tests/returnLabels/unfulfilledOrderReturnLabelValidation.spec.ts --project="Google Chrome" --headed 
 
 

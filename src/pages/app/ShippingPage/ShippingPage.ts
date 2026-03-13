@@ -233,8 +233,13 @@ export class ShippingPage extends BasePage {
   }
   // =================Validating the Return failure message for the unfulfilled order =================
   async validateReturnFailureMessageForUnfulfilledOrder() {
-    await expect(this.returnFailureTitleForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
-    await expect(this.returnFailureDescriptionForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+    // await expect(this.returnFailureTitleForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+    // await expect(this.returnFailureDescriptionForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+
+    return {
+    title: this.returnFailureTitleForUnfulfilledOrder,
+    description: this.returnFailureDescriptionForUnfulfilledOrder
+  };
   }
 
   // ================= Navigate to Products tab =================

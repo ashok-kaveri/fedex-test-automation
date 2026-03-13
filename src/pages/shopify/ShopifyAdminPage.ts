@@ -86,7 +86,7 @@ export class ShopifyAdminPage extends BasePage {
 
   // Click on Generate Label link to open manual label generation page
   async clickGenerateLabelLink(): Promise<void> {
-    await this.generateLabelLink.click();
+    await this.generateLabelLink.click();  
   }
 
   //Click on Auto-label generation
@@ -102,11 +102,11 @@ export class ShopifyAdminPage extends BasePage {
 
 
   // fulfilling order from Shopify Order Summary page
-  async confirmOrderFulfillment(): Promise<void> {
+  async confirmOrderFulfillment(): Promise<string> {
     await this.markAsFulfilledButton.click();
     await this.markAsFulfilledButton.click();
-    await expect(this.fulfillmentStatusBadge).toBeVisible({ timeout: 20000 });
-    await expect(this.fulfillmentStatusBadge).toContainText('Fulfilled');
+    await this.fulfillmentStatusBadge.waitFor({ state: 'visible', timeout: 20000 });
+    return await this.fulfillmentStatusBadge.innerText();
   }
 
   //generic method to navigate to order and click on generate label manually in shopify admin
@@ -117,12 +117,13 @@ export class ShopifyAdminPage extends BasePage {
     await this.clickGenerateLabelLink();
   }
 
-  async fulfillOrderInShopify(orderID: string) {
+  async fulfillOrderInShopify(orderID: string): Promise<string> {
     await this.navigateToStore(process.env.STORE!);
     await this.searchAndOpenOrder(orderID, 5);
-    await this.confirmOrderFulfillment();
+    const status = await this.confirmOrderFulfillment();
     await this.openMoreActions();
     await this.clickOnGenerateReturnLabel();
+    return status;
     
   }
 

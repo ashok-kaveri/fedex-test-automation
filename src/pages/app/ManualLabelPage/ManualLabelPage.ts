@@ -37,9 +37,10 @@ export class GenerateLabelManuallyPage extends BasePage {
     this.failedRatesBox = this.appFrame.locator('div.Polaris-Box').filter({ hasText: 'Failed to fetch rates' });
     this.clickBackButton = this.appFrame.getByRole('button', { name: 'Orders' });
     this.fetchXMLMenuButton = this.appFrame.getByRole('button').filter({ hasText: /^$/ }).nth(5);
-    this.viewXmlMenuLogItem = this.appFrame.getByRole('menuitem', { name: 'View XML' });
+    this.viewXmlMenuLogItem = this.appFrame.getByRole('menuitem', { name: 'View Logs' });
     this.XmlCloseButton = this.appFrame.locator('button.Polaris-Button--primary').filter({ hasText: 'Close' });
-    this.xmlRequestContentArea = this.appFrame.locator('pre').filter({ hasText: '<?xml version="1.0" encoding' });
+    // this.xmlRequestContentArea = this.appFrame.locator('pre').filter({ hasText: '<?xml version="1.0" encoding' });
+    this.xmlRequestContentArea = this.appFrame.locator('pre.Polaris-Text--root').first();
 
     // XML viewer modal locators
     this.xmlViewerModal = this.appFrame.locator('div[role="dialog"][aria-modal="true"]');
@@ -184,6 +185,8 @@ export class GenerateLabelManuallyPage extends BasePage {
     */
 
   async waitUntilGeneratePackageButtonVisible(): Promise<void> {
+    await this.page.reload();
+    await this.waitForLoadingToComplete();
     await this.generatePackagesButton.waitFor({ state: 'visible', timeout: 30000 });
   }
 

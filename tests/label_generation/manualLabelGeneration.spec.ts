@@ -25,3 +25,5 @@ test.describe('Manual Label Generation Flow', () => {
     await pages.orderSummaryPage.verifyLabelGenerated();
   });
 });
+
+//npx playwright test tests/label_generation/manualLabelGeneration.spec.ts --project="Google Chrome" --headed --debug

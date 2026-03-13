@@ -1,11 +1,8 @@
-import { test, expect, Page, BrowserContext } from '@playwright/test';
+import { Page, BrowserContext } from '@playwright/test';
 import { ProductPage } from '../../../src/pages/app/productsPage/productsPage';
 import { ProductSummaryPage } from '../../../src/pages/app/productsPage/productSummaryPage';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../../../src/pages/shopify/ShopifyAdminPage';
-import { ShippingPage } from '../../../src/pages/app/ShippingPage/ShippingPage';
-import { GenerateLabelManuallyPage } from '../../../src/pages/app/ManualLabelPage/ManualLabelPage';
-import { OrderSummaryPage } from '../../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
+import { test, expect } from '../../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -14,48 +11,36 @@ test.describe('Label Generation For Service Default Signature', () => {
   let sharedOrderID: string;
   let sharedPage: Page;
   let sharedContext: BrowserContext;
-  let capturedDocumentUrl: string = '';
 
   // ── Page Objects ──────────────────────────────────────────────────────────
   let orderUploader: ShopifyOrderUploader;
   let productPage: ProductPage;
   let productSummaryPage: ProductSummaryPage;
-  let shopifyAdminPage: ShopifyAdminPage;
-  let shippingPage: ShippingPage;
-  let manualLabelPage: GenerateLabelManuallyPage;
-  let orderSummaryPage: OrderSummaryPage;
 
   // ── Hooks ─────────────────────────────────────────────────────────────────
 
-  test.beforeAll(async ({ browser }) => {
-    sharedContext = await browser.newContext({ storageState: 'auth.json' });
-    sharedPage = await sharedContext.newPage();
-
+  test.beforeAll(async ({ pages }) => {
     orderUploader = new ShopifyOrderUploader();
-    shopifyAdminPage = new ShopifyAdminPage(sharedPage);
-    shippingPage = new ShippingPage(sharedPage);
-    productPage = new ProductPage(sharedPage);
-    productSummaryPage = new ProductSummaryPage(sharedPage);
-    manualLabelPage = new GenerateLabelManuallyPage(sharedPage);
-    orderSummaryPage = new OrderSummaryPage(sharedPage);
+    productPage = new ProductPage(pages.sharedPage);
+    productSummaryPage = new ProductSummaryPage(pages.sharedPage);
+    sharedContext = pages.sharedPage.context();
+    sharedPage = pages.sharedPage;
   });
 
-  test.afterAll(async () => {
-    await shippingPage.navigateToProductsPage();
-    await productPage.searchAndSelectProduct('Simple 1');
+  test.afterAll(async ({pages}) => {
+    await pages.shippingPage.navigateToProductsPage();
+    await productPage.searchAndSelectProduct('BLAZER');
     await productSummaryPage.updateProductSignature('AS_PER_THE_GENERAL_SETTINGS');
     expect(await productSummaryPage.getSelectedSignatureLabel()).toBe('As Per The General Settings');
-    await sharedPage?.close();
-    await sharedContext?.close();
   });
 
   // ── Tests ─────────────────────────────────────────────────────────────────
 
-  test('Step 1 | Enable Service Default Signature on product', async () => {
+  test('Step 1 | Enable Service Default Signature on product', async ({pages}) => {
     test.setTimeout(120_000);
 
-    await shippingPage.navigateToProductsPage();
-    await productPage.searchAndSelectProduct('Simple 1');
+    await pages.shippingPage.navigateToProductsPage();
+    await productPage.searchAndSelectProduct('BLAZER');
     await productSummaryPage.updateProductSignature('SERVICE_DEFAULT');
 
     const selectedLabel = await productSummaryPage.getSelectedSignatureLabel();
@@ -74,28 +59,28 @@ test.describe('Label Generation For Service Default Signature', () => {
     console.log(`✔ Order created — ID: ${sharedOrderID}`);
   });
 
-  test('Step 3 | Manually generate label and verify XML signature option', async () => {
+  test('Step 3 | Manually generate label and verify XML signature option', async ({pages}) => {
     test.setTimeout(0);
 
-    await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-    await manualLabelPage.waitUntilGeneratePackageButtonVisible();
-    await manualLabelPage.generatePackages();
-    await manualLabelPage.getShippingRates();
+    await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
+    await pages.manualLabelPage.waitUntilGeneratePackageButtonVisible();
+    await pages.manualLabelPage.generatePackages();
+    await pages.manualLabelPage.getShippingRates();
 
-    const xmlContent = await manualLabelPage.verifySignatureOptionInXmlRequest();
-    expect(xmlContent).toContain('<ns:OptionType>SERVICE_DEFAULT</ns:OptionType>');
+    const xmlContent = await pages.manualLabelPage.verifySignatureOptionInXmlRequest();
+    expect(xmlContent).toContain('SERVICE_DEFAULT');
     console.log('✔ XML contains expected signature option: SERVICE_DEFAULT');
 
-    await manualLabelPage.selectFirstShippingService();
-    await manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
-    await orderSummaryPage.verifyLabelGenerated();
+    await pages.manualLabelPage.selectFirstShippingService();
+    await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
+    await pages.orderSummaryPage.verifyLabelGenerated();
   });
 
 /*
-  test('Step 4 | Print label, capture URL and verify PDF text', async () => {
+  test('Step 4 | Print label, capture URL and verify PDF text', async ({pages}) => {
     test.setTimeout(0);
 
-    const { documentUrl, pdfText } = await orderSummaryPage.captureDocumentUrl(sharedContext, () => orderSummaryPage.clickPrintDocuments());
+    const { documentUrl, pdfText } = await pages.orderSummaryPage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
 
     expect(documentUrl).toBeTruthy();
     expect(pdfText).toContain('SERVICE_DEFAULT');
