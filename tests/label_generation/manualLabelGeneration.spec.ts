@@ -1,27 +1,24 @@
-import { test, expect } from '../../src/fixtures';
+import { test, expect } from '../../src/setup/fixtures';
+import ShopifyOrderUploader from '../../src/helpers/createOrder';
 
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Manual Label Generation Flow', () => {
   let sharedOrderID: string;
+  let orderUploader: ShopifyOrderUploader;
 
-  test('Create an order from API', async ({ orderUploader }) => {
+  test.beforeAll(async () => {
+    orderUploader = new ShopifyOrderUploader();
     const orderID = (await orderUploader.uploadOrder()) as string;
     console.log('Order ID:', orderID);
     expect(orderID).toBeTruthy();
     sharedOrderID = orderID;
   });
 
-  test('Navigate to Shopify order and generate label manually', async ({ 
-    page,
-    shopifyAdminPage, 
-    manualLabelPage, 
-    orderSummaryPage 
-  }) => {
+  test('Navigate to Shopify order and generate label manually', async ({ pages }) => {
     test.setTimeout(120000);
-    await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-    await manualLabelPage.generateLabelInApp();
-    await orderSummaryPage.verifyLabelGenerated();
+    await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
+    await pages.manualLabelPage.generateLabelInApp();
+    await pages.orderSummaryPage.verifyLabelGenerated();
   });
 });
-
