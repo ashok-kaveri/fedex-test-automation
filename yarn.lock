@@ -15,30 +15,6 @@
     formdata-node "^4.3.2"
     node-fetch "^2.6.7"
 
-<<<<<<< HEAD
-=======
-"@napi-rs/canvas-darwin-arm64@0.1.80":
-  version "0.1.80"
-  resolved "https://registry.npmjs.org/@napi-rs/canvas-darwin-arm64/-/canvas-darwin-arm64-0.1.80.tgz"
-  integrity sha512-O64APRTXRUiAz0P8gErkfEr3lipLJgM6pjATwavZ22ebhjYl/SUbpgM0xcWPQBNMP1n29afAC/Us5PX1vg+JNQ==
-
-"@napi-rs/canvas@^0.1.80", "@napi-rs/canvas@0.1.80":
-  version "0.1.80"
-  resolved "https://registry.npmjs.org/@napi-rs/canvas/-/canvas-0.1.80.tgz"
-  integrity sha512-DxuT1ClnIPts1kQx8FBmkk4BQDTfI5kIzywAaMjQSXfNnra5UFU9PwurXrl+Je3bJ6BGsp/zmshVVFbCmyI+ww==
-  optionalDependencies:
-    "@napi-rs/canvas-android-arm64" "0.1.80"
-    "@napi-rs/canvas-darwin-arm64" "0.1.80"
-    "@napi-rs/canvas-darwin-x64" "0.1.80"
-    "@napi-rs/canvas-linux-arm-gnueabihf" "0.1.80"
-    "@napi-rs/canvas-linux-arm64-gnu" "0.1.80"
-    "@napi-rs/canvas-linux-arm64-musl" "0.1.80"
-    "@napi-rs/canvas-linux-riscv64-gnu" "0.1.80"
-    "@napi-rs/canvas-linux-x64-gnu" "0.1.80"
-    "@napi-rs/canvas-linux-x64-musl" "0.1.80"
-    "@napi-rs/canvas-win32-x64-msvc" "0.1.80"
-
->>>>>>> 5092c7aebb38bb8724acf7e08b2de41d9399e083
 "@playwright/test@^1.58.2", "@playwright/test@>=1.40.0":
   version "1.58.2"
   resolved "https://registry.npmjs.org/@playwright/test/-/test-1.58.2.tgz"
@@ -68,8 +44,6 @@
   dependencies:
     undici-types "~5.26.4"
 
-<<<<<<< HEAD
-=======
 "@types/pdf-parse@^1.1.5":
   version "1.1.5"
   resolved "https://registry.npmjs.org/@types/pdf-parse/-/pdf-parse-1.1.5.tgz"
@@ -77,7 +51,6 @@
   dependencies:
     "@types/node" "*"
 
->>>>>>> 5092c7aebb38bb8724acf7e08b2de41d9399e083
 abort-controller@^3.0.0:
   version "3.0.0"
   resolved "https://registry.npmjs.org/abort-controller/-/abort-controller-3.0.0.tgz"
@@ -177,7 +150,6 @@ event-target-shim@^5.0.0:
   resolved "https://registry.npmjs.org/event-target-shim/-/event-target-shim-5.0.1.tgz"
   integrity sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==
 
-<<<<<<< HEAD
 fast-xml-builder@^1.0.0:
   version "1.0.0"
   resolved "https://registry.npmjs.org/fast-xml-builder/-/fast-xml-builder-1.0.0.tgz"
@@ -191,8 +163,6 @@ fast-xml-parser@^5.4.2:
     fast-xml-builder "^1.0.0"
     strnum "^2.1.2"
 
-=======
->>>>>>> 5092c7aebb38bb8724acf7e08b2de41d9399e083
 follow-redirects@^1.15.11:
   version "1.15.11"
   resolved "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.11.tgz"
@@ -334,29 +304,6 @@ openai@^4.70.0:
     formdata-node "^4.3.2"
     node-fetch "^2.6.7"
 
-<<<<<<< HEAD
-=======
-pdf-parse@^2.4.5:
-  version "2.4.5"
-  resolved "https://registry.npmjs.org/pdf-parse/-/pdf-parse-2.4.5.tgz"
-  integrity sha512-mHU89HGh7v+4u2ubfnevJ03lmPgQ5WU4CxAVmTSh/sxVTEDYd1er/dKS/A6vg77NX47KTEoihq8jZBLr8Cxuwg==
-  dependencies:
-    "@napi-rs/canvas" "0.1.80"
-    pdfjs-dist "5.4.296"
-
-pdf2json@^4.0.2:
-  version "4.0.2"
-  resolved "https://registry.npmjs.org/pdf2json/-/pdf2json-4.0.2.tgz"
-  integrity sha512-iiRSuRmLihoEJ4YGkoqSq3/r4MR0OmkMTYDda0Pq7DAWqJwMylTilXu46T16gfS3DUp3fhiVuz7NtRMbk3uBhw==
-
-pdfjs-dist@5.4.296:
-  version "5.4.296"
-  resolved "https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-5.4.296.tgz"
-  integrity sha512-DlOzet0HO7OEnmUmB6wWGJrrdvbyJKftI1bhMitK7O2N8W2gc757yyYBbINy9IDafXAV9wmKr9t7xsTaNKRG5Q==
-  optionalDependencies:
-    "@napi-rs/canvas" "^0.1.80"
-
->>>>>>> 5092c7aebb38bb8724acf7e08b2de41d9399e083
 playwright-core@1.58.2:
   version "1.58.2"
   resolved "https://registry.npmjs.org/playwright-core/-/playwright-core-1.58.2.tgz"
@@ -387,14 +334,11 @@ proxy-from-env@^1.1.0:
   resolved "https://registry.npmjs.org/proxy-from-env/-/proxy-from-env-1.1.0.tgz"
   integrity sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==
 
-<<<<<<< HEAD
 strnum@^2.1.2:
   version "2.2.0"
   resolved "https://registry.npmjs.org/strnum/-/strnum-2.2.0.tgz"
   integrity sha512-Y7Bj8XyJxnPAORMZj/xltsfo55uOiyHcU2tnAVzHUnSJR/KsEX+9RoDeXEnsXtl/CX4fAcrt64gZ13aGaWPeBg==
 
-=======
->>>>>>> 5092c7aebb38bb8724acf7e08b2de41d9399e083
 tr46@~0.0.3:
   version "0.0.3"
   resolved "https://registry.npmjs.org/tr46/-/tr46-0.0.3.tgz"

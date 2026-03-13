@@ -47,8 +47,8 @@ export class ShopifyAdminPage extends BasePage {
 
   // Search and open order by ID with retry logic
   async searchAndOpenOrder(orderID: string, maxRetries: number = 4): Promise<void> {
+    await this.page.waitForTimeout(3000);
     await this.searchButton.click();
-    await this.searchInput.waitFor({ state: 'visible', timeout: 1000 });
     await this.ordersButton.click();
     await this.searchInput.fill(orderID);
 
@@ -58,7 +58,7 @@ export class ShopifyAdminPage extends BasePage {
     let lastError: Error | undefined;
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        await orderLink.waitFor({ state: 'visible' });
+        await orderLink.waitFor({ state: 'visible', timeout: 1000 });
         await orderLink.click();
         return;
       } catch (error) {
