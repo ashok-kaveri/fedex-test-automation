@@ -150,7 +150,7 @@ export class SideDockPage {
     await this.thirdPartyInsuranceCheckbox.uncheck({ force: true });
   }
 
-  async addInsuranceDetails({ liabilityType, insuranceType, percentage }: { liabilityType: string; insuranceType: string; percentage?: any }) {
+  async addInsuranceDetails({ liabilityType, insuranceType, percentage }: { liabilityType: string; insuranceType: string; percentage?: number }) {
     await this.enableThirdPartyInsurance();
     await this.insuranceEditButton.click();
     await this.modalContainer.waitFor({ state: 'visible' });
@@ -201,9 +201,5 @@ export class SideDockPage {
 
   async selectShipAfterDays(days: string) {
     await this.shipAfterDaysTextBox.fill(days);
-
-    //With Spinner button
-    //await this.appFrame.locator(".Polaris-TextField__Segment").first().click();
-    //await this.appFrame.locator(".Polaris-TextField__Segment").last().click();
   }
 }
