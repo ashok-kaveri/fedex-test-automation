@@ -216,7 +216,7 @@ export class GenerateLabelManuallyPage extends BasePage {
   }
 
   async waitUntilGeneratePackageButtonVisible(): Promise<void> {
-    await this.page.reload();
+    // await this.page.reload();
     await this.waitForLoadingToComplete();
     await this.generatePackagesButton.waitFor({ state: 'visible', timeout: 30000 });
   }

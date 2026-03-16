@@ -2,7 +2,7 @@ import { Page, FrameLocator, Locator, expect, BrowserContext } from '@playwright
 import { AppFrameContentLocators, AppFrameHelper } from '../helpers/appFrameHelper';
 import axios from 'axios';
 // eslint-disable-next-line
-const { pdfParse } = require('pdf-parse');
+const { PDFParse } = require('pdf-parse');
 /**
  * BasePage class - Base class for all page objects in the FedEx automation suite
  * Provides common functionality and locators shared across multiple page objects
@@ -94,7 +94,7 @@ export class BasePage {
     expect(documentUrl).toBeTruthy();
 
     const response = await axios.get(documentUrl, { responseType: 'arraybuffer' });
-    const parser = new pdfParse({ data: response.data });
+    const parser = new PDFParse({ data: response.data });
     const pdfData = await parser.getText();
     console.log(pdfData.text);
 

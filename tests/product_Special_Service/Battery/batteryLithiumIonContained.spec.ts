@@ -30,7 +30,7 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
 
   test.afterAll(async ({ pages }) => {
     await pages.shippingPage.navigateToProductsPage();
-    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productPage.searchAndSelectProduct('simple product 1');
     await pages.productSummaryPage.disableSpecialService('battery');
     await expect(pages.productSummaryPage.isBatteryLabel).not.toBeChecked();
     console.log('✔ Battery is disabled');
@@ -42,7 +42,7 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
     test.setTimeout(120_000);
 
     await pages.shippingPage.navigateToProductsPage();
-    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productPage.searchAndSelectProduct('simple product 1');
     await pages.productSummaryPage.updateProductBattery(BATTERY_MATERIAL, BATTERY_PACKING);
 
     await expect(pages.productSummaryPage.batteryMaterialTypeDropdown).toHaveValue(BATTERY_MATERIAL);

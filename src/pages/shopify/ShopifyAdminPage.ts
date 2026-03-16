@@ -80,11 +80,13 @@ export class ShopifyAdminPage extends BasePage {
 
   // Open more actions menu
   async openMoreActions(): Promise<void> {
+    await this.moreActionsButton.waitFor({ state: 'visible', timeout: 10000 });
     await this.moreActionsButton.click();
   }
 
   // Click on Generate Label link to open manual label generation page
   async clickGenerateLabelLink(): Promise<void> {
+    await this.generateLabelLink.waitFor({ state: 'visible', timeout: 5000 });
     await this.generateLabelLink.click();
   }
 
