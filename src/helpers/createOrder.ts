@@ -1,10 +1,11 @@
-import axios from "axios";
-import * as dotenv from "dotenv";
+import * as dotenv from 'dotenv';
+import axios from 'axios';
+import type { APIRequestContext } from '@playwright/test';
 dotenv.config({ quiet: true });
 
-const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || "";
-const SHOPIFY_STORE_NAME = process.env.STORE || "";
-const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN || "";
+const SHOPIFY_API_VERSION = process.env.SHOPIFY_API_VERSION || '';
+const SHOPIFY_STORE_NAME = process.env.STORE || '';
+const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN || '';
 
 // ✅ Helper to parse address JSON from .env
 function parseAddress(envKey: string) {
@@ -13,9 +14,9 @@ function parseAddress(envKey: string) {
 }
 
 // ✅ Load multiple addresses
-const defaultAddress = parseAddress("SHIPPING_ADDRESS_JSON");
-const domesticAddress = parseAddress("DOMESTIC_ADDRESS_JSON");
-const internationalAddress = parseAddress("INTERNATIONAL_ADDRESS_JSON");
+const defaultAddress = parseAddress('SHIPPING_ADDRESS_JSON');
+const domesticAddress = parseAddress('DOMESTIC_ADDRESS_JSON');
+const internationalAddress = parseAddress('INTERNATIONAL_ADDRESS_JSON');
 
 // ✅ Products parsing
 let SIMPLE_PRODUCTS: { product_id: number; variant_id: number }[] = [];
@@ -29,26 +30,18 @@ interface Product {
   quantity?: number;
 }
 type ProductRequest = {
-  productType: "variable" | "simple" | "digital" | "dangerous";
+  productType: 'variable' | 'simple' | 'digital' | 'dangerous';
   productCount?: number;
   quantities?: number[];
 };
 
 try {
-  SIMPLE_PRODUCTS = process.env.SIMPLE_PRODUCTS_JSON
-    ? JSON.parse(process.env.SIMPLE_PRODUCTS_JSON)
-    : [];
-  VARIABLE_PRODUCTS = process.env.VARIABLE_PRODUCTS_JSON
-    ? JSON.parse(process.env.VARIABLE_PRODUCTS_JSON)
-    : [];
-  DIGITAL_PRODUCTS = process.env.DIGITAL_PRODUCTS_JSON
-    ? JSON.parse(process.env.DIGITAL_PRODUCTS_JSON)
-    : [];
-  DANGEROUS_PRODUCTS = process.env.DANGEROUS_PRODUCTS_JSON
-    ? JSON.parse(process.env.DANGEROUS_PRODUCTS_JSON)
-    : [];
+  SIMPLE_PRODUCTS = process.env.SIMPLE_PRODUCTS_JSON ? JSON.parse(process.env.SIMPLE_PRODUCTS_JSON) : [];
+  VARIABLE_PRODUCTS = process.env.VARIABLE_PRODUCTS_JSON ? JSON.parse(process.env.VARIABLE_PRODUCTS_JSON) : [];
+  DIGITAL_PRODUCTS = process.env.DIGITAL_PRODUCTS_JSON ? JSON.parse(process.env.DIGITAL_PRODUCTS_JSON) : [];
+  DANGEROUS_PRODUCTS = process.env.DANGEROUS_PRODUCTS_JSON ? JSON.parse(process.env.DANGEROUS_PRODUCTS_JSON) : [];
 } catch (e) {
-  console.error("Invalid PRODUCTS_JSON format in .env");
+  console.error('Invalid PRODUCTS_JSON format in .env');
 }
 
 interface User {
@@ -77,47 +70,41 @@ interface LineItem {
 class ShopifyOrderUploader {
   private readonly apiUrl: string;
   private lastOrderId: string | null = null;
+  private apiContext?: APIRequestContext;
 
-  constructor() {
+  constructor(apiContext?: APIRequestContext) {
     this.apiUrl = `https://${SHOPIFY_STORE_NAME}.myshopify.com/admin/api/${SHOPIFY_API_VERSION}/orders.json`;
+    this.apiContext = apiContext;
   }
 
   // Standard order with address type selection
   public async uploadOrder(
-    productCount: any = null,
-    quantity: any = [],
-    addressType: "default" | "domestic" | "international" = "default"
+    // productCount: any = null,
+    // quantity: any = [],
+    addressType: 'default' | 'domestic' | 'international' = 'default',
   ): Promise<string | null> {
     const user = this.getDefaultUser(addressType);
     const items = this.getLineItems();
     return this.upload(user, items, `Standard Order (${addressType})`);
   }
 
-  public async uploadOrderWithShippingCustomProduct(
-    addressType: "default" | "domestic" | "international" = "default"
-  ): Promise<string | null> {
+  public async uploadOrderWithShippingCustomProduct(addressType: 'default' | 'domestic' | 'international' = 'default'): Promise<string | null> {
     const user = this.getDefaultUser(addressType);
     const items = this.getLineItemsWithCustomProduct({
       requires_shipping: true,
     });
-    return this.upload(user, items, "Custom Product (with shipping)");
+    return this.upload(user, items, 'Custom Product (with shipping)');
   }
 
-  public async uploadOrderWithNonShippingCustomProduct(
-    addressType: "default" | "domestic" | "international" = "default"
-  ): Promise<string | null> {
+  public async uploadOrderWithNonShippingCustomProduct(addressType: 'default' | 'domestic' | 'international' = 'default'): Promise<string | null> {
     const user = this.getDefaultUser(addressType);
     const items = this.getLineItemsWithCustomProduct({
       requires_shipping: false,
     });
-    return this.upload(user, items, "Custom Product (no shipping)");
+    return this.upload(user, items, 'Custom Product (no shipping)');
   }
 
-
-  public async uploadOrderWithMultipleProducts(
-    productRequests?: ProductRequest[],
-    addressType: "default" | "domestic" | "international" = "default"
-  ): Promise<string | null> {
+  public async uploadOrderWithMultipleProducts(productRequests?: ProductRequest[], addressType: 'default' | 'domestic' | 'international' = 'default'): Promise<string | null> {
     const user = this.getDefaultUser(addressType);
     const items = this.getMultipleLineItems(productRequests);
     return this.upload(user, items, `Standard Order (${addressType})`);
@@ -127,26 +114,43 @@ class ShopifyOrderUploader {
     return this.lastOrderId;
   }
 
-  private async upload(
-    user: User,
-    lineItems: LineItem[],
-    label: string
-  ): Promise<string | null> {
+  private async upload(user: User, lineItems: LineItem[], label: string): Promise<string | null> {
     const payload = this.buildOrderPayload(user, lineItems);
+
     try {
-      const { data } = await axios.post(this.apiUrl, payload, {
-        headers: {
-          "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
-          "Content-Type": "application/json",
-        },
-      });
-      this.lastOrderId = data.order.id;
-      return data.order.name;
-    } catch (err: any) {
-      console.error(
-        `${label} creation failed:`,
-        err.response?.data || err.message
-      );
+      // Use Playwright request if available, fallback to axios for backward compatibility
+      if (this.apiContext) {
+        const response = await this.apiContext.post(this.apiUrl, {
+          headers: {
+            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+          },
+          data: payload,
+        });
+
+        if (!response.ok()) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error(`${label} creation failed:`, errorData);
+          return null;
+        }
+
+        const data = await response.json();
+        this.lastOrderId = data.order.id;
+        return data.order.name;
+      } else {
+        // Fallback to axios for backward compatibility
+        const { data } = await axios.post(this.apiUrl, payload, {
+          headers: {
+            'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+            'Content-Type': 'application/json',
+          },
+        });
+        this.lastOrderId = data.order.id;
+        return data.order.name;
+      }
+    } catch (err: unknown) {
+      const error = err as { response?: { data: unknown }; message?: string };
+      console.error(`${label} creation failed:`, error.response?.data || error.message);
       return null;
     }
   }
@@ -185,16 +189,16 @@ class ShopifyOrderUploader {
       let productList: Product[] = [];
 
       switch (req.productType) {
-        case "variable":
+        case 'variable':
           productList = VARIABLE_PRODUCTS;
           break;
-        case "simple":
+        case 'simple':
           productList = SIMPLE_PRODUCTS;
           break;
-        case "digital":
+        case 'digital':
           productList = DIGITAL_PRODUCTS;
           break;
-        case "dangerous":
+        case 'dangerous':
           productList = DANGEROUS_PRODUCTS;
           break;
 
@@ -203,9 +207,7 @@ class ShopifyOrderUploader {
           continue;
       }
 
-      const products = req.productCount
-        ? productList.slice(0, req.productCount)
-        : productList;
+      const products = req.productCount ? productList.slice(0, req.productCount) : productList;
       products.forEach((product, idx) => {
         selectedProducts.push({
           ...product,
@@ -221,29 +223,25 @@ class ShopifyOrderUploader {
     }));
   }
 
-  private getLineItemsWithCustomProduct(customConfig: {
-    requires_shipping: boolean;
-  }): LineItem[] {
+  private getLineItemsWithCustomProduct(customConfig: { requires_shipping: boolean }): LineItem[] {
     const catalogItems = this.getLineItems();
     const customItem: LineItem = {
-      title: "Custom Product",
-      price: "9.99",
+      title: 'Custom Product',
+      price: '9.99',
       quantity: 1,
       requires_shipping: customConfig.requires_shipping,
     };
     return [...catalogItems, customItem];
   }
 
-  private getDefaultUser(
-    addressType: "default" | "domestic" | "international"
-  ): User {
+  private getDefaultUser(addressType: 'default' | 'domestic' | 'international'): User {
     let chosenAddress;
 
     switch (addressType) {
-      case "domestic":
+      case 'domestic':
         chosenAddress = domesticAddress;
         break;
-      case "international":
+      case 'international':
         chosenAddress = internationalAddress;
         break;
       default:
@@ -251,22 +249,21 @@ class ShopifyOrderUploader {
     }
 
     return {
-      firstName: "Test",
-      lastName: "User",
-      email: "test.user@example.com",
-      phone: "1234567890",
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test.user@example.com',
+      phone: '1234567890',
       address: {
-        street: chosenAddress.street || "",
-        city: chosenAddress.city || "",
-        state: chosenAddress.state || "",
-        countryCode: chosenAddress.countryCode || "",
-        zip: chosenAddress.zip || "",
+        street: chosenAddress.street || '',
+        city: chosenAddress.city || '',
+        state: chosenAddress.state || '',
+        countryCode: chosenAddress.countryCode || '',
+        zip: chosenAddress.zip || '',
       },
     };
   }
 
   private getAddress(user: User) {
-    
     return {
       first_name: user.firstName,
       last_name: user.lastName,
@@ -289,6 +286,3 @@ class ShopifyOrderUploader {
 }
 
 export default ShopifyOrderUploader;
-
-
-

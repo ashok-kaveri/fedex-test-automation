@@ -9,9 +9,6 @@ test.describe('Manual Label Generation Flow', () => {
 
   test.beforeAll(async () => {
     orderUploader = new ShopifyOrderUploader();
-  });
-
-  test('Create an order from API', async () => {
     const orderID = (await orderUploader.uploadOrder()) as string;
     console.log('Order ID:', orderID);
     expect(orderID).toBeTruthy();
@@ -23,5 +20,8 @@ test.describe('Manual Label Generation Flow', () => {
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
     await pages.manualLabelPage.generateLabelInApp();
     await pages.orderSummaryPage.verifyLabelGenerated();
+    await expect(pages.orderSummaryPage.packagesSection).toBeVisible({ timeout: 10000 });
   });
 });
+
+//npx playwright test tests/label_generation/manualLabelGeneration.spec.ts --project="Google Chrome" --headed --debug

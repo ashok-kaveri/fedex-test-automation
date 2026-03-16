@@ -1,7 +1,7 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, Locator } from '@playwright/test';
 import { BasePage } from '../../basePage';
 
-export class ProductsPage extends BasePage {
+export class ProductsPage_M extends BasePage {
   // Locators
   readonly searchFilterButton: Locator;
   readonly searchInput: Locator;

@@ -12,8 +12,8 @@ module.exports = {
     // Warn on any in all files
     '@typescript-eslint/no-explicit-any': 'warn',
 
-    // No console.log in committed code
-    'no-console': 'warn',
+    // Disable console rule completely
+    'no-console': 'off',
   },
 
   overrides: [
@@ -23,22 +23,12 @@ module.exports = {
       extends: ['plugin:playwright/recommended'],
 
       rules: {
-        // Warn on waitForTimeout
         'playwright/no-wait-for-timeout': 'warn',
-
-        // Every test must contain an expect
         'playwright/expect-expect': 'error',
-
-        // Avoid force:true
         'playwright/no-force-option': 'warn',
-
-        // Prevent skipped tests
         'playwright/no-skipped-test': 'warn',
-
-        // Prevent test.only
         'playwright/no-focused-test': 'error',
 
-        // Prevent direct page usage in tests
         'no-restricted-syntax': [
           'error',
           {
@@ -46,14 +36,11 @@ module.exports = {
               "CallExpression[callee.type='MemberExpression'][callee.object.name='page'][callee.property.name=/^(locator|click|fill|type|goto|getByRole|getByLabel|getByText|waitForSelector|frameLocator|pause)$/]",
             message: 'Do not call raw page methods in spec files. Use Page Objects instead.',
           },
-
           {
             selector: "CallExpression[callee.property.name='waitForTimeout'][arguments.0.type='Literal'][arguments.0.value>3000]",
             message: 'Hard wait > 3s is blocked. Use expect().toBeVisible() or smart waits.',
           },
         ],
-
-        'no-console': 'warn',
       },
     },
 
@@ -64,15 +51,11 @@ module.exports = {
       rules: {
         'no-restricted-syntax': [
           'error',
-
-          // Prevent this.page.locator inside methods
           {
             selector:
               "MethodDefinition:not([kind='constructor']) CallExpression[callee.object.type='MemberExpression'][callee.object.property.name='page'][callee.property.object.type='ThisExpression'][callee.property.name='locator']",
             message: 'Define this.page.locator() as readonly properties in the constructor.',
           },
-
-          // Block long hard waits
           {
             selector: "CallExpression[callee.property.name='waitForTimeout'][arguments.0.type='Literal'][arguments.0.value>3000]",
             message: 'Hard wait > 3s is blocked. Use expect().toBeVisible() or locator waits.',
