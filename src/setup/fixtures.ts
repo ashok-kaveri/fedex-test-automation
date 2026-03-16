@@ -13,6 +13,7 @@ import { ShopifyProductPage } from '../pages/shopify/ShopifyProductPage';
 import { ProductPage } from '../pages/app/productsPage/productsPage';
 import { ProductSummaryPage } from '../pages/app/productsPage/productSummaryPage';
 import { SideDockPage } from '../pages/app/ManualLabelPage/SideDockConfig';
+import { ShopifyAccountSelectorPage } from '../pages/shopify/ShopifyAccountSelectorPage';
 
 export type Pages = {
   sharedPage: Page;
@@ -29,6 +30,7 @@ export type Pages = {
   productPage: ProductPage;
   productSummaryPage: ProductSummaryPage;
   sideDockPage: SideDockPage;
+  shopifyAccountSelectorPage: ShopifyAccountSelectorPage;
 };
 
 export const test = baseTest.extend<object, { pages: Pages }>({
@@ -55,6 +57,7 @@ export const test = baseTest.extend<object, { pages: Pages }>({
         productPage: new ProductPage(page),
         productSummaryPage: new ProductSummaryPage(page),
         sideDockPage: new SideDockPage(page),
+        shopifyAccountSelectorPage: new ShopifyAccountSelectorPage(page),
       };
       await use(pages);
       await context.close();
