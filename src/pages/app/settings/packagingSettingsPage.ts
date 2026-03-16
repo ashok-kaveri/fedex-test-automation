@@ -116,21 +116,16 @@ export class PackagingSettingsPage extends BasePage {
   }
 
   async clickSettingsButtonUsingLabel(label: string, buttonName: string) {
-    // eslint-disable-next-line no-restricted-syntax
     const card = this.appFrame.locator('.Polaris-FormLayout__Item').filter({ has: this.appFrame.getByLabel(label) });
     await card.getByRole('button', { name: buttonName }).click();
   }
 
   async clickSettingsButtonUsingHeading(heading: string, buttonName: string) {
     const headingLocator = this.appFrame.getByRole('heading', { name: heading });
-
-    // eslint-disable-next-line no-restricted-syntax
     const section = headingLocator.locator('..').locator('..').locator('..'); // climb until container
 
     await section.getByRole('button', { name: buttonName, exact: true }).click();
   }
-
-  
 
   async setCheckbox(labelText: string, enable: boolean) {
     const checkbox = this.appFrame.getByRole('checkbox', { name: labelText });
