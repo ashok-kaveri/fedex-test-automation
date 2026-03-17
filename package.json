@@ -8,7 +8,10 @@
     "test:debug": "npx playwright test --debug",
     "test:smoke": "npx playwright test tests/suites/smoke/singleShipmentFlow.spec.ts --headed --workers=1 --project=chromium",
     "codegen": "npx playwright codegen",
-    "show-report": "npx playwright show-report"
+    "show-report": "npx playwright show-report",
+    "lint": "eslint 'src/**/*.ts' 'tests/**/*.ts'",
+    "lint:fix": "eslint 'src/**/*.ts' 'tests/**/*.ts' --fix",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "Anuja B",
@@ -18,6 +21,12 @@
     "@playwright/test": "^1.58.2",
     "@types/node": "^24.9.1",
     "@types/pdf-parse": "^1.1.5",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "eslint-plugin-playwright": "^1.8.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.3",
     "playwright-smart-reporter": "^1.0.8"
   },
   "dependencies": {
@@ -25,5 +34,9 @@
     "dotenv": "^17.2.4",
     "pdf-parse": "^2.4.5",
     "pdf2json": "^4.0.2"
+  },
+  "lint-staged": {
+    "src/**/*.ts": "eslint --max-warnings=1",
+    "tests/**/*.ts": "eslint --max-warnings=1"
   }
 }

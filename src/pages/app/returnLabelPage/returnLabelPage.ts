@@ -1,4 +1,4 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, Locator } from '@playwright/test';
 import { BasePage } from '../../basePage';
 
 // Page Object for Order Summary Page - Displayed after successful label generation
@@ -11,7 +11,7 @@ export class ReturnLabelPage extends BasePage {
   readonly radioButtons: Locator;
   readonly shippingRatesSelection: Locator;
   readonly generateReturnLabelButton: Locator;
-  readonly successBadge: Locator; 
+  readonly successBadge: Locator;
   readonly downloadLink: Locator;
 
   constructor(page: Page) {
@@ -30,7 +30,7 @@ export class ReturnLabelPage extends BasePage {
     this.downloadLink = this.appFrame.getByText('Download Label').first();
   }
 
-  // Verify return label page title 
+  // Verify return label page title
   async validateReturnLabelTitle() {
     // await this.page.goto(`https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/api/v1/returnLabels`);
     await this.page.waitForLoadState('load');
@@ -62,7 +62,6 @@ export class ReturnLabelPage extends BasePage {
     throw new Error(`Failed to load return shipping rates after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
-
   async returnLabelGeneration() {
     await this.returnQuantityInput.waitFor({ state: 'visible', timeout: 120000 });
     await this.returnQuantityInput.fill('1');
@@ -76,4 +75,3 @@ export class ReturnLabelPage extends BasePage {
     console.log('Return label generated and validated successfully');
   }
 }
-

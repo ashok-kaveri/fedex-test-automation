@@ -1,7 +1,6 @@
 import { test, expect } from '../../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
-import { Page, BrowserContext } from '@playwright/test';
-
+import { BrowserContext } from '@playwright/test';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Suite: Label Generation For Lithium Ion (Contained In Equipment)
@@ -17,7 +16,6 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
-  let capturedDocumentUrl: string = '';
   let sharedContext: BrowserContext;
 
   // ── Page Objects ──────────────────────────────────────────────────────────
@@ -32,7 +30,7 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
 
   test.afterAll(async ({ pages }) => {
     await pages.shippingPage.navigateToProductsPage();
-    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productPage.searchAndSelectProduct('simple product 1');
     await pages.productSummaryPage.disableSpecialService('battery');
     await expect(pages.productSummaryPage.isBatteryLabel).not.toBeChecked();
     console.log('✔ Battery is disabled');
@@ -44,7 +42,7 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
     test.setTimeout(120_000);
 
     await pages.shippingPage.navigateToProductsPage();
-    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productPage.searchAndSelectProduct('simple product 1');
     await pages.productSummaryPage.updateProductBattery(BATTERY_MATERIAL, BATTERY_PACKING);
 
     await expect(pages.productSummaryPage.batteryMaterialTypeDropdown).toHaveValue(BATTERY_MATERIAL);
@@ -75,16 +73,15 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
     expect(xmlContent).toContain('IATA_SECTION_II');
     console.log(`✔ XML confirmed — BATTERY service present with ${BATTERY_MATERIAL} / ${BATTERY_PACKING}`);
 
-
     await pages.manualLabelPage.selectFirstShippingService();
     await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
     await pages.orderSummaryPage.verifyLabelGenerated();
   });
-  
-  test('Step 4 | Print label, capture URL and verify PDF text', async ({pages}) => {
+
+  test('Step 4 | Print label, capture URL and verify PDF text', async ({ pages }) => {
     test.setTimeout(0);
 
-    const { documentUrl, pdfText } = await pages.basePage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
+    const { documentUrl, pdfText } = await pages.orderSummaryPage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
 
     expect(documentUrl).toBeTruthy();
     expect(pdfText).toContain('ELB');

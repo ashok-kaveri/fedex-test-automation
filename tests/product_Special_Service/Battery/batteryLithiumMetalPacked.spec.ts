@@ -1,10 +1,6 @@
 import { test, expect } from '../../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
-import { Page, BrowserContext } from '@playwright/test';
-
-import axios from 'axios';
-
-const { PDFParse } = require('pdf-parse');
+import { BrowserContext } from '@playwright/test';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Suite: Label Generation For Lithium Metal (Packed With Equipment)
@@ -20,8 +16,7 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
-  let capturedDocumentUrl: string = '';
-   let sharedContext: BrowserContext;
+  let sharedContext: BrowserContext;
 
   // ── Page Objects ──────────────────────────────────────────────────────────
   let orderUploader: ShopifyOrderUploader;
@@ -82,10 +77,10 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
     await pages.orderSummaryPage.verifyLabelGenerated();
   });
 
-  test('Step 4 | Print label, capture URL and verify PDF text', async ({pages}) => {
+  test('Step 4 | Print label, capture URL and verify PDF text', async ({ pages }) => {
     test.setTimeout(0);
 
-    const { documentUrl, pdfText } = await pages.basePage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
+    const { documentUrl, pdfText } = await pages.orderSummaryPage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
 
     expect(documentUrl).toBeTruthy();
     expect(pdfText).toContain('ELB');

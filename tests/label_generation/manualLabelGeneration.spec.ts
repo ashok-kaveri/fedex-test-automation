@@ -20,6 +20,7 @@ test.describe('Manual Label Generation Flow', () => {
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
     await pages.manualLabelPage.generateLabelInApp();
     await pages.orderSummaryPage.verifyLabelGenerated();
+    await expect(pages.orderSummaryPage.packagesSection).toBeVisible({ timeout: 10000 });
   });
 });
 

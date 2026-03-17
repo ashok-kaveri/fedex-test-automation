@@ -29,6 +29,8 @@ test.describe('Return Label Generation Flow', () => {
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
     await pages.manualLabelPage.generateLabelInApp();
     await pages.orderSummaryPage.verifyLabelGenerated();
+    // expect(await productSummaryPage.getSelectedSignatureLabel()).toBe('As Per The General Settings');
+    await expect(pages.orderSummaryPage.packagesSection).toBeVisible({ timeout: 10000 });
   });
 
   test('Generate return label for the order', async ({ pages }) => {

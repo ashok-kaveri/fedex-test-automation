@@ -1,4 +1,4 @@
-import { Page, BrowserContext } from '@playwright/test';
+import { BrowserContext } from '@playwright/test';
 import { ProductPage } from '../../../src/pages/app/productsPage/productsPage';
 import { ProductSummaryPage } from '../../../src/pages/app/productsPage/productSummaryPage';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
@@ -9,7 +9,6 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Label Generation For Adult Signature', () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
-  let sharedPage: Page;
   let sharedContext: BrowserContext;
 
   // ── Page Objects ──────────────────────────────────────────────────────────
@@ -23,10 +22,9 @@ test.describe('Label Generation For Adult Signature', () => {
     productPage = new ProductPage(pages.sharedPage);
     productSummaryPage = new ProductSummaryPage(pages.sharedPage);
     sharedContext = pages.sharedPage.context();
-    sharedPage = pages.sharedPage;
   });
 
-  test.afterAll(async ({pages}) => {
+  test.afterAll(async ({ pages }) => {
     await pages.shippingPage.navigateToProductsPage();
     await productPage.searchAndSelectProduct('BLAZER');
     await productSummaryPage.updateProductSignature('AS_PER_THE_GENERAL_SETTINGS');
@@ -35,7 +33,7 @@ test.describe('Label Generation For Adult Signature', () => {
 
   // ── Tests ─────────────────────────────────────────────────────────────────
 
-  test('Step 1 | Enable Adult Signature on product', async ({pages}) => {
+  test('Step 1 | Enable Adult Signature on product', async ({ pages }) => {
     test.setTimeout(120_000);
 
     await pages.shippingPage.navigateToProductsPage();
@@ -58,7 +56,7 @@ test.describe('Label Generation For Adult Signature', () => {
     console.log(`✔ Order created — ID: ${sharedOrderID}`);
   });
 
-  test('Step 3 | Manually generate label and verify XML signature option', async ({pages}) => {
+  test('Step 3 | Manually generate label and verify XML signature option', async ({ pages }) => {
     test.setTimeout(0);
 
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
@@ -74,11 +72,11 @@ test.describe('Label Generation For Adult Signature', () => {
     await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
     await pages.orderSummaryPage.verifyLabelGenerated();
   });
-  
-  test('Step 4 | Print label, capture URL and verify PDF text', async ({pages}) => {
+
+  test('Step 4 | Print label, capture URL and verify PDF text', async ({ pages }) => {
     test.setTimeout(0);
 
-    const { documentUrl, pdfText } = await pages.basePage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
+    const { documentUrl, pdfText } = await pages.orderSummaryPage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
 
     expect(documentUrl).toBeTruthy();
     expect(pdfText).toContain('ASR');

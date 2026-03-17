@@ -1,22 +1,19 @@
-import { Page, Locator, FrameLocator, expect } from '@playwright/test';
+import { Page, Locator, FrameLocator } from '@playwright/test';
+import { BasePage } from '../../basePage';
 
-export class ProductPage {
-  readonly page: Page;
+export class ProductPage extends BasePage {
   readonly appIframe: FrameLocator;
   readonly productSearchAndFilterBtn: Locator;
   readonly productSearchInput: Locator;
   // readonly signatureSelect: Locator;
-  
-
 
   constructor(page: Page) {
-    this.page = page;
+    super(page);
 
     this.appIframe = page.frameLocator('iframe[name="app-iframe"]');
     this.productSearchAndFilterBtn = this.appIframe.getByRole('button', { name: 'Search and filter results' });
-    this.productSearchInput = this.appIframe.getByPlaceholder('Search by Product Name (Esc to cancel)')
+    this.productSearchInput = this.appIframe.getByPlaceholder('Search by Product Name (Esc to cancel)');
     // this.signatureSelect = this.appIframe.getByLabel('FedEx® Delivery Signature');
-    
   }
 
   // Search for a product and select it
@@ -32,6 +29,4 @@ export class ProductPage {
     await searchedProduct.waitFor({ state: 'visible', timeout: 10000 });
     await searchedProduct.click();
   }
-
-
 }

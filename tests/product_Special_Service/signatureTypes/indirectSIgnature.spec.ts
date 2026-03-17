@@ -1,6 +1,3 @@
-import { Page, BrowserContext } from '@playwright/test';
-import { ProductPage } from '../../../src/pages/app/productsPage/productsPage';
-import { ProductSummaryPage } from '../../../src/pages/app/productsPage/productSummaryPage';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
 import { test, expect } from '../../../src/setup/fixtures';
 
@@ -8,49 +5,40 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Label Generation For Indirect Signature', () => {
   // ── Shared State ──────────────────────────────────────────────────────────
- let sharedOrderID: string;
-  let sharedPage: Page;
-  let sharedContext: BrowserContext;
+  let sharedOrderID: string;
 
   // ── Page Objects ──────────────────────────────────────────────────────────
   let orderUploader: ShopifyOrderUploader;
-  let productPage: ProductPage;
-  let productSummaryPage: ProductSummaryPage;
-
 
   // ── Hooks ─────────────────────────────────────────────────────────────────
 
-  test.beforeAll(async ({ pages }) => {
+  test.beforeAll(async () => {
     orderUploader = new ShopifyOrderUploader();
-    productPage = new ProductPage(pages.sharedPage);
-    productSummaryPage = new ProductSummaryPage(pages.sharedPage);
-    sharedContext = pages.sharedPage.context();
-    sharedPage = pages.sharedPage;
   });
 
-  test.afterAll(async ({pages}) => {
+  test.afterAll(async ({ pages }) => {
     await pages.shippingPage.navigateToProductsPage();
-    await productPage.searchAndSelectProduct('BLAZER');
-    await productSummaryPage.updateProductSignature('AS_PER_THE_GENERAL_SETTINGS');
-    expect(await productSummaryPage.getSelectedSignatureLabel()).toBe('As Per The General Settings');
+    await pages.productPage.searchAndSelectProduct('BLAZER');
+    await pages.productSummaryPage.updateProductSignature('AS_PER_THE_GENERAL_SETTINGS');
+    expect(await pages.productSummaryPage.getSelectedSignatureLabel()).toBe('As Per The General Settings');
   });
 
   // ── Tests ─────────────────────────────────────────────────────────────────
 
-  test('Step 1 | Enable Indirect Signature on product', async ({pages}) => {
+  test('Step 1 | Enable Indirect Signature on product', async ({ pages }) => {
     test.setTimeout(120_000);
 
     await pages.shippingPage.navigateToProductsPage();
-    await productPage.searchAndSelectProduct('BLAZER');
-    await productSummaryPage.updateProductSignature('INDIRECT');
+    await pages.productPage.searchAndSelectProduct('BLAZER');
+    await pages.productSummaryPage.updateProductSignature('INDIRECT');
 
-    const selectedLabel = await productSummaryPage.getSelectedSignatureLabel();
+    const selectedLabel = await pages.productSummaryPage.getSelectedSignatureLabel();
     expect(selectedLabel).toBe('Indirect Signature Required');
 
     console.log(`✔ Signature type set to: "${selectedLabel}"`);
   });
 
-  test('Step 2 | Create order via API with adult-signature product', async ( ) => {
+  test('Step 2 | Create order via API with adult-signature product', async () => {
     test.setTimeout(0);
 
     const orderID = (await orderUploader.uploadOrder()) as string;
@@ -60,7 +48,7 @@ test.describe('Label Generation For Indirect Signature', () => {
     console.log(`✔ Order created — ID: ${sharedOrderID}`);
   });
 
-  test('Step 3 | Manually generate label and verify XML signature option', async ({pages}) => {
+  test('Step 3 | Manually generate label and verify XML signature option', async ({ pages }) => {
     test.setTimeout(0);
 
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
@@ -76,7 +64,7 @@ test.describe('Label Generation For Indirect Signature', () => {
     await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
     await pages.orderSummaryPage.verifyLabelGenerated();
   });
-/*
+  /*
   test('Step 4 | Print label, capture URL and verify PDF text', async ({pages}) => {
     test.setTimeout(0);
 

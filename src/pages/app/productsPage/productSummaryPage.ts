@@ -1,7 +1,7 @@
 import { Page, Locator, FrameLocator, expect } from '@playwright/test';
+import { BasePage } from '../../basePage';
 
-export class ProductSummaryPage {
-  readonly page: Page;
+export class ProductSummaryPage extends BasePage {
   readonly appIframe: FrameLocator;
   readonly signatureOptionDropdown: Locator;
   readonly saveButton: Locator;
@@ -16,9 +16,8 @@ export class ProductSummaryPage {
   readonly batteryMaterialTypeDropdown: Locator;
   readonly batteryPackingTypeDropdown: Locator;
 
-
   constructor(page: Page) {
-    this.page = page;
+    super(page);
 
     this.appIframe = page.frameLocator('iframe[name="app-iframe"]');
     this.signatureOptionDropdown = this.appIframe.locator('select[name="signatureOptionType"]');
@@ -36,7 +35,6 @@ export class ProductSummaryPage {
     this.batteryMaterialTypeDropdown = this.appIframe.getByLabel('Battery Material Type');
     this.batteryPackingTypeDropdown = this.appIframe.getByLabel('Battery Packing Type');
   }
-
 
   // Set the signature type (e.g., 'ADULT', 'SERVICE_DEFAULT', 'DIRECT', "INDIRECT", "NO_SIGNATURE_REQUIRED", "AS_PER_THE_GENERAL_SETTINGS")
   async setSignatureType(signatureType: string): Promise<void> {
@@ -63,7 +61,6 @@ export class ProductSummaryPage {
   async getSelectedSignatureLabel(): Promise<string> {
     return await this.signatureOptionDropdown.evaluate((el: HTMLSelectElement) => el.options[el.selectedIndex].text);
   }
-
 
   // Update dry ice weight (assertion to be handled in test)
   async updateProductDryIce(dryIceWeight: string): Promise<void> {
@@ -107,8 +104,7 @@ export class ProductSummaryPage {
     await this.saveProductSettings();
   }
 
-
-  async disableIsBattery(){
+  async disableIsBattery() {
     await this.isBatteryLabel.waitFor({ state: 'visible', timeout: 10000 });
     // Check if it's already checked before clicking
     if (await this.isBatteryCheckbox.isChecked()) {
@@ -117,7 +113,7 @@ export class ProductSummaryPage {
     await this.saveProductSettings();
   }
 
-  async disableIsDryIce(){
+  async disableIsDryIce() {
     await this.dryIceLabel.waitFor({ state: 'visible', timeout: 10000 });
     // Check if it's already checked before clicking
     if (await this.dryIceCheckbox.isChecked()) {
@@ -126,7 +122,7 @@ export class ProductSummaryPage {
     await this.saveProductSettings();
   }
 
-  async disableIsAlcohol(){
+  async disableIsAlcohol() {
     await this.isAlcoholLabel.waitFor({ state: 'visible', timeout: 10000 });
     // Check if it's already checked before clicking
     if (await this.isAlcoholCheckbox.isChecked()) {
@@ -135,21 +131,20 @@ export class ProductSummaryPage {
     await this.saveProductSettings();
   }
 
-
   async disableSpecialService(service: 'battery' | 'dryIce' | 'alcohol') {
     const config = {
-        battery: {
-            label:    this.isBatteryLabel,
-            checkbox: this.isBatteryCheckbox,
-        },
-        dryIce: {
-            label:    this.dryIceLabel,
-            checkbox: this.dryIceCheckbox,
-        },
-        alcohol: {
-            label:    this.isAlcoholLabel,
-            checkbox: this.isAlcoholCheckbox,
-        },
+      battery: {
+        label: this.isBatteryLabel,
+        checkbox: this.isBatteryCheckbox,
+      },
+      dryIce: {
+        label: this.dryIceLabel,
+        checkbox: this.dryIceCheckbox,
+      },
+      alcohol: {
+        label: this.isAlcoholLabel,
+        checkbox: this.isAlcoholCheckbox,
+      },
     };
 
     const { label, checkbox } = config[service];
@@ -157,11 +152,10 @@ export class ProductSummaryPage {
     await label.waitFor({ state: 'visible', timeout: 10_000 });
 
     if (await checkbox.isChecked()) {
-        await label.click();
-        // Wait for the UI to register the click and the checkbox to be unchecked
-        await expect(checkbox).not.toBeChecked({ timeout: 5000 });
-        await this.saveProductSettings();
+      await label.click();
+      // Wait for the UI to register the click and the checkbox to be unchecked
+      await expect(checkbox).not.toBeChecked({ timeout: 5000 });
+      await this.saveProductSettings();
     }
   }
-
 }

@@ -1,4 +1,4 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from '../../basePage';
 
 // Page Object for Manual Label Generation Page within FedEx App - Handles all actions related to manual label generation
@@ -216,7 +216,7 @@ export class GenerateLabelManuallyPage extends BasePage {
   }
 
   async waitUntilGeneratePackageButtonVisible(): Promise<void> {
-    await this.page.reload();
+    // await this.page.reload();
     await this.waitForLoadingToComplete();
     await this.generatePackagesButton.waitFor({ state: 'visible', timeout: 30000 });
   }
@@ -283,6 +283,11 @@ export class GenerateLabelManuallyPage extends BasePage {
     return jsonData;
   }
 
+  async getShipmentSpecialServicesFromRequestLog() {
+    const logs = await this.getParsedDataFromRequestLog();
+    return logs?.requestObject?.requestedShipment?.shipmentSpecialServices?.specialServiceTypes || [];
+  }
+
   async getSignatureValueFromRequestLog() {
     const logs = await this.getParsedDataFromRequestLog();
     return logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.packageSpecialServices?.signatureOptionType || null;
@@ -298,7 +303,7 @@ export class GenerateLabelManuallyPage extends BasePage {
     await this.viewXmlMenuLogItem.waitFor({ state: 'visible', timeout: 5000 });
     await this.viewXmlMenuLogItem.click();
     await this.xmlRequestContentArea.waitFor({ state: 'visible', timeout: 5000 });
-    const xmlContent = await this.xmlRequestContentArea.textContent() || '';
+    const xmlContent = (await this.xmlRequestContentArea.textContent()) || '';
 
     await this.XmlCloseButton.waitFor({ state: 'attached' });
     await this.XmlCloseButton.scrollIntoViewIfNeeded();

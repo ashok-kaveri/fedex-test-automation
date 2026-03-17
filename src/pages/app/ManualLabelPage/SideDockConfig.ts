@@ -1,7 +1,5 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, FrameLocator, Locator } from '@playwright/test';
 import { AppFrameHelper } from '../../../helpers/appFrameHelper';
-import { ShopifyAdminPage } from '../../shopify/ShopifyAdminPage';
-import { LoadFnOutput } from 'module';
 
 export class SideDockPage {
   readonly page: Page;
