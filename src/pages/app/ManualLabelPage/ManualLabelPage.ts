@@ -282,6 +282,14 @@ export class GenerateLabelManuallyPage extends BasePage {
     return logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.packageSpecialServices?.signatureOptionType || null;
   }
 
+  async getHALDetailsFromRequestLog() {
+    const logs = await this.getParsedDataFromRequestLog();
+    const shipmentSpecialServices = logs?.requestObject?.requestedShipment?.shipmentSpecialServices;
+    const specialServices = shipmentSpecialServices?.specialServiceTypes || [];
+    const locationId = shipmentSpecialServices?.holdAtLocationDetail?.locationId || null;
+    return { specialServices, locationId };
+  }
+
   async closeRatesLog() {
     await this.dialogModalCloseButton.click();
     await expect(this.appFrame.getByRole('dialog')).toBeHidden();
