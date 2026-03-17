@@ -40,6 +40,8 @@ export class ReturnLabelPage {
     await this.returnQuantityInput.fill('1');
     await this.refreshratesButton.click();
     await this.shippingRatesSelection.first().check(); 
+    // await this.waitForShippingRatesWithRetry();
+    await this.generateReturnLabelButton.waitFor({ state: 'visible', timeout: 40000 });
     await this.generateReturnLabelButton.click();
     await expect(this.page.getByText('SUCCESS')).toBeVisible();   
   }

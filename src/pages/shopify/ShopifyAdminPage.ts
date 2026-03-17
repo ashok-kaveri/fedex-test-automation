@@ -105,8 +105,7 @@ export class ShopifyAdminPage {
 async clickGenerateReturnLabelLink(): Promise<void> {
     await this.generateReturnLabelLink.click();
   }
-
-  //method to check if the Shopify Order status is in fulfilled status 
+//Method to generate return label from Shopify Order summary page for a fulfilled order
   async navigateToOrderInShopifyAndCheckStatus(orderID: string): Promise<void> {
   await this.navigateToStore(process.env.STORE!);
   await this.searchAndOpenOrder(orderID, 5);
@@ -121,14 +120,6 @@ async clickGenerateReturnLabelLink(): Promise<void> {
   await this.clickGenerateReturnLabelLink();
   }
 
-  // async OpenOrderAndClickReturnLabelLink(orderID:string): Promise<void>{
-
-
-  // }
 }
-  
-
-
-
 
 
