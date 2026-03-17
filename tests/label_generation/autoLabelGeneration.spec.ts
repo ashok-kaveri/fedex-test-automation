@@ -21,16 +21,13 @@ test.describe('Auto Label Generation Flow', () => {
     console.log(`Order created: ${sharedOrderID}`);
   });
 
-  test('1. Navigate to Shopify order', async ({ pages }) => {
+  test('1. Navigate to Shopify order and Auto Label Generation and Verify label status in Orders table', async ({ pages }) => {
     test.setTimeout(60000);
     await pages.shopifyAdmin.navigateToStore(store);
     await pages.shopifyAdmin.searchAndOpenOrder(sharedOrderID, 5);
-  });
-
-  test('2. Auto Label Generation and Verify label status in Orders table', async ({ pages }) => {
-    test.setTimeout(60000);
     await pages.shopifyAdmin.openMoreActions();
     await pages.shopifyAdmin.clickOnAutoLabelGeneration();
     await pages.shippingPage.orderGridColumnValidation(sharedOrderID, 'Label status', 'label generated');
+    await expect(pages.shippingPage.ordersTable).toContainText('label generated', { timeout: 8000 });
   });
 });

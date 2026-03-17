@@ -44,8 +44,8 @@ test.describe('Box Packaging Flow', () => {
     await pages.packagingSettingsPage.selectAppMenu('settings');
     // await pages.packagingSettingsPage.settingsDropDownUsingLabel('Packing Method', 'P1');
 
-    // await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'kgs_cm');
-    // await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'Save');
+    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'kgs_cm');
+    await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'Save');
     // await pages.packagingSettingsPage.expectToast('Updated');
     // await pages.packagingSettingsPage.setDefaultProductDimensions({
     //   length: 20,
