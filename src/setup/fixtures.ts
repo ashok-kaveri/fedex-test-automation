@@ -14,6 +14,12 @@ import { ProductPage } from '../pages/app/productsPage/productsPage';
 import { ProductSummaryPage } from '../pages/app/productsPage/productSummaryPage';
 import { SideDockPage } from '../pages/app/ManualLabelPage/SideDockConfig';
 import { ShopifyAccountSelectorPage } from '../pages/shopify/ShopifyAccountSelectorPage';
+import { ShopifyCreateStoreFormPage } from '../pages/shopify/ShopifyCreateStoreFormPage';
+import { ShopifyStoreSelectionPage } from '../pages/shopify/ShopifyStoreSelectionPage';
+import { ShopifyStoreInstallationPage } from '../pages/shopify/ShopifyStoreInstallationPage';
+import { ShopifyDevDashboardStorePage } from '../pages/shopify/ShopifyDevDashboardStorePage';
+import { ShopifyDevDashboardAppPage } from '../pages/shopify/ShopifyDevDashboardAppPage.ts';
+import { InstallationAuthPage } from '../pages/app/installationAuthPage/installatioAuthPage.ts';
 
 export type Pages = {
   sharedPage: Page;
@@ -31,6 +37,12 @@ export type Pages = {
   productSummaryPage: ProductSummaryPage;
   sideDockPage: SideDockPage;
   shopifyAccountSelectorPage: ShopifyAccountSelectorPage;
+  shopifyCreateStoreFormPage: ShopifyCreateStoreFormPage;
+  shopifyDevDashboardStorePage: ShopifyDevDashboardStorePage;
+  shopifyDevDashboardAppPage: ShopifyDevDashboardAppPage;
+  shopifyStoreSelectionPage: ShopifyStoreSelectionPage;
+  shopifyStoreInstallationPage: ShopifyStoreInstallationPage; 
+  authPage: InstallationAuthPage; 
 };
 
 export const test = baseTest.extend<object, { pages: Pages }>({
@@ -58,6 +70,12 @@ export const test = baseTest.extend<object, { pages: Pages }>({
         productSummaryPage: new ProductSummaryPage(page),
         sideDockPage: new SideDockPage(page),
         shopifyAccountSelectorPage: new ShopifyAccountSelectorPage(page),
+        shopifyCreateStoreFormPage: new ShopifyCreateStoreFormPage(page),
+        shopifyDevDashboardStorePage: new ShopifyDevDashboardStorePage(page),
+        shopifyDevDashboardAppPage: new ShopifyDevDashboardAppPage(page),
+        shopifyStoreSelectionPage: new ShopifyStoreSelectionPage(page),
+        shopifyStoreInstallationPage: new ShopifyStoreInstallationPage(page),
+        authPage: new InstallationAuthPage(page)
       };
       await use(pages);
       await context.close();
