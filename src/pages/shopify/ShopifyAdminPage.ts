@@ -11,7 +11,8 @@ export class ShopifyAdminPage {
   readonly searchResults: Locator;
   readonly moreActionsButton: Locator;
   readonly generateLabelLink: Locator;
-  readonly autoGenerateLabel: Locator;
+  readonly generateReturnLabelLink: Locator;
+
 
   constructor(page: Page) {
     this.page = page;
@@ -24,7 +25,7 @@ export class ShopifyAdminPage {
     this.searchResults = page.locator('ul#search-results');
     this.moreActionsButton = page.getByRole('button', { name: 'More actions' }).first();
     this.generateLabelLink = page.getByRole('link', { name: 'Generate Label', exact: true });
-    this.autoGenerateLabel = page.getByRole('link', { name: 'Auto-Generate Label', exact: true });
+    this.generateReturnLabelLink = page.getByRole('link', { name: 'Generate Return Label', exact: true });
 
   }
 
@@ -73,6 +74,16 @@ export class ShopifyAdminPage {
     throw new Error(`Order ${orderID} not found after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
+  //Return the Order fuflilment status
+  async isOrderFulfilled(): Promise<string> {
+  const badge = this.page
+    .locator('s-internal-badge')
+    .filter({ hasText: /(Fulfilled|Unfulfilled|Partially fulfilled)/i })
+    .first();
+
+  return (await badge.innerText()).trim();
+}
+
   // Open more actions menu
   async openMoreActions(): Promise<void> {
     await this.moreActionsButton.click();
@@ -83,12 +94,6 @@ export class ShopifyAdminPage {
     await this.generateLabelLink.click();
   }
 
-  //Click on Auto-label generation
-
-   async clickOnAutoLabelGeneration(): Promise<void> {
-    await this.autoGenerateLabel.click();
-  }
-
   //generic method to navigate to order and click on generate label manually in shopify admin
   async navigateToOrderInShopifyAndClickGenerateLabel(orderID: string): Promise<void> {
     await this.navigateToStore(process.env.STORE!);
@@ -96,4 +101,34 @@ export class ShopifyAdminPage {
     await this.openMoreActions();
     await this.clickGenerateLabelLink();
   }
-} 
+
+async clickGenerateReturnLabelLink(): Promise<void> {
+    await this.generateReturnLabelLink.click();
+  }
+
+  //method to check if the Shopify Order status is in fulfilled status 
+  async navigateToOrderInShopifyAndCheckStatus(orderID: string): Promise<void> {
+  await this.navigateToStore(process.env.STORE!);
+  await this.searchAndOpenOrder(orderID, 5);
+
+  const status = await this.isOrderFulfilled();
+  console.log('Status:', status);
+
+  if (!status.toLowerCase().includes('fulfilled')) {
+    throw new Error(`Order not fulfilled → ${status}`);
+  }
+  await this.openMoreActions();
+  await this.clickGenerateReturnLabelLink();
+  }
+
+  // async OpenOrderAndClickReturnLabelLink(orderID:string): Promise<void>{
+
+
+  // }
+}
+  
+
+
+
+
+
