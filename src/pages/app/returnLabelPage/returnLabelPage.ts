@@ -68,6 +68,8 @@ export class ReturnLabelPage extends BasePage {
     await this.returnQuantityInput.fill('1');
     await this.page.waitForTimeout(3000);
     await this.refreshratesButton.click();
+    await this.shippingRatesSelection.first().check(); 
+    // await this.waitForShippingRatesWithRetry();
     await this.waitForShippingRatesWithRetry();
     await this.generateReturnLabelButton.waitFor({ state: 'visible', timeout: 40000 });
     await this.generateReturnLabelButton.click();

@@ -179,25 +179,25 @@ export class SideDockPage {
     await this.generateReturnLabelCheckbox.check();
   }
 
-  async selectGenerateReturnEditButton({ returnPackType, returnSignOption }) {
-    await this.generateReturnLabelEditButton.click();
-    await this.modalContainer.waitFor({ state: 'visible' });
-    await this.returnPackagingType.selectOption(returnPackType);
-    await this.returnSignatureDropdown.selectOption(returnSignOption);
-    await this.modalCloseButton.click();
-  }
+  // async selectGenerateReturnEditButton({ returnPackType, returnSignOption }) {
+  //   await this.generateReturnLabelEditButton.click();
+  //   await this.modalContainer.waitFor({ state: 'visible' });
+  //   await this.returnPackagingType.selectOption(returnPackType);
+  //   await this.returnSignatureDropdown.selectOption(returnSignOption);
+  //   await this.modalCloseButton.click();
+  // }
 
   async enableHazardousproductCheckBox() {
     await this.hazardousProductCheckbox.check();
   }
 
-  async selectHardousShipmentDetails({ hazPackType, HazPackMaterial }) {
-    await this.hazardousProductEditButton.click();
-    await this.modalContainer.waitFor({ state: 'visible' });
-    await this.hazardousPackagingType.selectOption(hazPackType);
-    await this.hazardousPackagingMaterial.selectOption(HazPackMaterial);
-    await this.modalCloseButton.click();
-  }
+  // async selectHardousShipmentDetails({ hazPackType, HazPackMaterial }) {
+  //   await this.hazardousProductEditButton.click();
+  //   await this.modalContainer.waitFor({ state: 'visible' });
+  //   await this.hazardousPackagingType.selectOption(hazPackType);
+  //   await this.hazardousPackagingMaterial.selectOption(HazPackMaterial);
+  //   await this.modalCloseButton.click();
+  // }
 
   async selectShipAfterDays(days: string) {
     await this.shipAfterDaysTextBox.fill(days);
