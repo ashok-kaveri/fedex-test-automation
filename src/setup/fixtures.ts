@@ -20,7 +20,7 @@ import { ShopifyStoreSelectionPage } from '../pages/shopify/ShopifyStoreSelectio
 import { ShopifyStoreInstallationPage } from '../pages/shopify/ShopifyStoreInstallationPage';
 import { ShopifyDevDashboardStorePage } from '../pages/shopify/ShopifyDevDashboardStorePage';
 import { ShopifyDevDashboardAppPage } from '../pages/shopify/ShopifyDevDashboardAppPage.ts';
-import { InstallationAuthPage } from '../pages/app/installationAuthPage/installatioAuthPage.ts';
+import { InstallationAuthPage } from '../pages/app/installationAuthPage/installationAuthPage.ts';
 
 export type Pages = {
   sharedPage: Page;

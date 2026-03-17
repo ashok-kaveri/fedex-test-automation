@@ -88,6 +88,16 @@ export class ShopifyAdminPage extends BasePage {
     throw new Error(`Order ${orderID} not found after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
+  //Return the Order fuflilment status
+  async isOrderFulfilled(): Promise<string> {
+  const badge = this.page
+    .locator('s-internal-badge')
+    .filter({ hasText: /(Fulfilled|Unfulfilled|Partially fulfilled)/i })
+    .first();
+
+  return (await badge.innerText()).trim();
+}
+
   // Open more actions menu
   async openMoreActions(): Promise<void> {
     await this.moreActionsButton.waitFor({ state: 'visible', timeout: 10000 });
@@ -148,6 +158,24 @@ async clickAppFromResults(appName: string): Promise<void> {
     await this.clickGenerateLabelLink();
   }
 
+async clickGenerateReturnLabelLink(): Promise<void> {
+    await this.generateReturnLabelLink.click();
+  }
+//Method to generate return label from Shopify Order summary page for a fulfilled order
+  async navigateToOrderInShopifyAndCheckStatus(orderID: string): Promise<void> {
+  await this.navigateToStore(process.env.STORE!);
+  await this.searchAndOpenOrder(orderID, 5);
+
+  const status = await this.isOrderFulfilled();
+  console.log('Status:', status);
+
+  if (!status.toLowerCase().includes('fulfilled')) {
+    throw new Error(`Order not fulfilled → ${status}`);
+  }
+  await this.openMoreActions();
+  await this.clickGenerateReturnLabelLink();
+  }
+
   async fulfillOrderInShopify(orderID: string): Promise<string> {
     await this.navigateToStore(process.env.STORE!);
     await this.searchAndOpenOrder(orderID, 5);
@@ -157,6 +185,7 @@ async clickAppFromResults(appName: string): Promise<void> {
     return status;
   }
 
+  
   async navigateToApp(appName: string): Promise<string> {
   console.log(`Navigating to app "${appName}" in Shopify Admin...`);
   await this.openAppsSection();
@@ -165,6 +194,4 @@ async clickAppFromResults(appName: string): Promise<void> {
   await this.page.waitForLoadState('networkidle');
   return this.page.url();
 }
-
-
 }
