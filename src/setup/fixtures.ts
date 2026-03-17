@@ -7,6 +7,7 @@ import { OrderSummaryPage } from '../pages/app/OrderSummaryPage/OrderSummaryPage
 import { PickupPage } from '../pages/app/PickupPage/PickupPage';
 import { ReturnLabelPage } from '../pages/app/returnLabelPage/returnLabelPage';
 import { PackagingSettingsPage } from '../pages/app/settings/packagingSettingsPage';
+import { AdditionalServices } from '../pages/app/settings/additionalServices';
 import { ProductsPage_M } from '../pages/app/Products/productsPage_M';
 import { ShopifyProductsSummaryPage } from '../pages/shopify/ShopifyProductsSummeryPage';
 import { ShopifyProductPage } from '../pages/shopify/ShopifyProductPage';
@@ -30,6 +31,7 @@ export type Pages = {
   pickupPage: PickupPage;
   returnLabelPage: ReturnLabelPage;
   packagingSettingsPage: PackagingSettingsPage;
+  additionalServices: AdditionalServices;
   productsPage: ProductsPage_M;
   shopifyProductsSummary: ShopifyProductsSummaryPage;
   shopifyProductPage: ShopifyProductPage;
@@ -63,6 +65,7 @@ export const test = baseTest.extend<object, { pages: Pages }>({
         pickupPage: new PickupPage(page),
         returnLabelPage: new ReturnLabelPage(page),
         packagingSettingsPage: new PackagingSettingsPage(page),
+        additionalServices: new AdditionalServices(page),
         productsPage: new ProductsPage_M(page),
         shopifyProductsSummary: new ShopifyProductsSummaryPage(page),
         shopifyProductPage: new ShopifyProductPage(page),
