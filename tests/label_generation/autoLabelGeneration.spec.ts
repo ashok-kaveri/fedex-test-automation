@@ -20,8 +20,8 @@ test.describe('Auto Label Generation Flow', () => {
     sharedOrderID = orderID;
     console.log(`Order created: ${sharedOrderID}`);
   });
-
-  test('1. Navigate to Shopify order and Auto Label Generation and Verify label status in Orders table', async ({ pages }) => {
+ 
+  test('1. Navigate to Shopify order', async ({ pages }) => {
     test.setTimeout(60000);
     await pages.shopifyAdmin.navigateToStore(store);
     await pages.shopifyAdmin.searchAndOpenOrder(sharedOrderID, 5);

@@ -253,4 +253,9 @@ export class PackagingSettingsPage extends BasePage {
     await this.freightWidthInput.fill(String(data.width));
     await this.freightHeightInput.fill(String(data.height));
   }
+
+  async getSelectedPackingMethod() {
+  const locator = this.appFrame.locator('.Polaris-Select__SelectedOption').last();
+  return await locator.textContent();
+  }
 }

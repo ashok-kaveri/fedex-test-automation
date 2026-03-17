@@ -17,6 +17,9 @@ export class ShopifyProductsSummaryPage extends BasePage {
   // Pricing
   readonly priceInput: Locator;
 
+  //weight
+  readonly productWeight: Locator;
+
   // Inventory
   readonly inventoryTrackedCheckbox: Locator;
 
@@ -63,6 +66,10 @@ export class ShopifyProductsSummaryPage extends BasePage {
     // ================= PRICING =================
 
     this.priceInput = this.page.locator('input[name="price"]');
+
+    // ================= Weight=================
+
+    this.productWeight = this.page.locator('#ShippingCardWeight');
 
     // ================= INVENTORY =================
 
@@ -166,6 +173,11 @@ export class ShopifyProductsSummaryPage extends BasePage {
     if (hsCode) {
       await this.hsCodeInput.fill(hsCode);
     }
+  }
+
+  async getProductWeight(): Promise<string> {
+      const textContent = await this.productWeight.inputValue();
+      return textContent?.trim() || '';
   }
 
   async addTag(tag: string) {

@@ -15,6 +15,7 @@ export class ProductSummaryPage extends BasePage {
   readonly isBatteryCheckbox: Locator;
   readonly batteryMaterialTypeDropdown: Locator;
   readonly batteryPackingTypeDropdown: Locator;
+  readonly productWeight: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -34,6 +35,7 @@ export class ProductSummaryPage extends BasePage {
     this.isBatteryCheckbox = this.appIframe.getByRole('checkbox', { name: 'Is Battery' });
     this.batteryMaterialTypeDropdown = this.appIframe.getByLabel('Battery Material Type');
     this.batteryPackingTypeDropdown = this.appIframe.getByLabel('Battery Packing Type');
+    this.productWeight = this.page.locator('#ShippingCardWeight');
   }
 
   // Set the signature type (e.g., 'ADULT', 'SERVICE_DEFAULT', 'DIRECT', "INDIRECT", "NO_SIGNATURE_REQUIRED", "AS_PER_THE_GENERAL_SETTINGS")
