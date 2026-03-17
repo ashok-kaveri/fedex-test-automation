@@ -1,67 +1,53 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../../src/pages/shopify/ShopifyAdminPage';
-import { GenerateLabelManuallyPage } from '../../src/pages/app/ManualLabelPage/ManualLabelPage';
-import { OrderSummaryPage } from '../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
-import { ShippingPage } from '../../src/pages/app/ShippingPage/ShippingPage';
-import { ReturnLabelPage } from '../../src/pages/app/returnLabelPage/returnLabelPage';
-
 
 const store = process.env.STORE;
 
 if (!store) {
-    throw new Error('STORE environment variable is required');
+  throw new Error('STORE environment variable is required');
 }
 
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Return Label Generation Flow', () => {
-    let sharedOrderID: string;
-    let sharedPage: any;
-    let sharedContext: any;
-    let manualLabelPage: GenerateLabelManuallyPage;
-    let shippingPage: ShippingPage;
-    let orderSummaryPage: OrderSummaryPage;
-    let shopifyAdminPage: ShopifyAdminPage;
-    let orderUploader: ShopifyOrderUploader;
-    let returnLabelPage: ReturnLabelPage;
+  let sharedOrderID: string;
+  let orderUploader: ShopifyOrderUploader;
 
-    test.beforeAll(async ({ browser }) => {
-        sharedContext = await browser.newContext({ storageState: 'auth.json' });
-        sharedPage = await sharedContext.newPage();
+  test.beforeAll(async () => {
+    orderUploader = new ShopifyOrderUploader();
+  });
 
-        manualLabelPage = new GenerateLabelManuallyPage(sharedPage);
-        shippingPage = new ShippingPage(sharedPage);
-        orderSummaryPage = new OrderSummaryPage(sharedPage);
-        shopifyAdminPage = new ShopifyAdminPage(sharedPage);
-        orderUploader = new ShopifyOrderUploader();
-        returnLabelPage = new ReturnLabelPage(sharedPage);
+  test('Create an order from API', async () => {
+    const orderID = (await orderUploader.uploadOrder()) as string;
+    console.log('Order ID:', orderID);
+    expect(orderID).toBeTruthy();
+    sharedOrderID = orderID;
+  });
 
-    });
+  test('Navigate to Shopify order and generate label manually', async ({ pages }) => {
+    test.setTimeout(60000);
+    await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
+    await pages.manualLabelPage.generateLabelInApp();
+    await pages.orderSummaryPage.verifyLabelGenerated();
+  });
 
-    test.afterAll(async () => {
-        await sharedPage?.close();
-        await sharedContext?.close();
-    });
-
-    test('Create an order from API', async () => {
-        const orderID = (await orderUploader.uploadOrder()) as string;
-        console.log('Order ID:', orderID);
-        expect(orderID).toBeTruthy();
-        sharedOrderID = orderID;
-    });
-
-    test('Navigate to Shopify order and generate label manually', async () => {
-        test.setTimeout(60000);
-        await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-        await manualLabelPage.generateLabelInApp();
-        await orderSummaryPage.verifyLabelGenerated();
-    });
-
-    test('Generate return label for the order', async () => {
-        await orderSummaryPage.navigatingToReturnLabelPage();
-        await returnLabelPage.validateReturnLabelTitle();
-        await returnLabelPage.returnLabelGeneration();        
-    });
-
+  test('Generate return label for the order', async ({ pages }) => {
+    test.setTimeout(120000);
+    // Use the sharedPage from the fixture for direct URL navigation
+    await pages.sharedPage.goto(`https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/shopify`);
+    await pages.shippingPage.searchButton.waitFor({ state: 'visible', timeout: 30000 });
+    await pages.shippingPage.searchOrder(sharedOrderID);
+    await pages.shippingPage.orderClick();
+    await pages.orderSummaryPage.navigatingToReturnLabelPage();
+    await pages.returnLabelPage.validateReturnLabelTitle();
+    await expect(pages.returnLabelPage.returnLabelPageTitle).toContainText('Return Label', { timeout: 10000 });
+    await pages.sharedPage.reload();
+    await pages.returnLabelPage.returnLabelGeneration();
+    await pages.sharedPage.waitForLoadState('load');
+    await expect(pages.returnLabelPage.successBadge).toBeVisible({ timeout: 40000 });
+    await expect(pages.returnLabelPage.downloadLink).toBeVisible({ timeout: 40000 });
+    console.log('Return label generated successfully for the order fulfilled from the app');
+  });
 });
+
+// npx playwright test tests/returnLabels/returnLabelGeneration.spec.ts --project="Google Chrome" --headed

@@ -1,10 +1,8 @@
 import { Page, FrameLocator, Locator, expect } from '@playwright/test';
-import { AppFrameHelper } from '../../../helpers/appFrameHelper';
+import { BasePage } from '../../basePage';
 
 // Page Object for Shipping Page within FedEx App
-export class ShippingPage {
-  readonly page: Page;
-  private readonly appFrame: FrameLocator;
+export class ShippingPage extends BasePage {
   private lastRequestPickupTriggeredAt: Date | null;
 
   // Locators
@@ -18,10 +16,15 @@ export class ShippingPage {
   readonly requestPickupButton: Locator;
   readonly headers: Locator;
   readonly refreshButton: Locator;
+  readonly clickOrderNumber: Locator;
+  readonly returnFailureTitleForUnfulfilledOrder: Locator;
+  readonly returnFailureDescriptionForUnfulfilledOrder: Locator;
+  // readonly productsTab: Locator;
+
+  readonly yesBtnInPopUpForRequestPickup: Locator;
 
   constructor(page: Page) {
-    this.page = page;
-    this.appFrame = AppFrameHelper.getAppFrame(page);
+    super(page);
     this.lastRequestPickupTriggeredAt = null;
 
     // Initialize locators
@@ -33,13 +36,16 @@ export class ShippingPage {
     this.selectAllCell = this.appFrame.getByRole('cell', { name: 'Select all orders' });
     this.selectAllCheckbox = this.appFrame.getByRole('checkbox', { name: 'Select all orders' });
     this.requestPickupButton = this.appFrame.getByRole('button', { name: 'Request Pick Up' });
+    this.clickOrderNumber = this.appFrame.locator('a[class="orderId"]');
+    this.returnFailureTitleForUnfulfilledOrder = this.appFrame.getByText('Failed to generate Return Label');
+    this.returnFailureDescriptionForUnfulfilledOrder = this.appFrame.getByText('Sorry, you cannot generate a return label for this order because it is not yet fulfilled. Please wait until the order is fulfilled to proceed or select a fulfilled order.');
+    // this.productsTab = page.getByRole('link', { name: 'Products' }).nth(1);
 
     // From second file
     this.refreshButton = this.appFrame.locator('button:has-text("Refresh")');
     this.headers = this.appFrame.locator('table thead th');
+    this.yesBtnInPopUpForRequestPickup = this.appFrame.getByRole('button', { name: 'Yes' });
   }
-
-  // ================= BASIC NAVIGATION =================
 
   getOrderRow(orderID: string): Locator {
     return this.ordersTable.getByText(orderID);
@@ -49,8 +55,6 @@ export class ShippingPage {
     await this.ordersButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.ordersButton.click();
   }
-
-  // ================= SEARCH =================
 
   async searchOrder(orderID: string, maxRetries: number = 3): Promise<void> {
     const cleanOrderID = orderID.replace(/^#/, '');
@@ -77,8 +81,6 @@ export class ShippingPage {
 
     throw new Error(`Order ${orderID} not found: ${lastError?.message}`);
   }
-
-  // ================= GRID HELPERS =================
 
   getRowByOrderId(orderID: string) {
     const clean = orderID.replace(/^#/, '');
@@ -116,8 +118,6 @@ export class ShippingPage {
     return false;
   }
 
-  // ================= VALIDATIONS =================
-
   async verifyOrderStatusInOrderGrid(): Promise<void> {
     await expect(this.ordersTable).toContainText('label generated', { timeout: 10000 });
   }
@@ -145,8 +145,6 @@ export class ShippingPage {
     throw new Error(`Timeout. Last value: ${lastValue}`);
   }
 
-  // ================= SELECTION =================
-
   async selectAllOrdersInOrderGrid() {
     await this.selectAllCell.waitFor({ state: 'visible', timeout: 5000 });
     await this.selectAllCell.click();
@@ -164,40 +162,90 @@ export class ShippingPage {
     const row = this.ordersTable.locator('tr.Polaris-IndexTable__TableRow').filter({
       has: this.appFrame.locator('a.orderId', { hasText: normalized }),
     });
-
     const checkbox = row.locator('input[id^="Select-"][type="checkbox"]').first();
     await checkbox.setChecked(true, { force: true });
   }
-
-  // ================= MORE ACTIONS =================
 
   async openMoreActionsInOrderGrid() {
     await this.moreActionsButton.waitFor({ state: 'visible' });
     await this.moreActionsButton.click();
   }
 
-  async clickMoreActionsItem(actionName: string) {
-    const normalized = actionName.trim();
-    const isPickup = normalized.toLowerCase() === 'request pick up';
+  async clickMoreActionsItem(actionName: string): Promise<void> {
+    const normalizedActionName = actionName.trim().replace(/\s+/g, ' ');
+    const isRequestPickupAction = normalizedActionName.toLowerCase() === 'request pick up';
+    const candidates: Locator[] = [
+      this.appFrame.getByRole('menuitem', { name: normalizedActionName }).first(),
+      this.appFrame.locator('.Polaris-ActionList button').filter({ hasText: normalizedActionName }).first(),
+      this.appFrame.getByRole('button', { name: normalizedActionName }).first(),
+      this.appFrame.locator('button').filter({ hasText: normalizedActionName }).first(),
+    ];
+    let lastError: Error | undefined;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await this.openMoreActionsInOrderGrid();
 
-    await this.openMoreActionsInOrderGrid();
-    const candidate = this.appFrame.locator('button, [role="menuitem"]').filter({ hasText: normalized }).first();
-    await candidate.click();
-
-    if (isPickup) {
-      const yesBtn = this.appFrame.getByRole('button', { name: 'Yes' });
-      await yesBtn.waitFor({ state: 'visible', timeout: 5000 });
-      this.lastRequestPickupTriggeredAt = new Date();
+        for (const candidate of candidates) {
+          if ((await candidate.count()) === 0) continue;
+          if (!(await candidate.isVisible())) continue;
+          await expect(candidate).toBeEnabled({ timeout: 5000 });
+          await candidate.scrollIntoViewIfNeeded();
+          await candidate.click({ trial: true });
+          await candidate.click();
+          if (isRequestPickupAction) {
+            const confirmYesButton = this.appFrame.getByRole('button', { name: 'Yes' }).first();
+            try {
+              await confirmYesButton.waitFor({
+                state: 'visible',
+                timeout: 2500,
+              });
+            } catch {
+              continue;
+            }
+          }
+          return;
+        }
+      } catch (error) {
+        lastError = error as Error;
+      }
     }
+    throw lastError ?? new Error(`Failed to click action: ${actionName}`);
+  }
+
+  async clickOnYesInPopUp() {
+    await this.yesBtnInPopUpForRequestPickup.waitFor({ state: 'visible' });
+    this.lastRequestPickupTriggeredAt = new Date();
+    await this.yesBtnInPopUpForRequestPickup.click();
   }
 
   getLastRequestPickupTriggeredAt() {
     return this.lastRequestPickupTriggeredAt;
   }
 
-  async clickOnYesInPopUp() {
-    const yes = this.appFrame.getByRole('button', { name: 'Yes' });
-    await yes.waitFor({ state: 'visible' });
-    await yes.click();
+
+  // ================= click order Number =================
+
+  async orderClick() {
+    // Using 'load' instead of 'networkidle' is much faster and usually sufficient
+    await this.page.waitForLoadState('load');
+    await this.clickOrderNumber.first().waitFor({ state: 'visible', timeout: 30000 });
+    await this.clickOrderNumber.first().click();
   }
+  // =================Validating the Return failure message for the unfulfilled order =================
+  async validateReturnFailureMessageForUnfulfilledOrder() {
+    // await expect(this.returnFailureTitleForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+    // await expect(this.returnFailureDescriptionForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+
+    return {
+    title: this.returnFailureTitleForUnfulfilledOrder,
+    description: this.returnFailureDescriptionForUnfulfilledOrder
+  };
+  }
+
+  // ================= Navigate to Products tab =================
+  async navigateToProductsPage(): Promise<void> {
+    await this.page.goto(`https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/products`);
+  }
+
+
 }

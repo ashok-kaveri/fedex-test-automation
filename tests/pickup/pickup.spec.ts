@@ -1,40 +1,14 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../../src/pages/shopify/ShopifyAdminPage';
-import { GenerateLabelManuallyPage } from '../../src/pages/app/ManualLabelPage/ManualLabelPage';
-import { OrderSummaryPage } from '../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
-import { ShippingPage } from '../../src/pages/app/ShippingPage/ShippingPage';
-import { PickupPage } from '../../src/pages/app/PickupPage/PickupPage';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Manual Label Generation Flow', () => {
+test.describe('Manual Label Generation Flow', { tag: '@sanity' }, () => {
   let sharedOrderID: string;
-  let sharedPage: any;
-  let sharedContext: any;
-  let manualLabelPage: GenerateLabelManuallyPage;
-  let shippingPage: ShippingPage;
-  let shopifyAdminPage: ShopifyAdminPage;
-  let orderSummaryPage: OrderSummaryPage;
   let orderUploader: ShopifyOrderUploader;
-  let pickupPage: PickupPage;
 
-  test.beforeAll(async ({ browser }) => {
-    // Create shared context and page for all tests
-    sharedContext = await browser.newContext({ storageState: 'auth.json' });
-    sharedPage = await sharedContext.newPage();
-
-    manualLabelPage = new GenerateLabelManuallyPage(sharedPage);
-    shippingPage = new ShippingPage(sharedPage);
-    shopifyAdminPage = new ShopifyAdminPage(sharedPage);
-    orderSummaryPage = new OrderSummaryPage(sharedPage);
-    pickupPage = new PickupPage(sharedPage);
+  test.beforeAll(async () => {
     orderUploader = new ShopifyOrderUploader();
-  });
-
-  test.afterAll(async () => {
-    await sharedPage?.close();
-    await sharedContext?.close();
   });
 
   test('Create an order from API', async () => {
@@ -44,32 +18,27 @@ test.describe('Manual Label Generation Flow', () => {
     sharedOrderID = orderID;
   });
 
-  test('Navigate to Shopify order and generate label manually', async () => {
+  test('Navigate to Shopify order and generate label manually', async ({ pages }) => {
     test.setTimeout(180000);
-    await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-    await manualLabelPage.generateLabelInApp();
-    await orderSummaryPage.verifyLabelGenerated();
+    await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
+    await pages.manualLabelPage.generateLabelInApp();
+    await pages.orderSummaryPage.verifyLabelGenerated();
   });
 
-  test('Click Back and serach the order and pickup', async () => {
+  test('Click Back in OrderSummary and search the order and click request pickup', async ({ pages }) => {
     test.setTimeout(60000);
-    await manualLabelPage.clickBackButtonInManualLabelGenerationPage();
-    await shippingPage.selectOrderCheckboxByOrderIdWithLabelGenerated(sharedOrderID);
-    await shippingPage.clickMoreActionsItem('Request Pick Up');
-    const requestPickupTriggeredAt = shippingPage.getLastRequestPickupTriggeredAt();
+    await pages.manualLabelPage.clickBackButtonInManualLabelGenerationPage();
+    await pages.shippingPage.selectOrderCheckboxByOrderIdWithLabelGenerated(sharedOrderID);
+    await pages.shippingPage.clickMoreActionsItem('Request Pick Up');
+    await pages.shippingPage.clickOnYesInPopUp();
+    const requestPickupTriggeredAt = pages.shippingPage.getLastRequestPickupTriggeredAt();
     expect(requestPickupTriggeredAt).not.toBeNull();
-    await shippingPage.clickOnYesInPopUp();
-    await pickupPage.verifyOrderStatus(sharedOrderID, 'Pickup requested');
-    await sharedPage.waitForURL(/pickup/i);
-    await expect(pickupPage.pickupHeading).toContainText('Pickups');
-    await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
-    await sharedPage.waitForTimeout(1000);
-    await pickupPage.clickRowByOrderId(sharedOrderID);
-    // await expect(pickupPage.statusInPickupLinkPage).toBeVisible({ timeout: 10000 });
-    await pickupPage.verifyPickupField('Status', 'SUCCESS');
-    await pickupPage.verifyPickupField('Orders', sharedOrderID);
-    const pickupNumber = await pickupPage.processPickupRow(sharedOrderID, requestPickupTriggeredAt ?? undefined);
-    await pickupPage.verifyPickupField('Pickup Confirmation Number', pickupNumber);
-    await sharedPage.waitForTimeout(10000);
+    await pages.sharedPage.waitForURL(/pickup/i);
+    await expect(pages.pickupPage.pickupHeading).toContainText('Pickups');
+    const pickupNumber = await pages.pickupPage.verifyPickupRowColumns(sharedOrderID, requestPickupTriggeredAt ?? undefined);
+    await pages.pickupPage.clickRowByOrderId(sharedOrderID);
+    await pages.pickupPage.verifyPickupDetails('Pickup Confirmation Number', pickupNumber);
+    await pages.pickupPage.verifyPickupDetails('Status', 'SUCCESS');
+    await pages.pickupPage.verifyPickupDetails('Orders', sharedOrderID);
   });
 });

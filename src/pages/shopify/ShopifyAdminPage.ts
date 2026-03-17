@@ -1,8 +1,8 @@
 import { Page, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { BasePage } from '../basePage';
 
-export class ShopifyAdminPage {
-  readonly page: Page;
-
+export class ShopifyAdminPage extends BasePage {
   // Locators
   readonly searchButton: Locator;
   readonly searchContainer: Locator;
@@ -11,11 +11,13 @@ export class ShopifyAdminPage {
   readonly searchResults: Locator;
   readonly moreActionsButton: Locator;
   readonly generateLabelLink: Locator;
+  readonly autoGenerateLabel: Locator;
+  readonly markAsFulfilledButton: Locator;
+  readonly fulfillmentStatusBadge: Locator;
   readonly generateReturnLabelLink: Locator;
 
-
   constructor(page: Page) {
-    this.page = page;
+    super(page);
 
     // Initialize locators
     this.searchButton = page.getByRole('button', { name: /search/i });
@@ -25,16 +27,19 @@ export class ShopifyAdminPage {
     this.searchResults = page.locator('ul#search-results');
     this.moreActionsButton = page.getByRole('button', { name: 'More actions' }).first();
     this.generateLabelLink = page.getByRole('link', { name: 'Generate Label', exact: true });
+    this.autoGenerateLabel = page.getByRole('link', { name: 'Auto-Generate Label', exact: true });
+    this.markAsFulfilledButton = page.getByRole('button', { name: 'Mark as fulfilled' });
+    // this.fulfillmentStatusBadge = page.locator('s-internal-badge:nth-child(4) > .badge');
+    this.fulfillmentStatusBadge = page.getByText('CompletePaidCompleteFulfilledArchived');
     this.generateReturnLabelLink = page.getByRole('link', { name: 'Generate Return Label', exact: true });
+
+
 
   }
 
   // Helper method for dynamic locators
   getOrderLink(orderID: string): Locator {
-    return this.searchResults.locator(
-      `a[role="option"][href*="/orders/"]`,
-      { hasText: orderID }
-    );
+    return this.searchResults.locator(`a[role="option"][href*="/orders/"]`, { hasText: orderID });
   }
 
   // Navigate to Shopify admin store
@@ -44,7 +49,7 @@ export class ShopifyAdminPage {
   }
 
   // Search and open order by ID with retry logic
-  async searchAndOpenOrder(orderID: string, maxRetries: number = 3): Promise<void> {
+  async searchAndOpenOrder(orderID: string, maxRetries: number = 4): Promise<void> {
     await this.searchButton.click();
     await this.ordersButton.click();
     await this.searchInput.fill(orderID);
@@ -91,7 +96,27 @@ export class ShopifyAdminPage {
 
   // Click on Generate Label link to open manual label generation page
   async clickGenerateLabelLink(): Promise<void> {
-    await this.generateLabelLink.click();
+    await this.generateLabelLink.click();  
+  }
+
+  //Click on Auto-label generation
+
+  async clickOnAutoLabelGeneration(): Promise<void> {
+    await this.autoGenerateLabel.click();
+  }
+
+  //Click on Generate Return Label
+  async clickOnGenerateReturnLabel(): Promise<void> {
+    await this.generateReturnLabelLink.click();
+  }
+
+
+  // fulfilling order from Shopify Order Summary page
+  async confirmOrderFulfillment(): Promise<string> {
+    await this.markAsFulfilledButton.click();
+    await this.markAsFulfilledButton.click();
+    await this.fulfillmentStatusBadge.waitFor({ state: 'visible', timeout: 20000 });
+    return await this.fulfillmentStatusBadge.innerText();
   }
 
   //generic method to navigate to order and click on generate label manually in shopify admin
@@ -120,6 +145,16 @@ async clickGenerateReturnLabelLink(): Promise<void> {
   await this.clickGenerateReturnLabelLink();
   }
 
+  async fulfillOrderInShopify(orderID: string): Promise<string> {
+    await this.navigateToStore(process.env.STORE!);
+    await this.searchAndOpenOrder(orderID, 5);
+    const status = await this.confirmOrderFulfillment();
+    await this.openMoreActions();
+    await this.clickOnGenerateReturnLabel();
+    return status;
+    
+  }
 }
 
+  
 

@@ -1,10 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../../src/pages/shopify/ShopifyAdminPage';
-import { GenerateLabelManuallyPage } from '../../src/pages/app/ManualLabelPage/ManualLabelPage';
-import { OrderSummaryPage } from '../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
-import { ReturnLabelPage } from '../../src/pages/app/returnLabelPage/returnLabelPage';
-
 
 const store = process.env.STORE;
 
@@ -18,21 +13,12 @@ test.describe('Return Label Generation Flow', () => {
     let sharedOrderID: string;
     let sharedPage: any;
     let sharedContext: any;
-    let manualLabelPage: GenerateLabelManuallyPage;
-    let shopifyAdminPage: ShopifyAdminPage;
     let orderUploader: ShopifyOrderUploader;
-    let orderSummaryPage: OrderSummaryPage;
-    let returnLabelPage: ReturnLabelPage;
 
     test.beforeAll(async ({ browser }) => {
         sharedContext = await browser.newContext({ storageState: 'auth.json' });
         sharedPage = await sharedContext.newPage();
-
-        manualLabelPage = new GenerateLabelManuallyPage(sharedPage);
-        shopifyAdminPage = new ShopifyAdminPage(sharedPage);
         orderUploader = new ShopifyOrderUploader();
-        orderSummaryPage = new OrderSummaryPage(sharedPage);
-        returnLabelPage = new ReturnLabelPage(sharedPage);
 
     });
 
@@ -49,21 +35,21 @@ test.describe('Return Label Generation Flow', () => {
         sharedOrderID = orderID;
     });
 
-    test('Navigate to Shopify order and generate label manually', async () => {
+    test('Navigate to Shopify order and generate label manually', async ({pages}) => {
         test.setTimeout(60000);
-        await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-        await manualLabelPage.generateLabelInApp();
-        await orderSummaryPage.verifyLabelGenerated();
+        await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
+        await pages.manualLabelPage.generateLabelInApp();
+        await pages.orderSummaryPage.verifyLabelGenerated();
 
     });
 
-    test('Navigate to Shopify order and generate return label for a fulfilled order', async () => {
+    test('Navigate to Shopify order and generate return label for a fulfilled order', async ({pages}) => {
 
-    await shopifyAdminPage.navigateToOrderInShopifyAndCheckStatus(sharedOrderID);
+    await pages.shopifyAdmin.navigateToOrderInShopifyAndCheckStatus(sharedOrderID);
     // await shopifyAdminPage.clickGenerateReturnLabelLink();
-    await orderSummaryPage.navigatingToReturnLabelPage();
-    await returnLabelPage.validateReturnLabelTitle();
-    await returnLabelPage.returnLabelGeneration(); 
+    await pages.orderSummaryPage.navigatingToReturnLabelPage();
+    await pages.returnLabelPage.validateReturnLabelTitle();
+    await pages.returnLabelPage.returnLabelGeneration(); 
     
 });
 
