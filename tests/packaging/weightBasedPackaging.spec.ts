@@ -16,7 +16,7 @@ test.describe('Weight Based Packaging Flow with Auto label generation', () => {
     length: 8,
     width: 10,
     height: 12,
-    unit: 'in'
+    unit: 'in',
   };
 
   test.beforeAll(async () => {
@@ -24,25 +24,25 @@ test.describe('Weight Based Packaging Flow with Auto label generation', () => {
   });
 
   test('1. Verify Weight Based Packaging', async ({ pages }) => {
-      test.setTimeout(60000);
-      await pages.shippingPage.navigateToProductsPage();
-      await pages.productPage.searchAndSelectProduct('Simple packaging product');
-      await pages.productsPage.addProductDimensions(inputDimensions);
-      await pages.productsPage.saveProduct();
-      await pages.packagingSettingsPage.selectAppMenu('settings');
-      await pages.packagingSettingsPage.settingsDropDownUsingLabel('Packing Method', 'Weight Based');
-      await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'Pounds & Inches');
-      await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'Save');
-      await pages.packagingSettingsPage.expectToast('Updated');
-      await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'more settings');
-      await expect(pages.packagingSettingsPage.skeletonLoader).toBeHidden();
-      const selectedPackingMethod = await pages.packagingSettingsPage.getSelectedPackingMethod();
-      expect(selectedPackingMethod).toBe('Weight Based');
-      await pages.packagingSettingsPage.setCheckbox('Use Volumetric Weight For Package Generation', true);
-      await pages.packagingSettingsPage.setCheckbox('Use Longest Side Of The Product As Package Dimensions', true);
-      await pages.packagingSettingsPage.savePackagingDetails();
-      await pages.packagingSettingsPage.expectToast('Updated');
-      console.log('Completed the packaging PackagingSettingsPage');
+    test.setTimeout(60000);
+    await pages.shippingPage.navigateToProductsPage();
+    await pages.productPage.searchAndSelectProduct('Simple packaging product');
+    await pages.productsPage.addProductDimensions(inputDimensions);
+    await pages.productsPage.saveProduct();
+    await pages.packagingSettingsPage.selectAppMenu('settings');
+    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Packing Method', 'Weight Based');
+    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'Pounds & Inches');
+    await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'Save');
+    await pages.packagingSettingsPage.expectToast('Updated');
+    await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'more settings');
+    await expect(pages.packagingSettingsPage.skeletonLoader).toBeHidden();
+    const selectedPackingMethod = await pages.packagingSettingsPage.getSelectedPackingMethod();
+    expect(selectedPackingMethod).toBe('Weight Based');
+    await pages.packagingSettingsPage.setCheckbox('Use Volumetric Weight For Package Generation', true);
+    await pages.packagingSettingsPage.setCheckbox('Use Longest Side Of The Product As Package Dimensions', true);
+    await pages.packagingSettingsPage.savePackagingDetails();
+    await pages.packagingSettingsPage.expectToast('Updated');
+    console.log('Completed the packaging PackagingSettingsPage');
   });
 
   test('2. Order Creation', async () => {
@@ -58,13 +58,12 @@ test.describe('Weight Based Packaging Flow with Auto label generation', () => {
     await pages.shopifyProductPage.openProductSummeryPage('Simple packaging product');
     const productWeight = Number(await pages.shopifyProductsSummary.getProductWeight());
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-    const volumetricWeight= pages.shopifyAdmin.calculateVolumetricWeight(inputDimensions.length,inputDimensions.width,inputDimensions.height,inputDimensions.unit);
+    const volumetricWeight = pages.shopifyAdmin.calculateVolumetricWeight(inputDimensions.length, inputDimensions.width, inputDimensions.height, inputDimensions.unit);
     const expectedFinalWeight = Math.max(productWeight, volumetricWeight);
     console.log(`Product Weight: ${productWeight}, Volumetric Weight: ${volumetricWeight}, Expected Final Weight: ${expectedFinalWeight}`);
     await pages.manualLabelPage.openRateRequestLog();
-    await pages.manualLabelPage.validateDimensionsFromLogs(inputDimensions);
-    await pages.manualLabelPage.openRateRequestLog();
-    expect(await pages.manualLabelPage.getWeightFromRequestLog()).toBe(expectedFinalWeight);
+    const actualweight = await pages.manualLabelPage.validateDimensionsFromLogs(inputDimensions);
+    expect(actualweight).toBe(expectedFinalWeight);
     await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
     await expect(pages.orderSummaryPage.labelGeneratedStatus).toBeVisible({ timeout: 70000 });
   });
