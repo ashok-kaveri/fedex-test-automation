@@ -53,6 +53,20 @@ export const PRODUCT_CONFIG: Record<string, StoreProducts> = {
     ],
 
     digital: [{ product_id: 9473336017137, variant_id: 47800721146097 }],
+  },
+  /*.....................Store name: kee-fedex-qa...............................*/
+  'kee-fedex-qa': {
+    simple: [{ product_id: 7820930547755, variant_id: 43098372407339 }],
+
+    variable: [
+      { product_id: 7820936020011, variant_id: 43098385121323 },
+      { product_id: 7820940050475, variant_id: 43098390855723 },
+    ],
+
+    digital: [
+      { product_id: 7820942671915, variant_id: 43098398949419 },
+      { product_id: 7820943753259, variant_id: 43098400227371 },
+    ],
 
     dangerous: [],
   },
