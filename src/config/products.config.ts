@@ -71,21 +71,21 @@ export const PRODUCT_CONFIG: Record<string, StoreProducts> = {
     dangerous: [],
   },
 
-  /*.....................Store name: qa-fedexapp...............................*/
-  'qa-fedexapp': {
+  /*.....................Store name: fedex-ashok-2...............................*/
+  'fedex-ashok-2': {
     simple: [
-      { product_id: 9009758535937, variant_id: 47555184525569 },
-      { product_id: 9009758535937, variant_id: 47555184525569 },
+      { product_id: 9181311631613, variant_id: 47304843034877 },
+      { product_id: 9181311664381, variant_id: 47304843067645 },
     ],
 
     variable: [
-      { product_id: 9009758535937, variant_id: 47555184525569 },
-      { product_id: 9009758535937, variant_id: 43098390855723 },
+      { product_id: 9181311697149, variant_id: 47304843100413 },
+      { product_id: 9181311729917, variant_id: 47304843165949 },
     ],
 
     digital: [
-      { product_id: 7820942671915, variant_id: 43098398949419 },
-      { product_id: 7820943753259, variant_id: 47555184525569 },
+      { product_id: 9181311566077, variant_id: 47304842969341 },
+      { product_id: 9181311598845, variant_id: 47304843002109 },
     ],
 
     dangerous: [],
