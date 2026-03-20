@@ -94,3 +94,92 @@ npx eslint .
 - **Session expired?** Delete `auth.json` to force fresh login
 - **CAPTCHA appears?** Solve manually, test continues automatically
 - Tests run serially in one browser window using shared context
+
+# 🛒 Order & Address Configuration (Short)
+
+---
+
+## 📦 Products
+
+Configured in:
+
+```
+src/config/products.config.ts
+```
+
+Add new store:
+
+```ts
+'my-store': {
+  simple: [{ product_id: 123, variant_id: 456 }],
+  variable: [],
+  digital: [],
+}
+```
+
+---
+
+## 📍 Addresses (Global)
+
+Configured in:
+
+```
+src/config/address.config.ts
+```
+
+Example:
+
+```ts
+export const ADDRESS_CONFIG = {
+  default: { ... },
+
+  US: { ... },
+  UK: { ... },
+  CA: { ... },
+};
+```
+
+* No store mapping ❌
+* Shared across all stores ✅
+* Add unlimited countries 🌍
+
+---
+
+## 🚀 Usage
+
+### ✅ Default (simple product + default address)
+
+```ts
+await orderUploader.uploadOrder();
+```
+
+---
+
+### ✅ With address (any country)
+
+```ts
+await orderUploader.uploadOrder('US');
+await orderUploader.uploadOrder('UK');
+await orderUploader.uploadOrder('CA');
+```
+
+---
+
+### ✅ Multiple products
+
+```ts
+await orderUploader.uploadOrderWithMultipleProducts([
+  { productType: 'simple', productIndexes: [0], quantities: [1] },
+]);
+```
+
+---
+
+### ✅ Multiple products + address
+
+```ts
+await orderUploader.uploadOrderWithMultipleProducts(
+  [{ productType: 'simple' }],
+  'UK'
+);
+```

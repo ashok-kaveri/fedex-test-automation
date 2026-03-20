@@ -1,4 +1,5 @@
 import { test, expect } from '../../src/setup/fixtures';
+import { Page, BrowserContext } from '@playwright/test';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
 
 const store = process.env.STORE;
