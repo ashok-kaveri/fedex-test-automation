@@ -3,7 +3,7 @@ import { test, expect } from '../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Weight Based Packaging Flow with Auto label generation', () => {
+test.describe('Weight Based Packaging with volumetric weight - Manual label generation', () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 
@@ -16,7 +16,7 @@ test.describe('Weight Based Packaging Flow with Auto label generation', () => {
     length: 8,
     width: 10,
     height: 12,
-    unit: 'in',
+    unit: 'mt',
   };
 
   test.beforeAll(async () => {
@@ -52,7 +52,7 @@ test.describe('Weight Based Packaging Flow with Auto label generation', () => {
     sharedOrderID = orderID;
   });
 
-  test('3.Validate Dimensions in Rate logs', async ({ pages }) => {
+  test('3.Validate Dimensions and weight in Rate logs', async ({ pages }) => {
     test.setTimeout(60000);
     await pages.shopifyProductsSummary.selectShopifyMenuOption('Products');
     await pages.shopifyProductPage.openProductSummeryPage('Simple packaging product');

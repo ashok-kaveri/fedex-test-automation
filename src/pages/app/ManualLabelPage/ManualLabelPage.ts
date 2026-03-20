@@ -300,29 +300,33 @@ export class GenerateLabelManuallyPage extends BasePage {
     return weight;
   }
 
-  async mapUnit(unit?: string) {
-    const unitMap: Record<string, string> = {
-      in: 'IN',
-      cm: 'CM',
-      ft: 'FT',
-      mt: 'M',
-    };
-    return unit ? unitMap[unit] : undefined;
-  }
-
-  async validateDimensionsFromLogs(input: { length: number; width: number; height: number; unit?: string }) {
+  async validateDimensionsFromLogs(input: { length: number; width: number; height: number; unit?: 'in' | 'cm' | 'ft' | 'mt' }) {
     const logs = await this.getParsedDataFromRequestLog();
     const packageItem = logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0];
     const apiDimensions = packageItem?.dimensions;
     const apiWeight = packageItem?.weight?.value;
     expect(apiDimensions).not.toBeNull();
-    expect(apiDimensions.length).toBe(input.length);
-    expect(apiDimensions.width).toBe(input.width);
-    expect(apiDimensions.height).toBe(input.height);
-    if (input.unit) {
-      expect(apiDimensions.units).toBe(await this.mapUnit(input.unit));
-    }
-    console.log('apiDimensions:', apiDimensions);
+    const convertToInches = (value: number, unit?: string) => {
+      if (!unit || unit === 'in') return Math.ceil(value);
+      const map: Record<string, number> = {
+        cm: 1 / 2.54,
+        ft: 12,
+        mt: 39.37,
+      };
+      return Math.ceil(value * (map[unit] || 1));
+    };
+
+    const expectedLength = convertToInches(input.length, input.unit);
+    const expectedWidth = convertToInches(input.width, input.unit);
+    const expectedHeight = convertToInches(input.height, input.unit);
+
+    expect(apiDimensions.length).toBe(expectedLength);
+    expect(apiDimensions.width).toBe(expectedWidth);
+    expect(apiDimensions.height).toBe(expectedHeight);
+    expect(apiDimensions.units).toBe('IN');
+
+    console.log('Expected:', expectedLength, expectedWidth, expectedHeight);
+    console.log('Actual:', apiDimensions);
     return apiWeight;
   }
 
