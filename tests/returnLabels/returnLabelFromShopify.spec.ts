@@ -49,7 +49,14 @@ test.describe('Return Label Generation Flow', () => {
     // await shopifyAdminPage.clickGenerateReturnLabelLink();
     await pages.orderSummaryPage.navigatingToReturnLabelPage();
     await pages.returnLabelPage.validateReturnLabelTitle();
+    await pages.returnLabelPage.validateReturnLabelTitle();
+    await expect(pages.returnLabelPage.returnLabelPageTitle).toContainText('Return Label', { timeout: 10000 });
+    await pages.sharedPage.reload();
     await pages.returnLabelPage.returnLabelGeneration(); 
+    await pages.sharedPage.waitForLoadState('load');
+    await expect(pages.returnLabelPage.successBadge).toBeVisible({ timeout: 40000 });
+    await expect(pages.returnLabelPage.downloadLink).toBeVisible({ timeout: 40000 });
+    console.log('✔ Return label generated successfully for externally fulfilled order');
     
 });
 

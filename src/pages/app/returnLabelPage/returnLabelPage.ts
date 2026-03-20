@@ -71,6 +71,7 @@ export class ReturnLabelPage extends BasePage {
     // await this.waitForShippingRatesWithRetry();
     await this.waitForShippingRatesWithRetry();
     await this.generateReturnLabelButton.waitFor({ state: 'visible', timeout: 40000 });
+    
     await this.generateReturnLabelButton.click();
     console.log('Return label generated and validated successfully');
   }
