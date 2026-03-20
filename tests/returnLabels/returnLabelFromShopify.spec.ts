@@ -47,8 +47,8 @@ test.describe('Return Label Generation Flow', () => {
 
     await pages.shopifyAdmin.navigateToOrderInShopifyAndCheckStatus(sharedOrderID);
     // await shopifyAdminPage.clickGenerateReturnLabelLink();
-    await pages.orderSummaryPage.navigatingToReturnLabelPage();
-    await pages.returnLabelPage.validateReturnLabelTitle();
+    // await pages.orderSummaryPage.navigatingToReturnLabelPage();
+    // await pages.returnLabelPage.validateReturnLabelTitle();
     await pages.returnLabelPage.validateReturnLabelTitle();
     await expect(pages.returnLabelPage.returnLabelPageTitle).toContainText('Return Label', { timeout: 10000 });
     await pages.sharedPage.reload();
