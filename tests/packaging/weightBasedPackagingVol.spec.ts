@@ -3,7 +3,7 @@ import { test, expect } from '../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Weight Based Packaging with volumetric weight - Manual label generation - Single product single package', () => {
+test.describe('Weight based - pounds and inches - Volumetric weight - Longest side Enable [Single product and single package] - product in cm - Manual', () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 

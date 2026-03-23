@@ -3,7 +3,7 @@ import { test, expect } from '../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Weight Based Packaging with - Multiple product in Multiple package with Additional weight and max weight', () => {
+test.describe('Weight based - pounds and inches -Add additional weight - constant [Multiple variable prod and Multiple package] - product in inches - Manual', () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 
