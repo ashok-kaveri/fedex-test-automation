@@ -164,6 +164,7 @@ export class ShippingPage extends BasePage {
     const row = this.ordersTable.locator('tr.Polaris-IndexTable__TableRow').filter({
       has: this.appFrame.locator('a.orderId', { hasText: normalized }),
     });
+    await this.waitForPageLoadState('domcontentloaded');
     const checkbox = row.locator('input[id^="Select-"][type="checkbox"]').first();
     await checkbox.setChecked(true, { force: true });
   }
