@@ -11,20 +11,11 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Return Label Generation Flow', () => {
     let sharedOrderID: string;
-    let sharedPage: any;
-    let sharedContext: any;
     let orderUploader: ShopifyOrderUploader;
 
-    test.beforeAll(async ({ browser }) => {
-        sharedContext = await browser.newContext({ storageState: 'auth.json' });
-        sharedPage = await sharedContext.newPage();
+    test.beforeAll(async () => {
         orderUploader = new ShopifyOrderUploader();
 
-    });
-
-    test.afterAll(async () => {
-        await sharedPage?.close();
-        await sharedContext?.close();
     });
 
 
@@ -40,6 +31,7 @@ test.describe('Return Label Generation Flow', () => {
         await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
         await pages.manualLabelPage.generateLabelInApp();
         await pages.orderSummaryPage.verifyLabelGenerated();
+        await expect(pages.orderSummaryPage.packagesSection).toBeVisible({ timeout: 10000 });
 
     });
 
