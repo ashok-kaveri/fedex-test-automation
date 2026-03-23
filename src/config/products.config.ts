@@ -40,7 +40,7 @@ export const PRODUCT_CONFIG: Record<string, StoreProducts> = {
 
     dangerous: [],
   },
-  /*.....................Store name: rest-fedex-new...............................*/
+  /*.....................Store name: fedex-automation-inder...............................*/
   'fedex-automation-inder': {
     simple: [
       { product_id: 9473336049905, variant_id: 47800721178865 },
@@ -90,5 +90,4 @@ export const PRODUCT_CONFIG: Record<string, StoreProducts> = {
 
     dangerous: [],
   },
-  
 };

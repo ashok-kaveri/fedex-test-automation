@@ -18,9 +18,11 @@ test.describe('FedEx One Rate', () => {
     await pages.packagingSettingsPage.selectAppMenu('settings');
     await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'more settings');
     await expect(pages.packagingSettingsPage.skeletonLoader).toBeHidden();
+    await pages.sharedPage.waitForTimeout(2000); // need to be updated (dependency on other test case)
     await pages.packagingSettingsPage.settingsDropDownUsingLabel('Packing Method', 'Box Packing');
     await pages.packagingSettingsPage.restoreFedExBoxes();
     await pages.packagingSettingsPage.keepOnlyBoxes({ 'FedEx® Small Box': [1] });
+    await pages.packagingSettingsPage.savePackagingDetails();
     await pages.packagingSettingsPage.backButton.click();
     await pages.sharedPage.waitForLoadState('domcontentloaded');
     await expect(pages.additionalServices.fedexOneRateHeading).toBeVisible();
