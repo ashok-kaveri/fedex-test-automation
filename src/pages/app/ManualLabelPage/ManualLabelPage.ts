@@ -1,8 +1,5 @@
 import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from '../../basePage';
-import fs from 'fs';
-import path from 'path';
-import AdmZip from 'adm-zip';
 
 // Page Object for Manual Label Generation Page within FedEx App - Handles all actions related to manual label generation
 export class GenerateLabelManuallyPage extends BasePage {
@@ -261,6 +258,7 @@ export class GenerateLabelManuallyPage extends BasePage {
     await this.getShippingRates();
     await this.selectShippingServiceForSignature('FEDEX_2_DAY');
     await this.clickRateActionsMenuInShippingRates();
+    await this.page.waitForTimeout(1000);
     await this.clickViewLogsFromRatesMenu();
     await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
   }
@@ -278,10 +276,12 @@ export class GenerateLabelManuallyPage extends BasePage {
   }
 
   async clickRateActionsMenuInShippingRates() {
+    await this.ratesActionMenu.waitFor({ state: 'visible', timeout: 5000 });
     await this.ratesActionMenu.click();
   }
 
   async clickViewLogsFromRatesMenu() {
+    await this.viewRateLog.waitFor({ state: 'visible', timeout: 5000 });
     await this.viewRateLog.click();
   }
 
@@ -387,34 +387,6 @@ export class GenerateLabelManuallyPage extends BasePage {
     await this.howToSubAction.click();
   }
 
-  async downloadLabelLogs() {
-    const dir = path.resolve('testLabelLogs');
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-      console.log(dir);
-    }
-    const [download] = await Promise.all([this.page.waitForEvent('download'), this.labelClickHereButton.click()]);
-    //Adding timestamp to file name
-    const now = new Date();
-    const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${now.getHours()}-${now.getMinutes()}`;
-    const filePath = path.join(dir, `rate-log-${timestamp}.zip`);
-
-    await download.saveAs(filePath);
-    console.log(filePath);
-    return filePath;
-  }
-
-  async getLabelRequestLog(filePath: string) {
-    const zip = new AdmZip(filePath);
-    const entries = zip.getEntries();
-    for (const entry of entries) {
-      if (entry.entryName.includes('Request')) {
-        const content = entry.getData().toString('utf8');
-        return JSON.parse(content);
-      }
-    }
-  }
-
   async getHALDetailsFromLabelRequestLog(filePath: string) {
     const logs = await this.getLabelRequestLog(filePath);
     const shipmentSpecialServices = logs?.requestObject?.requestedShipment?.shipmentSpecialServices;
@@ -424,14 +396,7 @@ export class GenerateLabelManuallyPage extends BasePage {
     return { specialServices, locationId, locationType };
   }
 
-  async cleanupLogs(filePath: string) {
-    if (filePath && fs.existsSync(filePath)) {
-      try {
-        fs.unlinkSync(filePath);
-        console.log(`Cleanup: Deleted ${path.basename(filePath)}`);
-      } catch (error) {
-        console.error(`Cleanup: Failed to delete ${filePath}`, error);
-      }
-    }
+  async downloadLabelLogs() {
+    return await this.downloadLogs(() => this.labelClickHereButton.click());
   }
 }

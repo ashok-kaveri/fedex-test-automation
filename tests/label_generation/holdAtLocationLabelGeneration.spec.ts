@@ -6,7 +6,7 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Manual Label Generation Flow for Hold At Location', () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
-  const HAL_LOCATION = 'EMTKI';
+  const HAL_LOCATION = 'HHRAA';
   let selectedHALType: string | null;
 
   test.beforeAll(async () => {
@@ -40,7 +40,6 @@ test.describe('Manual Label Generation Flow for Hold At Location', () => {
     expect(specialServices).toContain('HOLD_AT_LOCATION');
     expect(locationId).toBe(HAL_LOCATION);
     expect(locationType).toBe(selectedHALType);
-
     console.log(`Verified HAL Location ID: ${locationId}`);
     await pages.manualLabelPage.cleanupLogs(logPath);
   });
