@@ -1,5 +1,4 @@
 import { test, expect } from '../../src/setup/fixtures';
-import { Page, BrowserContext } from '@playwright/test';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
 
 const store = process.env.STORE;
@@ -14,7 +13,7 @@ test.describe('Return Label Generation Flow', () => {
     let sharedOrderID: string;
     let orderUploader: ShopifyOrderUploader;
 
-    test.beforeAll(async ({ browser }) => {
+    test.beforeAll(async ( ) => {
         orderUploader = new ShopifyOrderUploader();
 
     });
@@ -32,6 +31,7 @@ test.describe('Return Label Generation Flow', () => {
         await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
         await pages.manualLabelPage.generateLabelInApp();
         await pages.orderSummaryPage.verifyLabelGenerated();
+        await expect(pages.orderSummaryPage.packagesSection).toBeVisible({ timeout: 10000 });
 
     });
 
