@@ -5,6 +5,7 @@ import { BasePage } from '../../basePage';
 export class PackagingSettingsPage extends BasePage {
   // Locators
   readonly volumetricWeightCheckbox: Locator;
+  readonly maxWeightInput: Locator;
   readonly addAdditionalWeight: Locator;
   readonly stackProductsInBoxes: Locator;
   readonly boxesTable: Locator;
@@ -46,11 +47,14 @@ export class PackagingSettingsPage extends BasePage {
 
   readonly addBoxButton: Locator;
 
+  readonly backButton: Locator;
+
   constructor(page: Page) {
     super(page);
 
     // Initialize locators
     this.volumetricWeightCheckbox = this.appFrame.getByLabel('Use Volumetric Weight For Package Generation');
+    this.maxWeightInput = this.appFrame.getByLabel('Max Weight');
     this.addAdditionalWeight = this.appFrame.getByLabel('Add Additional Weight To All Packages');
     this.stackProductsInBoxes = this.appFrame.getByLabel('Do You Stack Products In Boxes?');
     this.boxesTable = this.appFrame.locator('tbody tr');
@@ -98,17 +102,15 @@ export class PackagingSettingsPage extends BasePage {
     this.maxBoxWeightInput = this.addPackageModal.getByLabel('Max Weight');
 
     this.addBoxButton = this.addPackageModal.getByRole('button', { name: 'Add Box' });
+    this.backButton = this.appFrame.getByRole('button', { name: 'Settings' });
   }
 
   async settingsDropDownUsingLabel(label: string, value: string) {
     const dropdown = this.appFrame.getByLabel(label);
-
     await dropdown.selectOption(value);
-
     // wait until Polaris UI updates visible text
     const container = dropdown.locator('..');
     await expect(container.locator('.Polaris-Select__SelectedOption')).toBeVisible();
-
     // trigger blur so React registers change
     await dropdown.blur();
   }
@@ -142,6 +144,12 @@ export class PackagingSettingsPage extends BasePage {
     } else {
       await this.addAdditionalWeight.uncheck({ force: true });
     }
+  }
+
+  async setMaxWeight(weight: number) {
+    await this.maxWeightInput.waitFor({ state: 'visible' });
+    await this.maxWeightInput.clear();
+    await this.maxWeightInput.fill(weight.toString());
   }
 
   async fillInputByLabel(label: string, value: string | number) {
@@ -255,7 +263,7 @@ export class PackagingSettingsPage extends BasePage {
   }
 
   async getSelectedPackingMethod() {
-  const locator = this.appFrame.locator('.Polaris-Select__SelectedOption').last();
-  return await locator.textContent();
+    const locator = this.appFrame.locator('.Polaris-Select__SelectedOption').first();
+    return await locator.textContent();
   }
 }

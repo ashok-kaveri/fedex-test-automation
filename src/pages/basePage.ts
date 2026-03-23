@@ -52,12 +52,12 @@ export class BasePage {
   async selectAppMenu(route: string) {
     // eslint-disable-next-line no-restricted-syntax
     const link = this.page.locator(`a[href*="/apps/testing-553/${route}"]`);
-    await link.waitFor({ state: 'visible', timeout: 5000 });
+    await link.waitFor({ state: 'visible' });
     await link.click({ force: true });
   }
 
   successMessage(message: string) {
-    return this.page.getByText(message, { exact: true });
+    return this.appFrame.getByText(message, { exact: true });
   }
 
   async expectToast(message: string) {
@@ -66,12 +66,7 @@ export class BasePage {
     // await toast.waitFor({ state: 'visible', timeout: 5000 });
     await expect(toast).toBeVisible({ timeout: 7000 });
   }
-  calculateVolumetricWeight(
-    length: number,
-    width: number,
-    height: number,
-    unit: 'in' | 'cm' | 'ft' | 'mt'
-  ) {
+  calculateVolumetricWeight(length: number, width: number, height: number, unit: 'in' | 'cm' | 'ft' | 'mt') {
     const divisor = unit === 'cm' ? 5000 : 139;
     return Number(((length * width * height) / divisor).toFixed(2));
   }
@@ -86,6 +81,7 @@ export class BasePage {
     await button.waitFor({ state: 'visible', timeout: 5000 });
     await button.click();
   }
+
   async captureDocumentUrl(context: BrowserContext, triggerAction: () => Promise<void>, urlParamName: string = 'document'): Promise<{ documentUrl: string; pdfText: string }> {
     const newPagePromise = context.waitForEvent('page');
     await triggerAction();

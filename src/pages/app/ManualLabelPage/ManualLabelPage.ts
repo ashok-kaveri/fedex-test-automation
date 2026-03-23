@@ -254,10 +254,12 @@ export class GenerateLabelManuallyPage extends BasePage {
   }
 
   async clickRateActionsMenuInShippingRates() {
+    await this.clickBackButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.ratesActionMenu.click();
   }
 
   async clickViewLogsFromRatesMenu() {
+    await this.clickBackButton.waitFor({ state: 'visible', timeout: 5000 });
     await this.viewRateLog.click();
   }
 
@@ -283,6 +285,11 @@ export class GenerateLabelManuallyPage extends BasePage {
     return jsonData;
   }
 
+  async getShipmentSpecialServicesFromRequestLog() {
+    const logs = await this.getParsedDataFromRequestLog();
+    return logs?.requestObject?.requestedShipment?.shipmentSpecialServices?.specialServiceTypes || [];
+  }
+
   async getSignatureValueFromRequestLog() {
     const logs = await this.getParsedDataFromRequestLog();
     return logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.packageSpecialServices?.signatureOptionType || null;
@@ -298,6 +305,11 @@ export class GenerateLabelManuallyPage extends BasePage {
     const logs = await this.getParsedDataFromRequestLog();
     const weight = logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.weight?.value || null;
     return weight;
+  }
+
+  async getTotalPackageWeightFromRequestLog() {
+    const logs = await this.getParsedDataFromRequestLog();
+    return logs?.requestObject?.requestedShipment?.totalWeight || null;
   }
 
   async validateDimensionsFromLogs(input: { length: number; width: number; height: number; unit?: 'in' | 'cm' | 'ft' | 'mt' }) {

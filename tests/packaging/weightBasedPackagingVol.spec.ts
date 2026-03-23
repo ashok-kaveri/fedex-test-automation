@@ -3,7 +3,7 @@ import { test, expect } from '../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Weight Based Packaging with volumetric weight - Manual label generation', () => {
+test.describe('Weight Based Packaging with volumetric weight - Manual label generation - Single product single package', () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 
@@ -16,7 +16,7 @@ test.describe('Weight Based Packaging with volumetric weight - Manual label gene
     length: 8,
     width: 10,
     height: 12,
-    unit: 'mt',
+    unit: 'cm',
   };
 
   test.beforeAll(async () => {
@@ -42,7 +42,6 @@ test.describe('Weight Based Packaging with volumetric weight - Manual label gene
     await pages.packagingSettingsPage.setCheckbox('Use Longest Side Of The Product As Package Dimensions', true);
     await pages.packagingSettingsPage.savePackagingDetails();
     await pages.packagingSettingsPage.expectToast('Updated');
-    console.log('Completed the packaging PackagingSettingsPage');
   });
 
   test('2. Order Creation', async () => {

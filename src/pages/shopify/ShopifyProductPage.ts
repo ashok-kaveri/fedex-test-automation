@@ -17,7 +17,6 @@ export class ShopifyProductPage extends BasePage {
   readonly allRows: Locator;
   readonly rowTextInputFilter: Locator;
   readonly columnHeaders: Locator;
-  
 
   constructor(page: Page) {
     super(page);
@@ -99,6 +98,13 @@ export class ShopifyProductPage extends BasePage {
     const productLink = this.page.getByRole('link', { name: productName, exact: true });
     await productLink.waitFor();
     await productLink.click();
+  }
+
+  async openVariantProduct(productName: string, variantName: string) {
+    this.openProductSummeryPage(productName);
+    const variantLink = this.page.getByRole('link', { name: variantName, exact: true });
+    await variantLink.waitFor();
+    await variantLink.click();
   }
 
   async clickBulkEditButton() {

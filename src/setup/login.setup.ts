@@ -48,7 +48,7 @@ setup('Write login session data', async ({ page }) => {
   const accountPageVisible = await accountSelector.isAccountSelectionPageVisible();
 
   if (accountPageVisible) {
-    await accountSelector.selectAccountByText(userEmail || '');
+    await accountSelector.selectAccountByEmail(userEmail || '');
     await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 
     if (page.url().includes('admin.shopify.com/store/')) {

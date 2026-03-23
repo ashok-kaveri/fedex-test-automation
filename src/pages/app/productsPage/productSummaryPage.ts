@@ -16,6 +16,7 @@ export class ProductSummaryPage extends BasePage {
   readonly batteryMaterialTypeDropdown: Locator;
   readonly batteryPackingTypeDropdown: Locator;
   readonly productWeight: Locator;
+  readonly navBackButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -36,6 +37,8 @@ export class ProductSummaryPage extends BasePage {
     this.batteryMaterialTypeDropdown = this.appIframe.getByLabel('Battery Material Type');
     this.batteryPackingTypeDropdown = this.appIframe.getByLabel('Battery Packing Type');
     this.productWeight = this.page.locator('#ShippingCardWeight');
+
+    this.navBackButton = this.appFrame.locator('nav[role="navigation"]').locator('button[aria-label="products"]');
   }
 
   // Set the signature type (e.g., 'ADULT', 'SERVICE_DEFAULT', 'DIRECT', "INDIRECT", "NO_SIGNATURE_REQUIRED", "AS_PER_THE_GENERAL_SETTINGS")
@@ -51,6 +54,10 @@ export class ProductSummaryPage extends BasePage {
     await this.saveButton.scrollIntoViewIfNeeded();
     await this.saveButton.waitFor({ state: 'visible', timeout: 10000 });
     await this.saveButton.click();
+  }
+
+  async clickBackButton(): Promise<void> {
+    await this.navBackButton.click();
   }
 
   // Update product signature (assertion to be handled in test)
