@@ -15,12 +15,13 @@ test.describe('Auto Label Generation Flow', () => {
 
   test.beforeAll(async () => {
     orderUploader = new ShopifyOrderUploader();
-    const orderID = await orderUploader.uploadOrder();
+    const orderID = await orderUploader.uploadOrderWithMultipleProducts([{ productType: 'simple', productIndexes: [1], quantities: [1] }]);
+
     if (!orderID) throw new Error('Failed to create Shopify order');
     sharedOrderID = orderID;
     console.log(`Order created: ${sharedOrderID}`);
   });
- 
+
   test('1. Navigate to Shopify order', async ({ pages }) => {
     test.setTimeout(60000);
     await pages.shopifyAdmin.navigateToStore(store);
