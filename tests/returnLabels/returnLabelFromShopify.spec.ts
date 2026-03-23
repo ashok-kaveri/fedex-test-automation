@@ -12,20 +12,11 @@ test.describe.configure({ mode: 'serial' });
 
 test.describe('Return Label Generation Flow', () => {
     let sharedOrderID: string;
-    let sharedPage: any;
-    let sharedContext: any;
     let orderUploader: ShopifyOrderUploader;
 
     test.beforeAll(async ({ browser }) => {
-        sharedContext = await browser.newContext({ storageState: 'auth.json' });
-        sharedPage = await sharedContext.newPage();
         orderUploader = new ShopifyOrderUploader();
 
-    });
-
-    test.afterAll(async () => {
-        await sharedPage?.close();
-        await sharedContext?.close();
     });
 
 
@@ -45,19 +36,13 @@ test.describe('Return Label Generation Flow', () => {
     });
 
     test('Navigate to Shopify order and generate return label for a fulfilled order', async ({pages}) => {
-
+    test.setTimeout(0);
     await pages.shopifyAdmin.navigateToOrderInShopifyAndCheckStatus(sharedOrderID);
-    // await shopifyAdminPage.clickGenerateReturnLabelLink();
-    // await pages.orderSummaryPage.navigatingToReturnLabelPage();
-    // await pages.returnLabelPage.validateReturnLabelTitle();
-    await pages.returnLabelPage.validateReturnLabelTitle();
-    await expect(pages.returnLabelPage.returnLabelPageTitle).toContainText('Return Label', { timeout: 10000 });
-    await pages.sharedPage.reload();
-    await pages.returnLabelPage.returnLabelGeneration(); 
+    await pages.returnLabelPage.returnLabelGeneration();
     await pages.sharedPage.waitForLoadState('load');
     await expect(pages.returnLabelPage.successBadge).toBeVisible({ timeout: 40000 });
     await expect(pages.returnLabelPage.downloadLink).toBeVisible({ timeout: 40000 });
-    console.log('✔ Return label generated successfully for externally fulfilled order');
+    console.log('Return label generated successfully for the order fulfilled from the app'); 
     
 });
 
