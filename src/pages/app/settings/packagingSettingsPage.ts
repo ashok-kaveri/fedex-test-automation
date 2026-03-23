@@ -46,6 +46,8 @@ export class PackagingSettingsPage extends BasePage {
 
   readonly addBoxButton: Locator;
 
+  readonly backButton: Locator;
+
   constructor(page: Page) {
     super(page);
 
@@ -98,6 +100,7 @@ export class PackagingSettingsPage extends BasePage {
     this.maxBoxWeightInput = this.addPackageModal.getByLabel('Max Weight');
 
     this.addBoxButton = this.addPackageModal.getByRole('button', { name: 'Add Box' });
+    this.backButton = this.appFrame.getByRole('button', { name: 'Settings' });
   }
 
   async settingsDropDownUsingLabel(label: string, value: string) {

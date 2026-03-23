@@ -289,6 +289,11 @@ export class GenerateLabelManuallyPage extends BasePage {
     return jsonData;
   }
 
+  async getShipmentSpecialServicesFromRequestLog() {
+    const logs = await this.getParsedDataFromRequestLog();
+    return logs?.requestObject?.requestedShipment?.shipmentSpecialServices?.specialServiceTypes || [];
+  }
+
   async getSignatureValueFromRequestLog() {
     const logs = await this.getParsedDataFromRequestLog();
     return logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.packageSpecialServices?.signatureOptionType || null;

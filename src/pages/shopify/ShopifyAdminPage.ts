@@ -14,6 +14,9 @@ export class ShopifyAdminPage extends BasePage {
   readonly markAsFulfilledButton: Locator;
   readonly fulfillmentStatusBadge: Locator;
   readonly generateReturnLabelLink: Locator;
+  readonly appsButton: Locator;
+
+
 
   constructor(page: Page) {
     super(page);
@@ -31,11 +34,18 @@ export class ShopifyAdminPage extends BasePage {
     // this.fulfillmentStatusBadge = page.locator('s-internal-badge:nth-child(4) > .badge');
     this.fulfillmentStatusBadge = page.getByText('CompletePaidCompleteFulfilledArchived');
     this.generateReturnLabelLink = page.getByRole('link', { name: 'Generate Return Label', exact: true });
+    this.appsButton = page.getByRole('button', { name: 'Apps' });
+  
   }
 
   // Helper method for dynamic locators
   getOrderLink(orderID: string): Locator {
     return this.searchResults.locator(`a[role="option"][href*="/orders/"]`, { hasText: orderID });
+  }
+  
+  getAppLink(appName: string): Locator {  
+    return this. page.getByRole('option', { name: appName}).nth(0);
+
   }
 
   // Navigate to Shopify admin store
@@ -78,6 +88,16 @@ export class ShopifyAdminPage extends BasePage {
     throw new Error(`Order ${orderID} not found after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
+  //Return the Order fuflilment status
+  async isOrderFulfilled(): Promise<string> {
+  const badge = this.page
+    .locator('s-internal-badge')
+    .filter({ hasText: /(Fulfilled|Unfulfilled|Partially fulfilled)/i })
+    .first();
+
+  return (await badge.innerText()).trim();
+}
+
   // Open more actions menu
   async openMoreActions(): Promise<void> {
     await this.moreActionsButton.waitFor({ state: 'visible', timeout: 10000 });
@@ -100,6 +120,27 @@ export class ShopifyAdminPage extends BasePage {
   async clickOnGenerateReturnLabel(): Promise<void> {
     await this.generateReturnLabelLink.click();
   }
+// Click Apps button
+  async openAppsSection(): Promise<void> {
+  await this.appsButton.click();
+}
+//Search for the app
+async searchApp(appName: string): Promise<void> {
+  await this.searchInput.fill(appName);
+  await this.page.keyboard.press('Enter');
+}
+//Click the app from search results
+
+async clickAppFromResults(appName: string): Promise<void> {
+  const appLink = this.getAppLink(appName);
+
+  await appLink.waitFor({ state: 'visible', timeout: 20000 });
+
+  await Promise.all([
+    this.page.waitForLoadState('networkidle'),
+    appLink.click()
+  ]);
+}
 
   // fulfilling order from Shopify Order Summary page
   async confirmOrderFulfillment(): Promise<string> {
@@ -117,6 +158,24 @@ export class ShopifyAdminPage extends BasePage {
     await this.clickGenerateLabelLink();
   }
 
+async clickGenerateReturnLabelLink(): Promise<void> {
+    await this.generateReturnLabelLink.click();
+  }
+//Method to generate return label from Shopify Order summary page for a fulfilled order
+  async navigateToOrderInShopifyAndCheckStatus(orderID: string): Promise<void> {
+  await this.navigateToStore(process.env.STORE!);
+  await this.searchAndOpenOrder(orderID, 5);
+
+  const status = await this.isOrderFulfilled();
+  console.log('Status:', status);
+
+  if (!status.toLowerCase().includes('fulfilled')) {
+    throw new Error(`Order not fulfilled → ${status}`);
+  }
+  await this.openMoreActions();
+  await this.clickGenerateReturnLabelLink();
+  }
+
   async fulfillOrderInShopify(orderID: string): Promise<string> {
     await this.navigateToStore(process.env.STORE!);
     await this.searchAndOpenOrder(orderID, 5);
@@ -125,4 +184,14 @@ export class ShopifyAdminPage extends BasePage {
     await this.clickOnGenerateReturnLabel();
     return status;
   }
+
+  
+  async navigateToApp(appName: string): Promise<string> {
+  console.log(`Navigating to app "${appName}" in Shopify Admin...`);
+  await this.openAppsSection();
+  await this.searchApp(appName);
+  await this.clickAppFromResults(appName);
+  await this.page.waitForLoadState('networkidle');
+  return this.page.url();
+}
 }

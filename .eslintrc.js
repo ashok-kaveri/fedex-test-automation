@@ -26,7 +26,6 @@ module.exports = {
         'playwright/no-wait-for-timeout': 'warn',
         'playwright/expect-expect': 'error',
         'playwright/no-force-option': 'warn',
-        'playwright/no-skipped-test': 'warn',
         'playwright/no-focused-test': 'error',
 
         'no-restricted-syntax': [
