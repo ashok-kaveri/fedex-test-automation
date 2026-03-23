@@ -1,7 +1,5 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, FrameLocator, Locator } from '@playwright/test';
 import { AppFrameHelper } from '../../../helpers/appFrameHelper';
-import { ShopifyAdminPage } from '../../shopify/ShopifyAdminPage';
-import { LoadFnOutput } from 'module';
 
 export class SideDockPage {
   readonly page: Page;
@@ -134,7 +132,7 @@ export class SideDockPage {
     await this.modalYesButton.click();
   }
 
-  async getHALSelectedType(){
+  async getHALSelectedType() {
     return this.halType.textContent();
   }
 
@@ -186,25 +184,25 @@ export class SideDockPage {
     await this.generateReturnLabelCheckbox.check();
   }
 
-  async selectGenerateReturnEditButton({ returnPackType, returnSignOption }) {
-    await this.generateReturnLabelEditButton.click();
-    await this.modalContainer.waitFor({ state: 'visible' });
-    await this.returnPackagingType.selectOption(returnPackType);
-    await this.returnSignatureDropdown.selectOption(returnSignOption);
-    await this.modalCloseButton.click();
-  }
+  // async selectGenerateReturnEditButton({ returnPackType, returnSignOption }) {
+  //   await this.generateReturnLabelEditButton.click();
+  //   await this.modalContainer.waitFor({ state: 'visible' });
+  //   await this.returnPackagingType.selectOption(returnPackType);
+  //   await this.returnSignatureDropdown.selectOption(returnSignOption);
+  //   await this.modalCloseButton.click();
+  // }
 
   async enableHazardousproductCheckBox() {
     await this.hazardousProductCheckbox.check();
   }
 
-  async selectHardousShipmentDetails({ hazPackType, HazPackMaterial }) {
-    await this.hazardousProductEditButton.click();
-    await this.modalContainer.waitFor({ state: 'visible' });
-    await this.hazardousPackagingType.selectOption(hazPackType);
-    await this.hazardousPackagingMaterial.selectOption(HazPackMaterial);
-    await this.modalCloseButton.click();
-  }
+  // async selectHardousShipmentDetails({ hazPackType, HazPackMaterial }) {
+  //   await this.hazardousProductEditButton.click();
+  //   await this.modalContainer.waitFor({ state: 'visible' });
+  //   await this.hazardousPackagingType.selectOption(hazPackType);
+  //   await this.hazardousPackagingMaterial.selectOption(HazPackMaterial);
+  //   await this.modalCloseButton.click();
+  // }
 
   async selectShipAfterDays(days: string) {
     await this.shipAfterDaysTextBox.fill(days);

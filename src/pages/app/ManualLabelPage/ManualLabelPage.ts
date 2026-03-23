@@ -330,12 +330,6 @@ export class GenerateLabelManuallyPage extends BasePage {
     await expect(this.appFrame.getByRole('dialog')).toBeHidden();
   }
 
-  // async clickActionListItem(itemName: string) {
-  //   const item = this.appFrame.getByRole('button', { name: itemName, exact: true });
-  //   await item.waitFor({ state: 'visible' });
-  //   await item.click();
-  // }
-
   async selectClickHereButton() {
     await this.labelClickHereButton.scrollIntoViewIfNeeded();
     await this.labelClickHereButton.click();

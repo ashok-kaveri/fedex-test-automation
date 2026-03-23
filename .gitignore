@@ -13,6 +13,7 @@ test-history.json
 reports/playwright-report/
 package-lock.json
 yarn.lock
+testLabelLogs/
 
 # Environment and sensitive files
 .env
