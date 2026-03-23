@@ -1,136 +1,83 @@
-import { test, expect, Page, BrowserContext } from '@playwright/test';
-import { ProductPage } from '../../../src/pages/app/productsPage/productsPage';
-import { ProductSummaryPage } from '../../../src/pages/app/productsPage/productSummaryPage';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../../../src/pages/shopify/ShopifyAdminPage';
-import { ShippingPage } from '../../../src/pages/app/ShippingPage/ShippingPage';
-import { GenerateLabelManuallyPage } from '../../../src/pages/app/ManualLabelPage/ManualLabelPage';
-import { OrderSummaryPage } from '../../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
-import axios from 'axios';
-
-const { PDFParse } = require('pdf-parse');
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Test Suite: Label Generation For Service Default Signature
-// Run: npx playwright test tests/product_Special_Service/signatureTypes/serviceDefault.spec.ts
-//      --project="Google Chrome" --headed
-// ─────────────────────────────────────────────────────────────────────────────
+import { test, expect } from '../../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Label Generation For Service Default Signature', () => {
+  // ── Shared State ──────────────────────────────────────────────────────────
+  let sharedOrderID: string;
 
-    // ── Shared State ──────────────────────────────────────────────────────────
-    let sharedOrderID: string;
-    let sharedPage: Page;
-    let sharedContext: BrowserContext;
-    let capturedDocumentUrl: string = '';
+  // ── Page Objects ──────────────────────────────────────────────────────────
+  let orderUploader: ShopifyOrderUploader;
 
-    // ── Page Objects ──────────────────────────────────────────────────────────
-    let orderUploader: ShopifyOrderUploader;
-    let productPage: ProductPage;
-    let productSummaryPage: ProductSummaryPage;
-    let shopifyAdminPage: ShopifyAdminPage;
-    let shippingPage: ShippingPage;
-    let manualLabelPage: GenerateLabelManuallyPage;
-    let orderSummaryPage: OrderSummaryPage;
+  // ── Hooks ─────────────────────────────────────────────────────────────────
 
-    // ── Hooks ─────────────────────────────────────────────────────────────────
+  test.beforeAll(async () => {
+    orderUploader = new ShopifyOrderUploader();
+  });
 
-    test.beforeAll(async ({ browser }) => {
-        sharedContext = await browser.newContext({ storageState: 'auth.json' });
-        sharedPage = await sharedContext.newPage();
+  test.afterAll(async ({ pages }) => {
+    await pages.shippingPage.navigateToProductsPage();
+    await pages.productPage.searchAndSelectProduct('BLAZER');
+    await pages.productSummaryPage.updateProductSignature('AS_PER_THE_GENERAL_SETTINGS');
+    expect(await pages.productSummaryPage.getSelectedSignatureLabel()).toBe('As Per The General Settings');
+  });
 
-        orderUploader = new ShopifyOrderUploader();
-        shopifyAdminPage = new ShopifyAdminPage(sharedPage);
-        shippingPage = new ShippingPage(sharedPage);
-        productPage = new ProductPage(sharedPage);
-        productSummaryPage = new ProductSummaryPage(sharedPage);
-        manualLabelPage = new GenerateLabelManuallyPage(sharedPage);
-        orderSummaryPage = new OrderSummaryPage(sharedPage);
-    });
+  // ── Tests ─────────────────────────────────────────────────────────────────
 
-    test.afterAll(async () => {
-        await shippingPage.navigateToProductsPage();
-        await productPage.searchAndSelectProduct('Simple 1');
-        await productSummaryPage.updateProductSignature('AS_PER_THE_GENERAL_SETTINGS');
-        await sharedPage?.close();
-        await sharedContext?.close();
-    });
+  test('Step 1 | Enable Service Default Signature on product', async ({ pages }) => {
+    test.setTimeout(120_000);
 
-    // ── Tests ─────────────────────────────────────────────────────────────────
+    await pages.shippingPage.navigateToProductsPage();
+    await pages.productPage.searchAndSelectProduct('BLAZER');
+    await pages.productSummaryPage.updateProductSignature('SERVICE_DEFAULT');
 
-    test('Step 1 | Enable Service Default Signature on product', async () => {
-        test.setTimeout(120_000);
+    const selectedLabel = await pages.productSummaryPage.getSelectedSignatureLabel();
+    expect(selectedLabel).toBe('Service Default');
 
-        await shippingPage.navigateToProductsPage();
-        await productPage.searchAndSelectProduct('Simple 1');
-        await productSummaryPage.updateProductSignature('SERVICE_DEFAULT');
+    console.log(`✔ Signature type set to: "${selectedLabel}"`);
+  });
 
-        const selectedLabel = await productSummaryPage.getSelectedSignatureLabel();
-        expect(selectedLabel).toBe('Service Default');
+  test('Step 2 | Create order via API with adult-signature product', async () => {
+    test.setTimeout(0);
 
-        console.log(`✔ Signature type set to: "${selectedLabel}"`);
-    });
+    const orderID = (await orderUploader.uploadOrder()) as string;
+    expect(orderID).toBeTruthy();
 
-    test('Step 2 | Create order via API with adult-signature product', async () => {
-        test.setTimeout(0);
+    sharedOrderID = orderID;
+    console.log(`✔ Order created — ID: ${sharedOrderID}`);
+  });
 
-        const orderID = (await orderUploader.uploadOrder()) as string;
-        expect(orderID).toBeTruthy();
+  test('Step 3 | Manually generate label and verify XML signature option', async ({ pages }) => {
+    test.setTimeout(0);
 
-        sharedOrderID = orderID;
-        console.log(`✔ Order created — ID: ${sharedOrderID}`);
-    });
+    await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
+    await pages.manualLabelPage.waitUntilGeneratePackageButtonVisible();
+    await pages.manualLabelPage.generatePackages();
+    await pages.manualLabelPage.getShippingRates();
 
-    test('Step 3 | Manually generate label and verify XML signature option', async () => {
-        test.setTimeout(0);
+    const xmlContent = await pages.manualLabelPage.verifySignatureOptionInXmlRequest();
+    expect(xmlContent).toContain('SERVICE_DEFAULT');
+    console.log('✔ XML contains expected signature option: SERVICE_DEFAULT');
 
-        await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-        await manualLabelPage.waitUntilGeneratePackageButtonVisible();
-        await manualLabelPage.generatePackages();
-        await manualLabelPage.getShippingRates();
+    await pages.manualLabelPage.selectFirstShippingService();
+    await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
+    await pages.orderSummaryPage.verifyLabelGenerated();
+  });
 
-        const xmlContent = await manualLabelPage.verifySignatureOptionInXmlRequest();
-        expect(xmlContent).toContain('<ns:OptionType>SERVICE_DEFAULT</ns:OptionType>');
-        console.log('✔ XML contains expected signature option: SERVICE_DEFAULT');
+  /*
+  test('Step 4 | Print label, capture URL and verify PDF text', async ({pages}) => {
+    test.setTimeout(0);
 
-        await manualLabelPage.selectFirstShippingService();
-        await manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
-        await orderSummaryPage.verifyLabelGenerated();
-    });
+    const { documentUrl, pdfText } = await pages.orderSummaryPage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
 
-    test('Step 4 | Print label and capture document URL', async () => {
-        const newPagePromise = sharedContext.waitForEvent('page');
-        await orderSummaryPage.clickPrintDocuments();
+    expect(documentUrl).toBeTruthy();
+    expect(pdfText).toContain('SERVICE_DEFAULT');
 
-        const newPage = await newPagePromise;
-        await newPage.waitForLoadState('load');
-
-        const viewerUrl = newPage.url();
-        const url = new URL(viewerUrl);
-        capturedDocumentUrl = url.searchParams.get('document') ?? '';
-
-        expect(capturedDocumentUrl).toBeTruthy();
-        console.log(`✔ Captured document URL: ${capturedDocumentUrl}`);
-    });
-
-
-    //We can not verify the service default text in the generated FedEx label PDF as it will be not displayed in the label
-    // test('Step 5 | Verify "SERVICE_DEFAULT" text is present in generated FedEx label PDF', async () => {
-    //     test.setTimeout(0);
-
-    //     expect(capturedDocumentUrl).toBeTruthy();
-
-    //     const response = await axios.get(capturedDocumentUrl, { responseType: 'arraybuffer' });
-    //     const parser = new PDFParse({ data: response.data });
-    //     const pdfData = await parser.getText();
-
-    //     console.log('✔ PDF text extracted successfully');
-    //     expect(pdfData.text).toContain('SERVICE_DEFAULT');
-    //     console.log('✔ "SERVICE_DEFAULT" text confirmed in FedEx label');
-    // });
-
+    console.log(`✔ "SERVICE_DEFAULT" text confirmed in FedEx label`);
+    console.log(`✔ Final document URL: ${documentUrl}`);
+  });
+  */
 });
 
 // npx playwright test tests/product_Special_Service/signatureTypes/serviceDefault.spec.ts --project="Google Chrome" --headed

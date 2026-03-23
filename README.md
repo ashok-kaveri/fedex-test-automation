@@ -58,8 +58,128 @@ SIMPLE_PRODUCTS_JSON=[{"product_id":123,"variant_id":456}]
 SHIPPING_ADDRESS_JSON=[{"street":"123 Main St"},{"city":"Los Angeles"},{"state":"CA"},{"countryCode":"US"},{"zip":"90001"}]
 ```
 
+## ESLint
+
+The project uses `.eslintrc.js` to enforce code quality across all TypeScript files.
+
+### Run ESLint
+```bash
+npx eslint .
+```
+
+### Rules Overview
+
+**All files:**
+- `no-explicit-any` — warns when `any` type is used
+- `no-console` — warns on `console.log` (except helper/setup files)
+
+**Spec files (`tests/**/*.spec.ts`):**
+- `playwright/no-wait-for-timeout` — warns on hard waits (blocks if > 3 s)
+- `playwright/expect-expect` — every test must have at least one `expect()`
+- `playwright/no-force-option` — warns on `force: true`
+- `playwright/no-skipped-test` — warns on skipped tests
+- `playwright/no-focused-test` — blocks `test.only` / `it.only`
+- Raw `page.*` calls are **blocked** — use page objects (`pages.xxx.method()`) instead
+
+**Page object files (`src/pages/**/*.ts`):**
+- Locators must be defined as `readonly` class properties in the constructor, not inside methods
+- Hard waits > 3 s are blocked
+- `page.pause()` is blocked — use debugger breakpoints instead
+
+**Helper / setup files (`src/helpers/**`, `src/setup/**`):**
+- `no-console` is turned **off** — logging is allowed here
+
 ## Notes
 
 - **Session expired?** Delete `auth.json` to force fresh login
 - **CAPTCHA appears?** Solve manually, test continues automatically
 - Tests run serially in one browser window using shared context
+
+# 🛒 Order & Address Configuration (Short)
+
+---
+
+## 📦 Products
+
+Configured in:
+
+```
+src/config/products.config.ts
+```
+
+Add new store:
+
+```ts
+'my-store': {
+  simple: [{ product_id: 123, variant_id: 456 }],
+  variable: [],
+  digital: [],
+}
+```
+
+---
+
+## 📍 Addresses (Global)
+
+Configured in:
+
+```
+src/config/address.config.ts
+```
+
+Example:
+
+```ts
+export const ADDRESS_CONFIG = {
+  default: { ... },
+
+  US: { ... },
+  UK: { ... },
+  CA: { ... },
+};
+```
+
+* No store mapping ❌
+* Shared across all stores ✅
+* Add unlimited countries 🌍
+
+---
+
+## 🚀 Usage
+
+### ✅ Default (simple product + default address)
+
+```ts
+await orderUploader.uploadOrder();
+```
+
+---
+
+### ✅ With address (any country)
+
+```ts
+await orderUploader.uploadOrder('US');
+await orderUploader.uploadOrder('UK');
+await orderUploader.uploadOrder('CA');
+```
+
+---
+
+### ✅ Multiple products
+
+```ts
+await orderUploader.uploadOrderWithMultipleProducts([
+  { productType: 'simple', productIndexes: [0], quantities: [1] },
+]);
+```
+
+---
+
+### ✅ Multiple products + address
+
+```ts
+await orderUploader.uploadOrderWithMultipleProducts(
+  [{ productType: 'simple' }],
+  'UK'
+);
+```

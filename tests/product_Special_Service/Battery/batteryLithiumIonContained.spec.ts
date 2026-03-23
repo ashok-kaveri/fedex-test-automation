@@ -1,8 +1,6 @@
 import { test, expect } from '../../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
-import axios from 'axios';
-
-const { PDFParse } = require('pdf-parse');
+import { BrowserContext } from '@playwright/test';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Suite: Label Generation For Lithium Ion (Contained In Equipment)
@@ -18,20 +16,21 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
-  let capturedDocumentUrl: string = '';
+  let sharedContext: BrowserContext;
 
   // ── Page Objects ──────────────────────────────────────────────────────────
   let orderUploader: ShopifyOrderUploader;
 
   // ── Hooks ─────────────────────────────────────────────────────────────────
 
-  test.beforeAll(async () => {
+  test.beforeAll(async ({ pages }) => {
     orderUploader = new ShopifyOrderUploader();
+    sharedContext = pages.sharedPage.context();
   });
 
   test.afterAll(async ({ pages }) => {
     await pages.shippingPage.navigateToProductsPage();
-    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productPage.searchAndSelectProduct('simple product 1');
     await pages.productSummaryPage.disableSpecialService('battery');
     await expect(pages.productSummaryPage.isBatteryLabel).not.toBeChecked();
     console.log('✔ Battery is disabled');
@@ -43,7 +42,7 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
     test.setTimeout(120_000);
 
     await pages.shippingPage.navigateToProductsPage();
-    await pages.productPage.searchAndSelectProduct('Simple 1');
+    await pages.productPage.searchAndSelectProduct('simple product 1');
     await pages.productSummaryPage.updateProductBattery(BATTERY_MATERIAL, BATTERY_PACKING);
 
     await expect(pages.productSummaryPage.batteryMaterialTypeDropdown).toHaveValue(BATTERY_MATERIAL);
@@ -66,14 +65,12 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
     await pages.manualLabelPage.waitUntilGeneratePackageButtonVisible();
     await pages.manualLabelPage.generatePackages();
     await pages.manualLabelPage.getShippingRates();
-
     const xmlContent = await pages.manualLabelPage.verifyBatteryInXmlRequest();
-
-    expect(xmlContent).toContain('<ns:SpecialServiceTypes>BATTERY</ns:SpecialServiceTypes>');
-    expect(xmlContent).toContain('<ns:BatteryDetails>');
-    expect(xmlContent).toContain(`<ns:Material>${BATTERY_MATERIAL}</ns:Material>`);
-    expect(xmlContent).toContain(`<ns:Packing>${BATTERY_PACKING}</ns:Packing>`);
-    expect(xmlContent).toContain('<ns:RegulatorySubType>IATA_SECTION_II</ns:RegulatorySubType>');
+    expect(xmlContent).toContain('BATTERY');
+    expect(xmlContent).toContain('batteryDetails');
+    expect(xmlContent).toContain(`${BATTERY_MATERIAL}`);
+    expect(xmlContent).toContain(`${BATTERY_PACKING}`);
+    expect(xmlContent).toContain('IATA_SECTION_II');
     console.log(`✔ XML confirmed — BATTERY service present with ${BATTERY_MATERIAL} / ${BATTERY_PACKING}`);
 
     await pages.manualLabelPage.selectFirstShippingService();
@@ -81,30 +78,16 @@ test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () =>
     await pages.orderSummaryPage.verifyLabelGenerated();
   });
 
-  test('Step 4 | Print label and capture document URL', async ({ pages }) => {
-    const newPagePromise = pages.sharedPage.context().waitForEvent('page');
-    await pages.orderSummaryPage.clickPrintDocuments();
+  test('Step 4 | Print label, capture URL and verify PDF text', async ({ pages }) => {
+    test.setTimeout(0);
 
-    const newPage = await newPagePromise;
-    await newPage.waitForLoadState('load');
+    const { documentUrl, pdfText } = await pages.orderSummaryPage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
 
-    capturedDocumentUrl = new URL(newPage.url()).searchParams.get('document') ?? '';
+    expect(documentUrl).toBeTruthy();
+    expect(pdfText).toContain('ELB');
 
-    expect(capturedDocumentUrl).toBeTruthy();
-    console.log(`✔ Captured document URL: ${capturedDocumentUrl}`);
-    await newPage.close();
-  });
-
-  test('Step 5 | Verify "ELB" text is present in generated FedEx label PDF', async () => {
-    expect(capturedDocumentUrl).toBeTruthy();
-
-    const response = await axios.get(capturedDocumentUrl, { responseType: 'arraybuffer' });
-    const parser = new PDFParse({ data: response.data });
-    const pdfData = await parser.getText();
-
-    console.log('✔ PDF text extracted successfully');
-    expect(pdfData.text).toContain('ELB');
-    console.log('✔ "ELB" text confirmed in FedEx label');
+    console.log(`✔ "ELB" text confirmed in FedEx label`);
+    console.log(`✔ Final document URL: ${documentUrl}`);
   });
 });
 

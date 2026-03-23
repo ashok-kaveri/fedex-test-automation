@@ -1,5 +1,8 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from '../../basePage';
+import fs from 'fs';
+import path from 'path';
+import AdmZip from 'adm-zip';
 
 // Page Object for Manual Label Generation Page within FedEx App - Handles all actions related to manual label generation
 export class GenerateLabelManuallyPage extends BasePage {
@@ -36,6 +39,12 @@ export class GenerateLabelManuallyPage extends BasePage {
   readonly productPrice: Locator;
   readonly getShippingServiceLabel: (radioId: string) => Locator;
 
+  readonly howToSubAction: Locator;
+  readonly howToModal: Locator;
+  readonly howToHeading: Locator;
+  readonly labelClickHereButton: Locator;
+  readonly moreActionsButton: Locator;
+
   constructor(page: Page) {
     super(page);
 
@@ -49,9 +58,13 @@ export class GenerateLabelManuallyPage extends BasePage {
     this.failedRatesBox = this.appFrame.locator('div.Polaris-Box').filter({ hasText: 'Failed to fetch rates' });
     this.clickBackButton = this.appFrame.getByRole('button', { name: 'Orders' });
     this.fetchXMLMenuButton = this.appFrame.getByRole('button').filter({ hasText: /^$/ }).nth(5);
-    this.viewXmlMenuLogItem = this.appFrame.getByRole('menuitem', { name: 'View XML' });
+    this.viewXmlMenuLogItem = this.appFrame.getByRole('menuitem', { name: 'View Logs' });
     this.XmlCloseButton = this.appFrame.locator('button.Polaris-Button--primary').filter({ hasText: 'Close' });
-    this.xmlRequestContentArea = this.appFrame.locator('pre').filter({ hasText: '<?xml version="1.0" encoding' });
+    // this.xmlRequestContentArea = this.appFrame.locator('pre').filter({ hasText: '<?xml version="1.0" encoding' });
+    this.xmlRequestContentArea = this.appFrame.locator('pre.Polaris-Text--root').first();
+    // this.viewXmlMenuLogItem = this.appFrame.getByRole('menuitem', { name: 'View XML' });
+    this.XmlCloseButton = this.appFrame.locator('button.Polaris-Button--primary').filter({ hasText: 'Close' });
+    // this.xmlRequestContentArea = this.appFrame.locator('pre').filter({ hasText: '<?xml version="1.0" encoding' });
 
     this.ratesActionMenu = this.appFrame.locator('.Polaris-Box').filter({ hasText: 'Shipping rates from account' }).locator('button[aria-controls]');
     this.viewRateLog = this.appFrame.locator('button[role="menuitem"]').filter({ hasText: 'View Logs' }).first();
@@ -61,6 +74,21 @@ export class GenerateLabelManuallyPage extends BasePage {
     this.requestHeader = this.appFrame.getByRole('heading', { name: 'Request', exact: true });
     this.rateRequestContainer = this.appFrame.getByRole('dialog').locator('pre').first();
     this.productPrice = this.appFrame.locator('p.Polaris-Text--end');
+
+    this.ratesActionMenu = this.appFrame.locator('.Polaris-Box').filter({ hasText: 'Shipping rates from account' }).locator('button[aria-controls]');
+    this.viewRateLog = this.appFrame.locator('button[role="menuitem"]').filter({ hasText: 'View Logs' }).first();
+    this.rateDownloadLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: 'Download Logs' });
+    this.viewAddressLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: 'View Address Logs' });
+    this.ratesLogHeader = this.appFrame.getByRole('dialog').getByRole('heading', { name: 'Rates Log' });
+    this.requestHeader = this.appFrame.getByRole('heading', { name: 'Request', exact: true });
+    this.rateRequestContainer = this.appFrame.getByRole('dialog').locator('pre').first();
+    this.productPrice = this.appFrame.locator('p.Polaris-Text--end');
+
+    this.howToSubAction = this.appFrame.locator('.Polaris-ActionList__Item').filter({ hasText: 'How To' });
+    this.howToModal = this.appFrame.locator('div[role="dialog"]');
+    this.howToHeading = this.howToModal.getByRole('heading', { name: 'How To' });
+    this.labelClickHereButton = this.appFrame.locator('div').filter({ hasText: 'Need request/response Logs to contact FedEx?' }).getByRole('button', { name: 'Click Here' }).last();
+    this.moreActionsButton = this.appFrame.getByRole('button', { name: 'More Actions' }).last();
 
     // XML viewer modal locators
     this.xmlViewerModal = this.appFrame.locator('div[role="dialog"][aria-modal="true"]');
@@ -212,6 +240,8 @@ export class GenerateLabelManuallyPage extends BasePage {
   }
 
   async waitUntilGeneratePackageButtonVisible(): Promise<void> {
+    // await this.page.reload();
+    await this.waitForLoadingToComplete();
     await this.generatePackagesButton.waitFor({ state: 'visible', timeout: 30000 });
   }
 
@@ -277,6 +307,11 @@ export class GenerateLabelManuallyPage extends BasePage {
     return jsonData;
   }
 
+  async getShipmentSpecialServicesFromRequestLog() {
+    const logs = await this.getParsedDataFromRequestLog();
+    return logs?.requestObject?.requestedShipment?.shipmentSpecialServices?.specialServiceTypes || [];
+  }
+
   async getSignatureValueFromRequestLog() {
     const logs = await this.getParsedDataFromRequestLog();
     return logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.packageSpecialServices?.signatureOptionType || null;
@@ -294,6 +329,20 @@ export class GenerateLabelManuallyPage extends BasePage {
     await this.dialogModalCloseButton.click();
     await expect(this.appFrame.getByRole('dialog')).toBeHidden();
   }
+
+  // async clickActionListItem(itemName: string) {
+  //   const item = this.appFrame.getByRole('button', { name: itemName, exact: true });
+  //   await item.waitFor({ state: 'visible' });
+  //   await item.click();
+  // }
+
+  async selectClickHereButton() {
+    await this.labelClickHereButton.scrollIntoViewIfNeeded();
+    await this.labelClickHereButton.click();
+    await this.dialogModalCloseButton.click();
+    await expect(this.appFrame.getByRole('dialog')).toBeHidden();
+  }
+
   // Generic method to get XML request content for verification in tests
   async getXmlRequestContent(): Promise<string> {
     await this.fetchXMLMenuButton.click();
@@ -325,5 +374,64 @@ export class GenerateLabelManuallyPage extends BasePage {
   // Returns XML content to verify battery details in test file
   async verifyBatteryInXmlRequest(): Promise<string> {
     return await this.getXmlRequestContent();
+  }
+
+  async clickMoreActionsButton() {
+    await this.moreActionsButton.waitFor({ state: 'visible' });
+    await this.moreActionsButton.click();
+    await this.appFrame.locator('.Polaris-Popover').first().waitFor({ state: 'attached' });
+  }
+
+  async clickHowToSubActions() {
+    await this.howToSubAction.waitFor({ state: 'visible' });
+    await this.howToSubAction.click();
+  }
+
+  async downloadLabelLogs() {
+    const dir = path.resolve('testLabelLogs');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir);
+      console.log(dir);
+    }
+    const [download] = await Promise.all([this.page.waitForEvent('download'), this.labelClickHereButton.click()]);
+    //Adding timestamp to file name
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${now.getHours()}-${now.getMinutes()}`;
+    const filePath = path.join(dir, `rate-log-${timestamp}.zip`);
+
+    await download.saveAs(filePath);
+    console.log(filePath);
+    return filePath;
+  }
+
+  async getLabelRequestLog(filePath: string) {
+    const zip = new AdmZip(filePath);
+    const entries = zip.getEntries();
+    for (const entry of entries) {
+      if (entry.entryName.includes('Request')) {
+        const content = entry.getData().toString('utf8');
+        return JSON.parse(content);
+      }
+    }
+  }
+
+  async getHALDetailsFromLabelRequestLog(filePath: string) {
+    const logs = await this.getLabelRequestLog(filePath);
+    const shipmentSpecialServices = logs?.requestObject?.requestedShipment?.shipmentSpecialServices;
+    const specialServices = shipmentSpecialServices?.specialServiceTypes || [];
+    const locationId = shipmentSpecialServices?.holdAtLocationDetail?.locationId || null;
+    const locationType = shipmentSpecialServices?.holdAtLocationDetail?.locationType || null;
+    return { specialServices, locationId, locationType };
+  }
+
+  async cleanupLogs(filePath: string) {
+    if (filePath && fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+        console.log(`Cleanup: Deleted ${path.basename(filePath)}`);
+      } catch (error) {
+        console.error(`Cleanup: Failed to delete ${filePath}`, error);
+      }
+    }
   }
 }

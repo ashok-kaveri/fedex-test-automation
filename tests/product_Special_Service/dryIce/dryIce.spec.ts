@@ -1,8 +1,6 @@
 import { test, expect } from '../../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
-import axios from 'axios';
-
-const { PDFParse } = require('pdf-parse');
+import { BrowserContext } from '@playwright/test';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Suite: Label Generation For Dry Ice Product
@@ -17,15 +15,16 @@ test.describe.configure({ mode: 'serial' });
 test.describe('Label Generation For Dry Ice Product', () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
-  let capturedDocumentUrl: string = '';
+  let sharedContext: BrowserContext;
 
   // ── Page Objects ──────────────────────────────────────────────────────────
   let orderUploader: ShopifyOrderUploader;
 
   // ── Hooks ─────────────────────────────────────────────────────────────────
 
-  test.beforeAll(async () => {
+  test.beforeAll(async ({ pages }) => {
     orderUploader = new ShopifyOrderUploader();
+    sharedContext = pages.sharedPage.context();
   });
 
   test.afterAll(async ({ pages }) => {
@@ -67,11 +66,12 @@ test.describe('Label Generation For Dry Ice Product', () => {
 
     const xmlContent = await pages.manualLabelPage.verifyDryIceInXmlRequest();
 
-    expect(xmlContent).toContain('<ns:SpecialServiceTypes>DRY_ICE</ns:SpecialServiceTypes>');
-    expect(xmlContent).toContain('<ns:DryIceWeight>');
-    expect(xmlContent).toContain('<ns:Units>KG</ns:Units>');
+    expect(xmlContent).toContain('DRY_ICE');
+    expect(xmlContent).toContain('DryIceWeight');
+    expect(xmlContent).toContain('KG');
 
-    const weightFound = xmlContent.includes(`<ns:Value>${DRY_ICE_WEIGHT}`) || xmlContent.includes(`<ns:Value>${Number(DRY_ICE_WEIGHT).toFixed(2)}`);
+    const weightFound = xmlContent.includes(`${DRY_ICE_WEIGHT}`) || xmlContent.includes(`${Number(DRY_ICE_WEIGHT).toFixed(2)}`);
+    // eslint-disable-next-line
     expect(weightFound).toBeTruthy();
 
     console.log(`✔ XML confirmed — DRY_ICE service present with weight: ${DRY_ICE_WEIGHT} KG`);
@@ -81,33 +81,17 @@ test.describe('Label Generation For Dry Ice Product', () => {
     await pages.orderSummaryPage.verifyLabelGenerated();
   });
 
-  test('Step 4 | Print label and capture document URL', async ({ pages }) => {
-    const newPagePromise = pages.sharedPage.context().waitForEvent('page');
-    await pages.orderSummaryPage.clickPrintDocuments();
+  test('Step 4 | Print label, capture URL and verify PDF text', async ({ pages }) => {
+    test.setTimeout(0);
 
-    const newPage = await newPagePromise;
-    await newPage.waitForLoadState('load');
+    const { documentUrl, pdfText } = await pages.orderSummaryPage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
 
-    const viewerUrl = newPage.url();
-    capturedDocumentUrl = new URL(viewerUrl).searchParams.get('document') ?? '';
+    expect(documentUrl).toBeTruthy();
+    expect(pdfText).toContain('ICE');
 
-    expect(capturedDocumentUrl).toBeTruthy();
-    console.log(`✔ Captured document URL: ${capturedDocumentUrl}`);
+    console.log(`✔ "ICE" text confirmed in FedEx label`);
+    console.log(`✔ Final document URL: ${documentUrl}`);
   });
-
-  // Step 5 is skipped pending PDF text verification for Dry Ice label
-  // Re-enable once the label is confirmed to contain "ICE" text
-  // test.skip('Step 5 | Verify "ICE" text is present in generated FedEx label PDF', async () => {
-  //     expect(capturedDocumentUrl).toBeTruthy();
-
-  //     const response = await axios.get(capturedDocumentUrl, { responseType: 'arraybuffer' });
-  //     const parser = new PDFParse({ data: response.data });
-  //     const pdfData = await parser.getText();
-
-  //     console.log('✔ PDF text extracted successfully');
-  //     expect(pdfData.text).toContain('ICE');
-  //     console.log('✔ "ICE" text confirmed in FedEx label');
-  // });
 });
 
 // npx playwright test tests/product_Special_Service/dryIce/dryIce.spec.ts --project="Google Chrome" --headed

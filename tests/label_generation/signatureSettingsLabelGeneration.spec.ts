@@ -4,13 +4,12 @@ import ShopifyOrderUploader from '../../src/helpers/createOrder';
 //test.describe.configure({ mode: 'serial' });
 
 test.describe('Manual Label Generation with signature options', () => {
-  let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 
   //Signature
   const signatureOptions = ['ADULT', 'DIRECT', 'INDIRECT', 'NO_SIGNATURE_REQUIRED'];
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async () => {
     orderUploader = new ShopifyOrderUploader();
   });
 

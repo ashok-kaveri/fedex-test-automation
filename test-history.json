@@ -1,0 +1,37 @@
+{
+  "runs": [],
+  "tests": {
+    "[chromium] tests/returnLabels/returnLabelGeneration.spec.ts::Create an order from API": [
+      {
+        "passed": true,
+        "duration": 1081,
+        "timestamp": "2026-02-11T10:58:18.089Z",
+        "skipped": false,
+        "retry": 0
+      }
+    ],
+    "[chromium] tests/returnLabels/returnLabelGeneration.spec.ts::Navigate to Shopify order and generate label manually": [
+      {
+        "passed": true,
+        "duration": 29919,
+        "timestamp": "2026-02-11T10:58:18.089Z",
+        "skipped": false,
+        "retry": 0
+      }
+    ]
+  },
+  "summaries": [
+    {
+      "runId": "run-1770807463768",
+      "timestamp": "2026-02-11T10:57:43.768Z",
+      "total": 2,
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "slow": 0,
+      "duration": 34321,
+      "passRate": 100
+    }
+  ]
+}

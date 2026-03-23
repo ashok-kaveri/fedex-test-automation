@@ -1,6 +1,8 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, FrameLocator, Locator, expect, BrowserContext } from '@playwright/test';
 import { AppFrameContentLocators, AppFrameHelper } from '../helpers/appFrameHelper';
-
+import axios from 'axios';
+// eslint-disable-next-line
+const { PDFParse } = require('pdf-parse');
 /**
  * BasePage class - Base class for all page objects in the FedEx automation suite
  * Provides common functionality and locators shared across multiple page objects
@@ -14,6 +16,7 @@ export class BasePage {
   readonly appFrameMain: Locator;
   readonly loadingSpinner: Locator;
   readonly appButton: Locator;
+  readonly skeletonLoader: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -24,6 +27,7 @@ export class BasePage {
     this.appFrameMain = this.appContent.getAppFrameMain();
     this.loadingSpinner = this.appFrame.locator('[class*="spinner"], [class*="loading"]');
     this.appButton = this.page.getByRole('link', { name: 'QA Ship Rate & Track for FedEx' });
+    this.skeletonLoader = this.page.locator('.skeleton-loader');
   }
 
   //Wait for loading spinner to disappear
@@ -46,12 +50,58 @@ export class BasePage {
   }
 
   async selectAppMenu(route: string) {
+    // eslint-disable-next-line no-restricted-syntax
     const link = this.page.locator(`a[href*="/apps/testing-553/${route}"]`);
-    await link.waitFor({ state: 'visible', timeout: 5000 });
+    await link.waitFor({ state: 'visible' });
     await link.click({ force: true });
   }
 
   successMessage(message: string) {
     return this.appFrame.getByText(message, { exact: true });
+  }
+
+  async expectToast(message: string) {
+    // eslint-disable-next-line no-restricted-syntax
+    const toast = this.appFrame.locator(`text=${message}`);
+    // await toast.waitFor({ state: 'visible', timeout: 5000 });
+    await expect(toast).toBeVisible({ timeout: 5000 });
+  }
+
+  async selectShopifyMenuOption(option: string) {
+    const menuOption = this.page.getByRole('link', { name: option });
+    await menuOption.waitFor({ state: 'visible', timeout: 5000 });
+    await menuOption.click();
+  }
+
+  async clickButtonByName(buttonName: string) {
+    const button = this.page.getByRole('button', { name: buttonName }).first();
+    await button.waitFor({ state: 'visible', timeout: 5000 });
+    await button.click();
+  }
+
+  async captureDocumentUrl(context: BrowserContext, triggerAction: () => Promise<void>, urlParamName: string = 'document'): Promise<{ documentUrl: string; pdfText: string }> {
+    const newPagePromise = context.waitForEvent('page');
+    await triggerAction();
+
+    const newPage = await newPagePromise;
+    await newPage.waitForLoadState('load');
+
+    const viewerUrl = newPage.url();
+    const url = new URL(viewerUrl);
+    const documentUrl = url.searchParams.get(urlParamName) ?? '';
+
+    console.log(`✔ Captured document URL: ${documentUrl}`);
+    await newPage.close();
+    expect(documentUrl).toBeTruthy();
+
+    const response = await axios.get(documentUrl, { responseType: 'arraybuffer' });
+    const parser = new PDFParse({ data: response.data });
+    const pdfData = await parser.getText();
+    console.log(pdfData.text);
+
+    console.log('✔ PDF text extracted successfully');
+    console.log(pdfData.text);
+
+    return { documentUrl, pdfText: pdfData.text };
   }
 }

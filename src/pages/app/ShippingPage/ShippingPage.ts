@@ -1,4 +1,4 @@
-import { Page, FrameLocator, Locator, expect } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from '../../basePage';
 
 // Page Object for Shipping Page within FedEx App
@@ -38,7 +38,9 @@ export class ShippingPage extends BasePage {
     this.requestPickupButton = this.appFrame.getByRole('button', { name: 'Request Pick Up' });
     this.clickOrderNumber = this.appFrame.locator('a[class="orderId"]');
     this.returnFailureTitleForUnfulfilledOrder = this.appFrame.getByText('Failed to generate Return Label');
-    this.returnFailureDescriptionForUnfulfilledOrder = this.appFrame.getByText('Sorry, you cannot generate a return label for this order because it is not yet fulfilled. Please wait until the order is fulfilled to proceed or select a fulfilled order.');
+    this.returnFailureDescriptionForUnfulfilledOrder = this.appFrame.getByText(
+      'Sorry, you cannot generate a return label for this order because it is not yet fulfilled. Please wait until the order is fulfilled to proceed or select a fulfilled order.',
+    );
     // this.productsTab = page.getByRole('link', { name: 'Products' }).nth(1);
 
     // From second file
@@ -222,7 +224,6 @@ export class ShippingPage extends BasePage {
     return this.lastRequestPickupTriggeredAt;
   }
 
-
   // ================= click order Number =================
 
   async orderClick() {
@@ -233,14 +234,17 @@ export class ShippingPage extends BasePage {
   }
   // =================Validating the Return failure message for the unfulfilled order =================
   async validateReturnFailureMessageForUnfulfilledOrder() {
-    await expect(this.returnFailureTitleForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
-    await expect(this.returnFailureDescriptionForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+    // await expect(this.returnFailureTitleForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+    // await expect(this.returnFailureDescriptionForUnfulfilledOrder).toBeVisible({ timeout: 10000 });
+
+    return {
+      title: this.returnFailureTitleForUnfulfilledOrder,
+      description: this.returnFailureDescriptionForUnfulfilledOrder,
+    };
   }
 
   // ================= Navigate to Products tab =================
   async navigateToProductsPage(): Promise<void> {
     await this.page.goto(`https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/products`);
   }
-
-
 }

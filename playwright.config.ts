@@ -26,6 +26,7 @@ export default defineConfig({
   /* Shared settings */
   use: {
     trace: 'on-first-retry',
+    acceptDownloads: true,
 
     launchOptions: {
       args: ['--disable-blink-features=AutomationControlled'],

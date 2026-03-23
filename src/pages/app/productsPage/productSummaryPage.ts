@@ -1,7 +1,7 @@
 import { Page, Locator, FrameLocator, expect } from '@playwright/test';
+import { BasePage } from '../../basePage';
 
-export class ProductSummaryPage {
-  readonly page: Page;
+export class ProductSummaryPage extends BasePage {
   readonly appIframe: FrameLocator;
   readonly signatureOptionDropdown: Locator;
   readonly saveButton: Locator;
@@ -9,28 +9,32 @@ export class ProductSummaryPage {
   readonly dryIceWeightInput: Locator;
   readonly dryIceCheckbox: Locator;
   readonly isAlcoholLabel: Locator;
+  readonly isAlcoholCheckbox: Locator;
   readonly alcoholRecipientTypeDropdown: Locator;
   readonly isBatteryLabel: Locator;
+  readonly isBatteryCheckbox: Locator;
   readonly batteryMaterialTypeDropdown: Locator;
   readonly batteryPackingTypeDropdown: Locator;
 
-
   constructor(page: Page) {
-    this.page = page;
+    super(page);
 
     this.appIframe = page.frameLocator('iframe[name="app-iframe"]');
     this.signatureOptionDropdown = this.appIframe.locator('select[name="signatureOptionType"]');
-    this.saveButton = this.appIframe.locator('form').getByRole('button', { name: 'Save' }).first();
+    this.saveButton = this.appIframe.locator('span.Polaris-Button__Text:has-text("Save")').nth(0);
     this.dryIceLabel = this.appIframe.getByText('Is Dry Ice Needed');
     this.dryIceWeightInput = this.appIframe.getByRole('spinbutton', { name: 'Dry Ice Weight(kg)' });
-    this.dryIceCheckbox = this.appIframe.locator('div:nth-child(4) > div > .Polaris-Choice > .Polaris-Choice__Control > .Polaris-Checkbox > .Polaris-Checkbox__Backdrop');
+    this.dryIceCheckbox = this.appIframe.getByRole('checkbox', { name: 'Is Dry Ice Needed' });
+
     this.isAlcoholLabel = this.appIframe.getByText('Is Alcohol');
+    this.isAlcoholCheckbox = this.appIframe.getByRole('checkbox', { name: 'Is Alcohol' });
     this.alcoholRecipientTypeDropdown = this.appIframe.getByLabel('Alcohol Recipient Type');
-    this.isBatteryLabel = this.appIframe.locator('label').filter({ hasText: 'Is Battery' });
+
+    this.isBatteryLabel = this.appIframe.getByText('Is Battery');
+    this.isBatteryCheckbox = this.appIframe.getByRole('checkbox', { name: 'Is Battery' });
     this.batteryMaterialTypeDropdown = this.appIframe.getByLabel('Battery Material Type');
     this.batteryPackingTypeDropdown = this.appIframe.getByLabel('Battery Packing Type');
   }
-
 
   // Set the signature type (e.g., 'ADULT', 'SERVICE_DEFAULT', 'DIRECT', "INDIRECT", "NO_SIGNATURE_REQUIRED", "AS_PER_THE_GENERAL_SETTINGS")
   async setSignatureType(signatureType: string): Promise<void> {
@@ -41,6 +45,8 @@ export class ProductSummaryPage {
 
   // Save the product settings
   async saveProductSettings(): Promise<void> {
+    await this.saveButton.waitFor({ state: 'visible', timeout: 10000 });
+    await this.saveButton.scrollIntoViewIfNeeded();
     await this.saveButton.waitFor({ state: 'visible', timeout: 10000 });
     await this.saveButton.click();
   }
@@ -55,7 +61,6 @@ export class ProductSummaryPage {
   async getSelectedSignatureLabel(): Promise<string> {
     return await this.signatureOptionDropdown.evaluate((el: HTMLSelectElement) => el.options[el.selectedIndex].text);
   }
-
 
   // Update dry ice weight (assertion to be handled in test)
   async updateProductDryIce(dryIceWeight: string): Promise<void> {
@@ -74,7 +79,7 @@ export class ProductSummaryPage {
   async updateProductAlcohol(recipientType: string): Promise<void> {
     await this.isAlcoholLabel.waitFor({ state: 'visible', timeout: 10000 });
     // Check if it's already checked before clicking
-    if (!(await this.isAlcoholLabel.isChecked())) {
+    if (!(await this.isAlcoholCheckbox.isChecked())) {
       await this.isAlcoholLabel.click();
     }
     await this.alcoholRecipientTypeDropdown.waitFor({ state: 'visible', timeout: 10000 });
@@ -86,7 +91,7 @@ export class ProductSummaryPage {
   async updateProductBattery(materialType: string, packingType: string): Promise<void> {
     await this.isBatteryLabel.waitFor({ state: 'visible', timeout: 10000 });
     // Check if it's already checked before clicking
-    if (!(await this.isBatteryLabel.isChecked())) {
+    if (!(await this.isBatteryCheckbox.isChecked())) {
       await this.isBatteryLabel.click();
     }
 
@@ -99,17 +104,16 @@ export class ProductSummaryPage {
     await this.saveProductSettings();
   }
 
-
-  async disableIsBattery(){
+  async disableIsBattery() {
     await this.isBatteryLabel.waitFor({ state: 'visible', timeout: 10000 });
     // Check if it's already checked before clicking
-    if (await this.isBatteryLabel.isChecked()) {
+    if (await this.isBatteryCheckbox.isChecked()) {
       await this.isBatteryLabel.click();
     }
     await this.saveProductSettings();
   }
 
-  async disableIsDryIce(){
+  async disableIsDryIce() {
     await this.dryIceLabel.waitFor({ state: 'visible', timeout: 10000 });
     // Check if it's already checked before clicking
     if (await this.dryIceCheckbox.isChecked()) {
@@ -118,30 +122,29 @@ export class ProductSummaryPage {
     await this.saveProductSettings();
   }
 
-  async disableIsAlcohol(){
+  async disableIsAlcohol() {
     await this.isAlcoholLabel.waitFor({ state: 'visible', timeout: 10000 });
     // Check if it's already checked before clicking
-    if (await this.isAlcoholLabel.isChecked()) {
+    if (await this.isAlcoholCheckbox.isChecked()) {
       await this.isAlcoholLabel.click();
     }
     await this.saveProductSettings();
   }
 
-
   async disableSpecialService(service: 'battery' | 'dryIce' | 'alcohol') {
     const config = {
-        battery: {
-            label:    this.isBatteryLabel,
-            checkbox: this.isBatteryLabel,
-        },
-        dryIce: {
-            label:    this.dryIceLabel,
-            checkbox: this.dryIceCheckbox,
-        },
-        alcohol: {
-            label:    this.isAlcoholLabel,
-            checkbox: this.isAlcoholLabel,
-        },
+      battery: {
+        label: this.isBatteryLabel,
+        checkbox: this.isBatteryCheckbox,
+      },
+      dryIce: {
+        label: this.dryIceLabel,
+        checkbox: this.dryIceCheckbox,
+      },
+      alcohol: {
+        label: this.isAlcoholLabel,
+        checkbox: this.isAlcoholCheckbox,
+      },
     };
 
     const { label, checkbox } = config[service];
@@ -149,10 +152,10 @@ export class ProductSummaryPage {
     await label.waitFor({ state: 'visible', timeout: 10_000 });
 
     if (await checkbox.isChecked()) {
-        await label.click();
+      await label.click();
+      // Wait for the UI to register the click and the checkbox to be unchecked
+      await expect(checkbox).not.toBeChecked({ timeout: 5000 });
+      await this.saveProductSettings();
     }
-
-    await this.saveProductSettings();
-}
-
+  }
 }

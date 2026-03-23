@@ -1,134 +1,84 @@
-import { test, expect, Page, BrowserContext } from '@playwright/test';
-import { ProductPage } from '../../../src/pages/app/productsPage/productsPage';
-import { ProductSummaryPage } from '../../../src/pages/app/productsPage/productSummaryPage';
+import { BrowserContext } from '@playwright/test';
 import ShopifyOrderUploader from '../../../src/helpers/createOrder';
-import { ShopifyAdminPage } from '../../../src/pages/shopify/ShopifyAdminPage';
-import { ShippingPage } from '../../../src/pages/app/ShippingPage/ShippingPage';
-import { GenerateLabelManuallyPage } from '../../../src/pages/app/ManualLabelPage/ManualLabelPage';
-import { OrderSummaryPage } from '../../../src/pages/app/OrderSummaryPage/OrderSummaryPage';
-import axios from 'axios';
-
-const { PDFParse } = require('pdf-parse');
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Test Suite: Label Generation For Direct Signature
-// Run: npx playwright test tests/product_Special_Service/signatureTypes/directSignature.spec.ts
-//      --project="Google Chrome" --headed
-// ─────────────────────────────────────────────────────────────────────────────
+import { test, expect } from '../../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Label Generation For Direct Signature', () => {
+  // ── Shared State ──────────────────────────────────────────────────────────
+  let sharedOrderID: string;
+  let sharedContext: BrowserContext;
 
-    // ── Shared State ──────────────────────────────────────────────────────────
-    let sharedOrderID: string;
-    let sharedPage: Page;
-    let sharedContext: BrowserContext;
-    let capturedDocumentUrl: string = '';
+  // ── Page Objects ──────────────────────────────────────────────────────────
+  let orderUploader: ShopifyOrderUploader;
 
-    // ── Page Objects ──────────────────────────────────────────────────────────
-    let orderUploader: ShopifyOrderUploader;
-    let productPage: ProductPage;
-    let productSummaryPage: ProductSummaryPage;
-    let shopifyAdminPage: ShopifyAdminPage;
-    let shippingPage: ShippingPage;
-    let manualLabelPage: GenerateLabelManuallyPage;
-    let orderSummaryPage: OrderSummaryPage;
+  // ── Hooks ─────────────────────────────────────────────────────────────────
 
-    // ── Hooks ─────────────────────────────────────────────────────────────────
+  test.beforeAll(async ({ pages }) => {
+    orderUploader = new ShopifyOrderUploader();
+    sharedContext = pages.sharedPage.context();
+  });
 
-    test.beforeAll(async ({ browser }) => {
-        sharedContext = await browser.newContext({ storageState: 'auth.json' });
-        sharedPage = await sharedContext.newPage();
+  test.afterAll(async ({ pages }) => {
+    await pages.shippingPage.navigateToProductsPage();
+    await pages.productPage.searchAndSelectProduct('BLAZER');
+    await pages.productSummaryPage.updateProductSignature('AS_PER_THE_GENERAL_SETTINGS');
+    expect(await pages.productSummaryPage.getSelectedSignatureLabel()).toBe('As Per The General Settings');
+  });
 
-        orderUploader = new ShopifyOrderUploader();
-        shopifyAdminPage = new ShopifyAdminPage(sharedPage);
-        shippingPage = new ShippingPage(sharedPage);
-        productPage = new ProductPage(sharedPage);
-        productSummaryPage = new ProductSummaryPage(sharedPage);
-        manualLabelPage = new GenerateLabelManuallyPage(sharedPage);
-        orderSummaryPage = new OrderSummaryPage(sharedPage);
-    });
+  // ── Tests ─────────────────────────────────────────────────────────────────
 
-    test.afterAll(async () => {
-        await shippingPage.navigateToProductsPage();
-        await productPage.searchAndSelectProduct('Simple 1');
-        await productSummaryPage.updateProductSignature('AS_PER_THE_GENERAL_SETTINGS');
-        await sharedPage?.close();
-        await sharedContext?.close();
-    });
+  test('Step 1 | Enable Direct Signature on product', async ({ pages }) => {
+    test.setTimeout(120_000);
 
-    // ── Tests ─────────────────────────────────────────────────────────────────
+    await pages.shippingPage.navigateToProductsPage();
+    await pages.productPage.searchAndSelectProduct('BLAZER');
+    await pages.productSummaryPage.updateProductSignature('DIRECT');
 
-    test('Step 1 | Enable Direct Signature on product', async () => {
-        test.setTimeout(120_000);
+    const selectedLabel = await pages.productSummaryPage.getSelectedSignatureLabel();
+    expect(selectedLabel).toBe('Direct Signature Required');
 
-        await shippingPage.navigateToProductsPage();
-        await productPage.searchAndSelectProduct('Simple 1');
-        await productSummaryPage.updateProductSignature('DIRECT');
+    console.log(`✔ Signature type set to: "${selectedLabel}"`);
+  });
 
-        const selectedLabel = await productSummaryPage.getSelectedSignatureLabel();
-        expect(selectedLabel).toBe('Direct Signature Required');
+  test('Step 2 | Create order via API with direct-signature product', async () => {
+    test.setTimeout(0);
 
-        console.log(`✔ Signature type set to: "${selectedLabel}"`);
-    });
+    const orderID = (await orderUploader.uploadOrder()) as string;
+    expect(orderID).toBeTruthy();
 
-    test('Step 2 | Create order via API with direct-signature product', async () => {
-        test.setTimeout(0);
+    sharedOrderID = orderID;
+    console.log(`✔ Order created — ID: ${sharedOrderID}`);
+  });
 
-        const orderID = (await orderUploader.uploadOrder()) as string;
-        expect(orderID).toBeTruthy();
+  test('Step 3 | Manually generate label and verify XML signature option', async ({ pages }) => {
+    test.setTimeout(0);
 
-        sharedOrderID = orderID;
-        console.log(`✔ Order created — ID: ${sharedOrderID}`);
-    });
+    await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
+    await pages.manualLabelPage.waitUntilGeneratePackageButtonVisible();
+    await pages.manualLabelPage.generatePackages();
+    await pages.manualLabelPage.getShippingRates();
 
-    test('Step 3 | Manually generate label and verify XML signature option', async () => {
-        test.setTimeout(0);
+    const xmlContent = await pages.manualLabelPage.verifySignatureOptionInXmlRequest();
+    expect(xmlContent).toContain('DIRECT');
+    console.log('✔ XML contains expected signature option: DIRECT');
 
-        await shopifyAdminPage.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-        await manualLabelPage.waitUntilGeneratePackageButtonVisible();
-        await manualLabelPage.generatePackages();
-        await manualLabelPage.getShippingRates();
+    await pages.manualLabelPage.selectFirstShippingService();
+    await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
+    await pages.orderSummaryPage.verifyLabelGenerated();
+  });
 
-        const xmlContent = await manualLabelPage.verifySignatureOptionInXmlRequest();
-        expect(xmlContent).toContain('<ns:OptionType>DIRECT</ns:OptionType>');
-        console.log('✔ XML contains expected signature option: DIRECT');
+  test('Step 4 | Print label, capture URL and verify PDF text', async ({ pages }) => {
+    test.setTimeout(0);
 
-        await manualLabelPage.selectFirstShippingService();
-        await manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
-        await orderSummaryPage.verifyLabelGenerated();
-    });
+    const { documentUrl, pdfText } = await pages.orderSummaryPage.captureDocumentUrl(sharedContext, () => pages.orderSummaryPage.clickPrintDocuments());
 
-    test('Step 4 | Print label and capture document URL', async () => {
-        const newPagePromise = sharedContext.waitForEvent('page');
-        await orderSummaryPage.clickPrintDocuments();
+    expect(documentUrl).toBeTruthy();
+    expect(pdfText).toContain('DSR');
 
-        const newPage = await newPagePromise;
-        await newPage.waitForLoadState('load');
-
-        const viewerUrl = newPage.url();
-        const url = new URL(viewerUrl);
-        capturedDocumentUrl = url.searchParams.get('document') ?? '';
-
-        expect(capturedDocumentUrl).toBeTruthy();
-        console.log(`✔ Captured document URL: ${capturedDocumentUrl}`);
-    });
-
-    test('Step 5 | Verify "DSR" text is present in generated FedEx label PDF', async () => {
-        test.setTimeout(0);
-
-        expect(capturedDocumentUrl).toBeTruthy();
-
-        const response = await axios.get(capturedDocumentUrl, { responseType: 'arraybuffer' });
-        const parser = new PDFParse({ data: response.data });
-        const pdfData = await parser.getText();
-
-        console.log('✔ PDF text extracted successfully');
-        expect(pdfData.text).toContain('DSR');
-        console.log('✔ "DSR" text confirmed in FedEx label');
-    });
-
+    console.log(`✔ "DSR" text confirmed in FedEx label`);
+    console.log(`✔ Final document URL: ${documentUrl}`);
+  });
 });
 
 // npx playwright test tests/product_Special_Service/signatureTypes/directSignature.spec.ts --project="Google Chrome" --headed

@@ -13,6 +13,7 @@ export class SideDockPage {
   readonly holdAtLocationBtn: Locator;
   readonly holdLocationLabel: Locator;
   readonly holdLocationDropdown: Locator;
+  readonly halType: Locator;
 
   readonly modalContainer: Locator;
   readonly modalYesButton: Locator;
@@ -73,6 +74,7 @@ export class SideDockPage {
     this.holdAtLocationBtn = this.appFrame.getByText('Hold at Location');
     this.holdLocationLabel = this.appFrame.getByLabel('Hold Location Point');
     this.holdLocationDropdown = this.modalContainer.locator("//select[@id=//label[text()='Hold Location Point']/@for]");
+    this.halType = this.appFrame.locator('p:has-text("Hold Location Point") + div p').first();
 
     this.fedexSignatureLabel = this.appFrame.getByLabel('FedEx® Delivery Signature Options');
     this.fedexSignatureDropdown = this.appFrame.locator('div:has(> .Polaris-Labelled__LabelWrapper:has-text("FedEx® Delivery Signature Options")) select');
@@ -131,6 +133,11 @@ export class SideDockPage {
     await this.holdLocationDropdown.selectOption(option);
     await this.modalYesButton.click();
   }
+
+  async getHALSelectedType(){
+    return this.halType.textContent();
+  }
+
   async selectFedExSignature(option: string) {
     await this.fedexSignatureDropdown.waitFor({ state: 'visible' });
     await this.page.waitForTimeout(3000);
