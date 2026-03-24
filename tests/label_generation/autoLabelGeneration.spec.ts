@@ -21,7 +21,7 @@ test.describe('Auto Label Generation Flow', { tag: "@smoke" }, () => {
     sharedOrderID = orderID;
     console.log(`Order created: ${sharedOrderID}`);
   });
- 
+
   test('1. Navigate to Shopify order', async ({ pages }) => {
     test.setTimeout(60000);
     await pages.shopifyAdmin.navigateToStore(store);
