@@ -1,9 +1,9 @@
-import ShopifyOrderUploader from '../../src/helpers/createOrder';
-import { test, expect } from '../../src/setup/fixtures';
+import ShopifyOrderUploader from '../../../src/helpers/createOrder';
+import { test, expect } from '../../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Weight based - pounds and inches - Volumetric weight - Longest side Enable [Single product and single package] - product in cm - Manual', () => {
+test.describe('Weight based - Kilogram and centimetre - Pre-packed product - product in cm - Manual', () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 
@@ -13,9 +13,9 @@ test.describe('Weight based - pounds and inches - Volumetric weight - Longest si
     height: number;
     unit: 'in' | 'cm' | 'ft' | 'mt';
   } = {
-    length: 8,
-    width: 10,
-    height: 12,
+    length: 7,
+    width: 8,
+    height: 9,
     unit: 'cm',
   };
 
@@ -28,18 +28,18 @@ test.describe('Weight based - pounds and inches - Volumetric weight - Longest si
     await pages.shippingPage.navigateToProductsPage();
     await pages.productPage.searchAndSelectProduct('Simple packaging product');
     await pages.productsPage.addProductDimensions(inputDimensions);
+    await pages.productsPage.setSupplementaryOption('Is this product pre-packed?', true);
     await pages.productsPage.saveProduct();
     await pages.packagingSettingsPage.selectAppMenu('settings');
     await pages.packagingSettingsPage.settingsDropDownUsingLabel('Packing Method', 'Weight Based');
-    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'Pounds & Inches');
+    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'Kilograms & Centimeters');
     await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'Save');
     await pages.packagingSettingsPage.expectToast('Updated');
     await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'more settings');
     await expect(pages.packagingSettingsPage.skeletonLoader).toBeHidden();
     const selectedPackingMethod = await pages.packagingSettingsPage.getSelectedPackingMethod();
     expect(selectedPackingMethod).toBe('Weight Based');
-    await pages.packagingSettingsPage.setCheckbox('Use Volumetric Weight For Package Generation', true);
-    await pages.packagingSettingsPage.setCheckbox('Use Longest Side Of The Product As Package Dimensions', true);
+    await pages.packagingSettingsPage.setCheckbox('Use Volumetric Weight For Package Generation', false);
     await pages.packagingSettingsPage.savePackagingDetails();
     await pages.packagingSettingsPage.expectToast('Updated');
   });
@@ -57,13 +57,20 @@ test.describe('Weight based - pounds and inches - Volumetric weight - Longest si
     await pages.shopifyProductPage.openProductSummeryPage('Simple packaging product');
     const productWeight = Number(await pages.shopifyProductsSummary.getProductWeight());
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-    const volumetricWeight = pages.shopifyAdmin.calculateVolumetricWeight(inputDimensions.length, inputDimensions.width, inputDimensions.height, inputDimensions.unit);
-    const expectedFinalWeight = Math.max(productWeight, volumetricWeight);
-    console.log(`Product Weight: ${productWeight}, Volumetric Weight: ${volumetricWeight}, Expected Final Weight: ${expectedFinalWeight}`);
     await pages.manualLabelPage.openRateRequestLog();
     const actualweight = await pages.manualLabelPage.validateDimensionsFromLogs(inputDimensions);
-    expect(actualweight).toBe(expectedFinalWeight);
+    expect(actualweight).toBe(productWeight);
+    console.log(`Product Weight: ${productWeight}`);
     await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
     await expect(pages.orderSummaryPage.labelGeneratedStatus).toBeVisible({ timeout: 70000 });
+  });
+
+  test.afterAll('Cleanup: Disable prepacked setting from the product page', async ({ pages }) => {
+    await pages.shippingPage.navigateToProductsPage();
+    await pages.productPage.searchAndSelectProduct('Simple packaging product');
+    await pages.productsPage.addProductDimensions(inputDimensions);
+    await pages.productsPage.setSupplementaryOption('Is this product pre-packed?', false);
+    await pages.productsPage.saveProduct();
+    await pages.productPage.expectToast('Products Successfully Saved');
   });
 });

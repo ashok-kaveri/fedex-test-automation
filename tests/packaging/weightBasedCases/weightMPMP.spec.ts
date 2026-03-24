@@ -1,22 +1,22 @@
-import ShopifyOrderUploader from '../../src/helpers/createOrder';
-import { test, expect } from '../../src/setup/fixtures';
+import ShopifyOrderUploader from '../../../src/helpers/createOrder';
+import { test, expect } from '../../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe(' Weight based - Kilogram and centimetre- Volumetric weight - Max weight [Multiple same prod and single package] - product in inches -  Manual', () => {
+test.describe('Weight based - pounds and inches -Add additional weight - constant [Multiple variable prod and Multiple package] - product in inches - Manual', () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 
-  const maxWeight = 50;
+  const addOnweight = 3;
   const inputDimensions: {
     length: number;
     width: number;
     height: number;
     unit: 'in' | 'cm' | 'ft' | 'mt';
   } = {
-    length: 8,
+    length: 12,
     width: 10,
-    height: 12,
+    height: 5,
     unit: 'in',
   };
 
@@ -26,8 +26,14 @@ test.describe(' Weight based - Kilogram and centimetre- Volumetric weight - Max 
 
   test('1. Verify Weight Based Packaging', async ({ pages }) => {
     test.setTimeout(60000);
+
+    //Edit Product Dimensions
     await pages.shippingPage.navigateToProductsPage();
     await pages.productPage.searchAndSelectProduct('Simple packaging product');
+    await pages.productsPage.addProductDimensions(inputDimensions);
+    await pages.productsPage.saveProduct();
+    await pages.productSummaryPage.clickBackButton();
+    await pages.productPage.searchAndSelectProduct('variable 1 S');
     await pages.productsPage.addProductDimensions(inputDimensions);
     await pages.productsPage.saveProduct();
     await pages.productSummaryPage.clickBackButton();
@@ -37,24 +43,27 @@ test.describe(' Weight based - Kilogram and centimetre- Volumetric weight - Max 
 
     await pages.packagingSettingsPage.selectAppMenu('settings');
     await pages.packagingSettingsPage.settingsDropDownUsingLabel('Packing Method', 'Weight Based');
-    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'Kilograms & Centimeters');
+    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'Pounds & Inches');
     await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'Save');
     await pages.packagingSettingsPage.expectToast('Updated');
     await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'more settings');
     await expect(pages.packagingSettingsPage.skeletonLoader).toBeHidden();
     const selectedPackingMethod = await pages.packagingSettingsPage.getSelectedPackingMethod();
     expect(selectedPackingMethod).toBe('Weight Based');
-    await pages.packagingSettingsPage.setCheckbox('Use Volumetric Weight For Package Generation', true);
-    await pages.packagingSettingsPage.setMaxWeight(maxWeight);
-    await pages.packagingSettingsPage.setCheckbox('Use Longest Side Of The Product As Package Dimensions', false);
+    await pages.packagingSettingsPage.setCheckbox('Use Volumetric Weight For Package Generation', false);
+    await pages.packagingSettingsPage.setMaxWeight(5);
+    await pages.packagingSettingsPage.setAdditionalWeight(true);
+    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Additional Weight Options', 'Constant');
+    await pages.packagingSettingsPage.fillInputByLabel('Constant Weight To Be Added', addOnweight);
     await pages.packagingSettingsPage.savePackagingDetails();
     await pages.packagingSettingsPage.expectToast('Updated');
   });
 
   test('2. Order Creation with multiple products', async () => {
     const orderID = (await orderUploader.uploadOrderWithMultipleProducts([
-      { productType: 'simple', productIndexes: [0], quantities: [1] },
-      { productType: 'variable', productIndexes: [0], quantities: [1] },
+      { productType: 'simple', productIndexes: [0], quantities: [2] },
+      { productType: 'variable', productIndexes: [0], quantities: [2] },
+      { productType: 'variable', productIndexes: [1], quantities: [2] },
     ])) as string;
     console.log('Order ID:', orderID);
     expect(orderID).toBeTruthy();
@@ -62,7 +71,7 @@ test.describe(' Weight based - Kilogram and centimetre- Volumetric weight - Max 
   });
 
   test('3.Validate Dimensions and weight in Rate logs', async ({ pages }) => {
-    test.setTimeout(60000);
+    test.setTimeout(100000);
     //Prod 1
     await pages.shopifyProductsSummary.selectShopifyMenuOption('Products');
     await pages.shopifyProductPage.openProductSummeryPage('Simple packaging product');
@@ -71,17 +80,27 @@ test.describe(' Weight based - Kilogram and centimetre- Volumetric weight - Max 
     await pages.shopifyProductsSummary.selectShopifyMenuOption('Products');
     await pages.shopifyProductPage.openVariantProduct('variable 1', 'S');
     const productWeight2 = Number(await pages.shopifyProductsSummary.getProductWeight());
+    //Prod 3
+    await pages.shopifyProductsSummary.selectShopifyMenuOption('Products');
+    await pages.shopifyProductPage.openVariantProduct('variable 1', 'M');
+    const productWeight3 = Number(await pages.shopifyProductsSummary.getProductWeight());
+    const expectedFinalWeight = 2 * (productWeight1 + addOnweight) + 2 * (productWeight2 + addOnweight) + 2 * (productWeight3 + addOnweight);
+    console.log(expectedFinalWeight);
 
     await pages.shopifyAdmin.navigateToOrderInShopifyAndClickGenerateLabel(sharedOrderID);
-    const volumetricWeight = pages.shopifyAdmin.calculateVolumetricWeight(inputDimensions.length, inputDimensions.width, inputDimensions.height, inputDimensions.unit);
-    const expectedFinalWeight = Math.max(productWeight1, volumetricWeight) + Math.max(productWeight2, volumetricWeight);
-    console.log(`Product Weight: ${productWeight1}, Volumetric Weight: ${volumetricWeight}, Expected Final Weight: ${expectedFinalWeight}`);
-    console.log(`Product Weight: ${productWeight2}, Volumetric Weight: ${volumetricWeight}, Expected Final Weight: ${expectedFinalWeight}`);
-
     await pages.manualLabelPage.openRateRequestLog();
     const actualweight = await pages.manualLabelPage.getTotalPackageWeightFromRequestLog();
     expect(Math.floor(actualweight)).toBeCloseTo(Math.floor(expectedFinalWeight));
     await pages.manualLabelPage.clickGenerateLabelButtonInManualLabelGenerationPage();
-    await expect(pages.orderSummaryPage.labelGeneratedStatus).toBeVisible({ timeout: 70000 });
+    await expect(pages.orderSummaryPage.labelGeneratedStatus).toBeVisible({ timeout: 100000 });
+  });
+
+  test.afterAll('Cleanup: Disable additional weight settings', async ({ pages }) => {
+    await pages.packagingSettingsPage.selectAppMenu('settings');
+    await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'more settings');
+    await expect(pages.packagingSettingsPage.skeletonLoader).toBeHidden();
+    await pages.packagingSettingsPage.setAdditionalWeight(false);
+    await pages.packagingSettingsPage.savePackagingDetails();
+    await pages.packagingSettingsPage.expectToast('Updated');
   });
 });

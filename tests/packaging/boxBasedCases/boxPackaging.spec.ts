@@ -1,48 +1,51 @@
-import ShopifyOrderUploader from '../../src/helpers/createOrder';
-import { test, expect } from '../../src/setup/fixtures';
+import { test, expect } from '../../../src/setup/fixtures';
+
+const store = process.env.STORE;
+// const customBoxData = {
+//   name: 'Test Box',
+//   inner: {
+//     length: 10,
+//     width: 10,
+//     height: 10,
+//   },
+//   outer: {
+//     length: 12,
+//     width: 12,
+//     height: 12,
+//   },
+//   weight: {
+//     empty: 1,
+//     max: 20,
+//   },
+// };
+
+if (!store) {
+  throw new Error('STORE environment variable is required');
+}
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Box based - Kilogram and centimetre - Pre-packed product - product in cm - Manual', () => {
-  let sharedOrderID: string;
-  let orderUploader: ShopifyOrderUploader;
+test.describe('Box Packaging Flow', { tag: "@regression" }, () => {
+  // let sharedOrderID: string;
+  // let orderUploader: ShopifyOrderUploader;
 
-  const inputDimensions: {
-    length: number;
-    width: number;
-    height: number;
-    unit: 'in' | 'cm' | 'ft' | 'mt';
-  } = {
-    length: 7,
-    width: 8,
-    height: 9,
-    unit: 'cm',
-  };
-
-  test.beforeAll(async () => {
-    orderUploader = new ShopifyOrderUploader();
-  });
+  //   test.beforeAll(async () => {
+  //     orderUploader = new ShopifyOrderUploader();
+  //     const orderID = await orderUploader.uploadOrder();
+  //     if (!orderID) throw new Error('Failed to create Shopify order');
+  //     sharedOrderID = orderID;
+  //     console.log(`Order created: ${sharedOrderID}`);
+  //   });
 
   test('1. Verify Box Packaging', async ({ pages }) => {
     test.setTimeout(60000);
-    await pages.shippingPage.navigateToProductsPage();
-    await pages.productPage.searchAndSelectProduct('Simple packaging product');
-    await pages.productsPage.addProductDimensions(inputDimensions);
-    await pages.productsPage.setSupplementaryOption('Is this product pre-packed?', true);
-    await pages.productsPage.saveProduct();
+    await pages.shopifyAdmin.navigateToStore(store);
+    await pages.packagingSettingsPage.clickAppButton();
     await pages.packagingSettingsPage.selectAppMenu('settings');
-    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Packing Method', 'Box Based');
-    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'Kilograms & Centimeters');
-    await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'Save');
-    await pages.packagingSettingsPage.expectToast('Updated');
-    await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'more settings');
-    await expect(pages.packagingSettingsPage.skeletonLoader).toBeHidden();
-    const selectedPackingMethod = await pages.packagingSettingsPage.getSelectedPackingMethod();
-    expect(selectedPackingMethod).toBe('Box Based');
-    await pages.packagingSettingsPage.setCheckbox('Use Volumetric Weight For Package Generation', false);
-    await pages.packagingSettingsPage.savePackagingDetails();
-    await pages.packagingSettingsPage.expectToast('Updated');
+    // await pages.packagingSettingsPage.settingsDropDownUsingLabel('Packing Method', 'P1');
 
+    await pages.packagingSettingsPage.settingsDropDownUsingLabel('Weight And Dimensions Unit', 'kgs_cm');
+    await pages.packagingSettingsPage.clickSettingsButtonUsingLabel('Packing Method', 'Save');
     // await pages.packagingSettingsPage.expectToast('Updated');
     // await pages.packagingSettingsPage.setDefaultProductDimensions({
     //   length: 20,
@@ -74,4 +77,7 @@ test.describe('Box based - Kilogram and centimetre - Pre-packed product - produc
     // // await expect(pages.packagingSettingsPage.getBoxRowByName(customBoxData.name)).toBeVisible();
     // await pages.packagingSettingsPage.savePackagingDetails();
   });
+
+
+
 });

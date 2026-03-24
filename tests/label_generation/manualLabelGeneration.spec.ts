@@ -3,7 +3,7 @@ import ShopifyOrderUploader from '../../src/helpers/createOrder';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Manual Label Generation Flow', () => {
+test.describe('Manual Label Generation Flow', { tag: "@smoke" }, () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 

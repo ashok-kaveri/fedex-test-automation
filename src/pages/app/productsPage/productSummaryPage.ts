@@ -37,7 +37,6 @@ export class ProductSummaryPage extends BasePage {
     this.batteryMaterialTypeDropdown = this.appIframe.getByLabel('Battery Material Type');
     this.batteryPackingTypeDropdown = this.appIframe.getByLabel('Battery Packing Type');
     this.productWeight = this.page.locator('#ShippingCardWeight');
-
     this.navBackButton = this.appFrame.locator('nav[role="navigation"]').locator('button[aria-label="products"]');
   }
 

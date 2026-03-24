@@ -6,7 +6,7 @@ import { test, expect } from '../../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Label Generation For Adult Signature', () => {
+test.describe('Label Generation For Adult Signature', { tag: "@sanity" }, () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
   let sharedContext: BrowserContext;

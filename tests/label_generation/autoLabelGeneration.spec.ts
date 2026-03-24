@@ -9,13 +9,14 @@ if (!store) {
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Auto Label Generation Flow', () => {
+test.describe('Auto Label Generation Flow', { tag: "@smoke" }, () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 
   test.beforeAll(async () => {
     orderUploader = new ShopifyOrderUploader();
-    const orderID = await orderUploader.uploadOrder();
+    const orderID = await orderUploader.uploadOrderWithMultipleProducts([{ productType: 'simple', productIndexes: [1], quantities: [1] }]);
+
     if (!orderID) throw new Error('Failed to create Shopify order');
     sharedOrderID = orderID;
     console.log(`Order created: ${sharedOrderID}`);

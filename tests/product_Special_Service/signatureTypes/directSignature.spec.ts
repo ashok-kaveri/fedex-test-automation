@@ -4,7 +4,7 @@ import { test, expect } from '../../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Label Generation For Direct Signature', () => {
+test.describe('Label Generation For Direct Signature', { tag: "@sanity" }, () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
   let sharedContext: BrowserContext;
