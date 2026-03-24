@@ -12,7 +12,7 @@ const ALCOHOL_RECIPIENT_TYPE = 'LICENSEE';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Label Generation For Alcohol — Recipient Type: Licensee', () => {
+test.describe('Label Generation For Alcohol — Recipient Type: Licensee', { tag: "@regression" }, () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
   let sharedContext: BrowserContext;

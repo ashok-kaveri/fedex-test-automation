@@ -9,7 +9,7 @@ if (!store) {
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Auto Label Generation Flow', () => {
+test.describe('Auto Label Generation Flow', { tag: "@smoke" }, () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 

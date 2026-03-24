@@ -25,7 +25,7 @@ if (!store) {
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Box Packaging Flow', () => {
+test.describe('Box Packaging Flow', { tag: "@regression" }, () => {
   // let sharedOrderID: string;
   // let orderUploader: ShopifyOrderUploader;
 

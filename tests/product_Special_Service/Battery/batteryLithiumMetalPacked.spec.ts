@@ -13,7 +13,7 @@ const BATTERY_PACKING = 'PACKED_WITH_EQUIPMENT';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Label Generation For Lithium Ion (Contained In Equipment)', () => {
+test.describe('Label Generation For Lithium Ion (Contained In Equipment)', { tag: "@regression" }, () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
   let sharedContext: BrowserContext;

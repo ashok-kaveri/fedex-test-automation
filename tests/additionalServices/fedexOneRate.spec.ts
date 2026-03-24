@@ -7,7 +7,7 @@ if (!store) {
 }
 test.describe.configure({ mode: 'serial' });
 
-test.describe('FedEx One Rate', () => {
+test.describe('FedEx One Rate', { tag: "@regression" }, () => {
   let orderUploader: ShopifyOrderUploader;
   let sharedOrderID: string;
 

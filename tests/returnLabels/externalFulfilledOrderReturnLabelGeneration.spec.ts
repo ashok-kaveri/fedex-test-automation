@@ -9,7 +9,7 @@ if (!store) {
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Return Label Generation For External Fulfilled Order', () => {
+test.describe('Return Label Generation For External Fulfilled Order', { tag: "@regression" }, () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 

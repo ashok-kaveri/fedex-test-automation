@@ -1,7 +1,7 @@
 import { test, expect } from '../../src/setup/fixtures';
 import ShopifyOrderUploader from '../../src/helpers/createOrder';
 
-test.describe('Return Label Generation For External Fulfilled Order', () => {
+test.describe('Return Label Generation For External Fulfilled Order', { tag: "@regression" }, () => {
     let sharedOrderID: string;
     let orderUploader: ShopifyOrderUploader;
     

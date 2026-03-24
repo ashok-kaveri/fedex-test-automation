@@ -23,7 +23,7 @@ module.exports = {
       extends: ['plugin:playwright/recommended'],
 
       rules: {
-        'playwright/no-wait-for-timeout': 'warn',
+        'playwright/no-wait-for-timeout': 'off',
         'playwright/expect-expect': 'error',
         'playwright/no-force-option': 'warn',
         'playwright/no-focused-test': 'error',
