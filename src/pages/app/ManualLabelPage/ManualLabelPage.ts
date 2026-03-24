@@ -32,9 +32,14 @@ export class GenerateLabelManuallyPage extends BasePage {
   readonly dialogModalCloseButton: Locator;
   readonly LogModalRequestSection: Locator;
   readonly LogModalResponseSection: Locator;
-  // readonly xmlModalPreContent: Locator;
   readonly productPrice: Locator;
   readonly getShippingServiceLabel: (radioId: string) => Locator;
+
+  readonly howToSubAction: Locator;
+  readonly howToModal: Locator;
+  readonly howToHeading: Locator;
+  readonly labelClickHereButton: Locator;
+  readonly moreActionsButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -65,6 +70,21 @@ export class GenerateLabelManuallyPage extends BasePage {
     this.requestHeader = this.appFrame.getByRole('heading', { name: 'Request', exact: true });
     this.rateRequestContainer = this.appFrame.getByRole('dialog').locator('pre').first();
     this.productPrice = this.appFrame.locator('p.Polaris-Text--end');
+
+    this.ratesActionMenu = this.appFrame.locator('.Polaris-Box').filter({ hasText: 'Shipping rates from account' }).locator('button[aria-controls]');
+    this.viewRateLog = this.appFrame.locator('button[role="menuitem"]').filter({ hasText: 'View Logs' }).first();
+    this.rateDownloadLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: 'Download Logs' });
+    this.viewAddressLogsButton = this.appFrame.locator('.Polaris-Popover').getByRole('menuitem', { name: 'View Address Logs' });
+    this.ratesLogHeader = this.appFrame.getByRole('dialog').getByRole('heading', { name: 'Rates Log' });
+    this.requestHeader = this.appFrame.getByRole('heading', { name: 'Request', exact: true });
+    this.rateRequestContainer = this.appFrame.getByRole('dialog').locator('pre').first();
+    this.productPrice = this.appFrame.locator('p.Polaris-Text--end');
+
+    this.howToSubAction = this.appFrame.locator('.Polaris-ActionList__Item').filter({ hasText: 'How To' });
+    this.howToModal = this.appFrame.locator('div[role="dialog"]');
+    this.howToHeading = this.howToModal.getByRole('heading', { name: 'How To' });
+    this.labelClickHereButton = this.appFrame.locator('div').filter({ hasText: 'Need request/response Logs to contact FedEx?' }).getByRole('button', { name: 'Click Here' }).last();
+    this.moreActionsButton = this.appFrame.getByRole('button', { name: 'More Actions' }).last();
 
     // XML viewer modal locators
     this.xmlViewerModal = this.appFrame.locator('div[role="dialog"][aria-modal="true"]');
@@ -243,6 +263,7 @@ export class GenerateLabelManuallyPage extends BasePage {
     await this.getShippingRates();
     await this.selectShippingServiceForSignature('FEDEX_2_DAY');
     await this.clickRateActionsMenuInShippingRates();
+    await this.page.waitForTimeout(1000);
     await this.clickViewLogsFromRatesMenu();
     //await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
   }
@@ -260,10 +281,12 @@ export class GenerateLabelManuallyPage extends BasePage {
   }
 
   async clickRateActionsMenuInShippingRates() {
+    await this.ratesActionMenu.waitFor({ state: 'visible', timeout: 5000 });
     await this.ratesActionMenu.click();
   }
 
   async clickViewLogsFromRatesMenu() {
+    await this.viewRateLog.waitFor({ state: 'visible', timeout: 5000 });
     await this.viewRateLog.click();
   }
 
@@ -299,27 +322,30 @@ export class GenerateLabelManuallyPage extends BasePage {
     return logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.packageSpecialServices?.signatureOptionType || null;
   }
 
+  async getHALDetailsFromRequestLog() {
+    const logs = await this.getParsedDataFromRequestLog();
+    const shipmentSpecialServices = logs?.requestObject?.requestedShipment?.shipmentSpecialServices;
+    const specialServices = shipmentSpecialServices?.specialServiceTypes || [];
+    const locationId = shipmentSpecialServices?.holdAtLocationDetail?.locationId || null;
+    return { specialServices, locationId };
+  }
+
   async getDimensionsFromRequestLog() {
     const logs = await this.getParsedDataFromRequestLog();
     const dimensions = logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.dimensions || null;
     return dimensions;
   }
   async mapUnit(unit?: string) {
-  const unitMap: Record<string, string> = {
-    in: 'IN',
-    cm: 'CM',
-    ft: 'FT',
-    mt: 'M'
-  };
-  return unit ? unitMap[unit] : undefined;
+    const unitMap: Record<string, string> = {
+      in: 'IN',
+      cm: 'CM',
+      ft: 'FT',
+      mt: 'M',
+    };
+    return unit ? unitMap[unit] : undefined;
   }
 
-  async validateDimensionsFromLogs(input: {
-    length: number;
-    width: number;
-    height: number;
-    unit?: string;
-  }) {
+  async validateDimensionsFromLogs(input: { length: number; width: number; height: number; unit?: string }) {
     const apiDimensions = await this.getDimensionsFromRequestLog();
     expect(apiDimensions).not.toBeNull();
     expect(apiDimensions.length).toBe(input.length);
@@ -335,6 +361,14 @@ export class GenerateLabelManuallyPage extends BasePage {
     await this.dialogModalCloseButton.click();
     await expect(this.appFrame.getByRole('dialog')).toBeHidden();
   }
+
+  async selectClickHereButton() {
+    await this.labelClickHereButton.scrollIntoViewIfNeeded();
+    await this.labelClickHereButton.click();
+    await this.dialogModalCloseButton.click();
+    await expect(this.appFrame.getByRole('dialog')).toBeHidden();
+  }
+
   // Generic method to get XML request content for verification in tests
   async getXmlRequestContent(): Promise<string> {
     await this.fetchXMLMenuButton.click();
@@ -342,11 +376,9 @@ export class GenerateLabelManuallyPage extends BasePage {
     await this.viewXmlMenuLogItem.click();
     await this.xmlRequestContentArea.waitFor({ state: 'visible', timeout: 5000 });
     const xmlContent = (await this.xmlRequestContentArea.textContent()) || '';
-
     await this.XmlCloseButton.waitFor({ state: 'attached' });
     await this.XmlCloseButton.scrollIntoViewIfNeeded();
     await this.XmlCloseButton.click({ force: true });
-
     return xmlContent;
   }
 
@@ -368,5 +400,29 @@ export class GenerateLabelManuallyPage extends BasePage {
   // Returns XML content to verify battery details in test file
   async verifyBatteryInXmlRequest(): Promise<string> {
     return await this.getXmlRequestContent();
+  }
+
+  async clickMoreActionsButton() {
+    await this.moreActionsButton.waitFor({ state: 'visible' });
+    await this.moreActionsButton.click();
+    await this.appFrame.locator('.Polaris-Popover').first().waitFor({ state: 'attached' });
+  }
+
+  async clickHowToSubActions() {
+    await this.howToSubAction.waitFor({ state: 'visible' });
+    await this.howToSubAction.click();
+  }
+
+  async getHALDetailsFromLabelRequestLog(filePath: string) {
+    const logs = await this.getLabelRequestLog(filePath);
+    const shipmentSpecialServices = logs?.requestObject?.requestedShipment?.shipmentSpecialServices;
+    const specialServices = shipmentSpecialServices?.specialServiceTypes || [];
+    const locationId = shipmentSpecialServices?.holdAtLocationDetail?.locationId || null;
+    const locationType = shipmentSpecialServices?.holdAtLocationDetail?.locationType || null;
+    return { specialServices, locationId, locationType };
+  }
+
+  async downloadLabelLogs() {
+    return await this.downloadLogs(() => this.labelClickHereButton.click());
   }
 }
