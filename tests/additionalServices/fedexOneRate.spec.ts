@@ -34,6 +34,7 @@ test.describe('FedEx One Rate', () => {
   test('Create an order from API', async () => {
     orderUploader = new ShopifyOrderUploader();
     const orderID = await orderUploader.uploadOrder();
+    // eslint-disable-next-line
     if (!orderID) {
       throw new Error('Failed to create Shopify order');
     }

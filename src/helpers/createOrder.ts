@@ -1,9 +1,14 @@
 import * as dotenv from 'dotenv';
 import axios from 'axios';
 import type { APIRequestContext } from '@playwright/test';
-import { PRODUCT_CONFIG, Product } from '../config/products.config';
-import { ADDRESS_CONFIG } from '../config/address.config';
+import productConfigJson from '../../testData/products/productsconfig.json';
+import { StoreProducts, Product } from '../config/product.types';
+import addressConfigJson from '../../testData/products/addressConfig.json';
+import { Address, AddressKey } from '../../src/config/address.types';
 
+const ADDRESS_CONFIG = addressConfigJson as Record<AddressKey, Address>;
+
+const PRODUCT_CONFIG = productConfigJson as Record<string, StoreProducts>;
 dotenv.config({ quiet: true });
 
 // ENV
@@ -66,13 +71,13 @@ class ShopifyOrderUploader {
   // PUBLIC METHODS
   // ======================
 
-  public async uploadOrder(addressKey: string = 'default'): Promise<string | null> {
+  public async uploadOrder(addressKey: AddressKey = 'default'): Promise<string | null> {
     const user = this.getDefaultUser(addressKey);
     const items = this.getLineItems();
     return this.upload(user, items, `Order (${addressKey})`);
   }
 
-  public async uploadOrderWithMultipleProducts(productRequests?: ProductRequest[], addressKey: string = 'default'): Promise<string | null> {
+  public async uploadOrderWithMultipleProducts(productRequests?: ProductRequest[], addressKey: AddressKey = 'default'): Promise<string | null> {
     const user = this.getDefaultUser(addressKey);
     const items = this.getMultipleLineItems(productRequests);
     return this.upload(user, items, `Multi Product Order (${addressKey})`);
@@ -193,8 +198,8 @@ class ShopifyOrderUploader {
   // USER
   // ======================
 
-  private getDefaultUser(addressKey: string): User {
-    const addr = ADDRESS_CONFIG[addressKey] || ADDRESS_CONFIG.default;
+  private getDefaultUser(addressKey: AddressKey = 'default'): User {
+    const addr = ADDRESS_CONFIG[addressKey];
 
     return {
       firstName: 'Test',

@@ -109,9 +109,7 @@ export class PackagingSettingsPage extends BasePage {
     await dropdown.selectOption(value);
 
     // wait until Polaris UI updates visible text
-    // eslint-disable-next-line no-restricted-syntax
     const container = dropdown.locator('..');
-    // eslint-disable-next-line no-restricted-syntax
     await expect(container.locator('.Polaris-Select__SelectedOption')).toBeVisible();
 
     // trigger blur so React registers change
@@ -119,15 +117,12 @@ export class PackagingSettingsPage extends BasePage {
   }
 
   async clickSettingsButtonUsingLabel(label: string, buttonName: string) {
-    // eslint-disable-next-line no-restricted-syntax
     const card = this.appFrame.locator('.Polaris-FormLayout__Item').filter({ has: this.appFrame.getByLabel(label) });
     await card.getByRole('button', { name: buttonName }).click();
   }
 
   async clickSettingsButtonUsingHeading(heading: string, buttonName: string) {
     const headingLocator = this.appFrame.getByRole('heading', { name: heading });
-
-    // eslint-disable-next-line no-restricted-syntax
     const section = headingLocator.locator('..').locator('..').locator('..'); // climb until container
 
     await section.getByRole('button', { name: buttonName, exact: true }).click();
@@ -176,7 +171,6 @@ export class PackagingSettingsPage extends BasePage {
     // First pass: decide what to delete
     for (let i = 0; i < total; i++) {
       const row = rows.nth(i);
-      // eslint-disable-next-line no-restricted-syntax
       const boxName = (await row.locator('th').textContent())?.trim() || '';
 
       occurrenceMap[boxName] = (occurrenceMap[boxName] || 0) + 1;
@@ -195,7 +189,6 @@ export class PackagingSettingsPage extends BasePage {
       const row = this.boxesTable.nth(index);
 
       const initialCount = await this.boxesTable.count();
-      // eslint-disable-next-line no-restricted-syntax
       await row.locator('button').last().click();
 
       await expect(this.boxesTable).toHaveCount(initialCount - 1);
@@ -262,5 +255,10 @@ export class PackagingSettingsPage extends BasePage {
     await this.freightLengthInput.fill(String(data.length));
     await this.freightWidthInput.fill(String(data.width));
     await this.freightHeightInput.fill(String(data.height));
+  }
+
+  async getSelectedPackingMethod() {
+  const locator = this.appFrame.locator('.Polaris-Select__SelectedOption').last();
+  return await locator.textContent();
   }
 }

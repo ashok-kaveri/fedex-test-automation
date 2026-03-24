@@ -62,13 +62,21 @@ export class BasePage {
 
   async expectToast(message: string) {
     // eslint-disable-next-line no-restricted-syntax
-    const toast = this.appFrame.locator(`text=${message}`);
+    const toast = this.appFrame.locator(`text=${message}`).first();
     // await toast.waitFor({ state: 'visible', timeout: 5000 });
-    await expect(toast).toBeVisible({ timeout: 5000 });
+    await expect(toast).toBeVisible({ timeout: 7000 });
   }
-
+  calculateVolumetricWeight(
+    length: number,
+    width: number,
+    height: number,
+    unit: 'in' | 'cm' | 'ft' | 'mt'
+  ) {
+    const divisor = unit === 'cm' ? 5000 : 139;
+    return Number(((length * width * height) / divisor).toFixed(2));
+  }
   async selectShopifyMenuOption(option: string) {
-    const menuOption = this.page.getByRole('link', { name: option });
+    const menuOption = this.page.getByRole('link', { name: option }).first();
     await menuOption.waitFor({ state: 'visible', timeout: 5000 });
     await menuOption.click();
   }

@@ -1,9 +1,8 @@
-import { test ,expect} from '../../src/setup/fixtures';
+import { test, expect } from '../../src/setup/fixtures';
 import { StoreNameGenerator } from '../../src/helpers/storeNameGenerator';
 import { ShopifyCreateStoreFormPage } from '../../src/pages/shopify/ShopifyCreateStoreFormPage';
 import { ShopifyStoreSelectionPage } from '../../src/pages/shopify/ShopifyStoreSelectionPage';
 import { ShopifyStoreInstallationPage } from '../../src/pages/shopify/ShopifyStoreInstallationPage';
-
 
 test.describe.configure({ mode: 'serial' });
 
@@ -11,11 +10,9 @@ const appName = process.env.APP_NAME!;
 const partnersUrl = process.env.PARTNERS_URL!;
 
 test.describe('Shopify Store Creation and App Installation', () => {
-
   let storeName: string;
 
   test.beforeAll(async ({ pages }) => {
-
     storeName = StoreNameGenerator.generate();
     console.log('Generated Store Name:', storeName);
 
@@ -23,20 +20,17 @@ test.describe('Shopify Store Creation and App Installation', () => {
 
     await pages.shopifyDevDashboardStorePage.navigateToDevStores();
 
-    const createStorePage =
-      await pages.shopifyDevDashboardStorePage.openCreateStoreForm();
+    const createStorePage = await pages.shopifyDevDashboardStorePage.openCreateStoreForm();
 
-    const createStoreForm =
-      new ShopifyCreateStoreFormPage(createStorePage);
+    const createStoreForm = new ShopifyCreateStoreFormPage(createStorePage);
 
     await createStoreForm.createStore({
       storeName,
-      plan: 'Advanced'
+      plan: 'Advanced',
     });
 
     console.log(`Store "${storeName}" created successfully`);
   });
-
 
   test.skip('Install app in created store', async ({ pages }) => {
     test.setTimeout(500000);
@@ -44,7 +38,7 @@ test.describe('Shopify Store Creation and App Installation', () => {
     await pages.sharedPage.goto(partnersUrl);
     const Installpage = await pages.shopifyDevDashboardAppPage.installAppFromDevDashboard(appName);
     const selectionPage = new ShopifyStoreSelectionPage(Installpage);
-    
+
     await selectionPage.selectStoreAndProceed(storeName);
     // Create installation page using the SAME tab
     const installationPage = new ShopifyStoreInstallationPage(Installpage);
@@ -53,5 +47,4 @@ test.describe('Shopify Store Creation and App Installation', () => {
     await expect(installationPage.getinstallationVerificationMessage(installationVerificationText)).toBeVisible({ timeout: 40000 });
     console.log(`App "${appName}" installed successfully in "${storeName}"`);
   });
-
 });
