@@ -9,7 +9,7 @@ if (!store) {
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Return Label Generation Flow', () => {
+test.describe('Return Label Generation Flow', { tag: "@regression" }, () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 

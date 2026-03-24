@@ -3,7 +3,7 @@ import { test, expect } from '../../../src/setup/fixtures';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Label Generation For Service Default Signature', () => {
+test.describe('Label Generation For Service Default Signature', { tag: "@regression" },() => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
 

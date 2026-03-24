@@ -8,7 +8,7 @@ if (!store) {
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Products Flow', () => {
+test.describe('Products Flow', { tag: "@regression" }, () => {
   test('Validate all interactions in ShopifyProductsSummaryPage work correctly', async ({ pages }) => {
     const { shopifyProductsSummary, shopifyProductPage } = pages;
     test.setTimeout(60000);

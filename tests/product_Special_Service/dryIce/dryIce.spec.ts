@@ -12,7 +12,7 @@ const DRY_ICE_WEIGHT = '0.3';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Label Generation For Dry Ice Product', () => {
+test.describe('Label Generation For Dry Ice Product', { tag: "@regression" }, () => {
   // ── Shared State ──────────────────────────────────────────────────────────
   let sharedOrderID: string;
   let sharedContext: BrowserContext;
@@ -70,9 +70,8 @@ test.describe('Label Generation For Dry Ice Product', () => {
     expect(xmlContent).toContain('DryIceWeight');
     expect(xmlContent).toContain('KG');
 
-    const weightFound = xmlContent.includes(`${DRY_ICE_WEIGHT}`) || xmlContent.includes(`${Number(DRY_ICE_WEIGHT).toFixed(2)}`);
-    // eslint-disable-next-line
-    expect(weightFound).toBeTruthy();
+    const dryIceWeightPattern = new RegExp(`${DRY_ICE_WEIGHT}0?`);
+    expect(xmlContent).toMatch(dryIceWeightPattern);
 
     console.log(`✔ XML confirmed — DRY_ICE service present with weight: ${DRY_ICE_WEIGHT} KG`);
 
