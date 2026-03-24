@@ -78,27 +78,23 @@ export class ShopifyProductPage extends BasePage {
       await this.selectAllCheckbox.click();
       return;
     }
-
     for (const name of productNames) {
       const row = this.page.getByRole('row').filter({
         has: this.page.getByRole('link', { name, exact: true }),
       });
-
       await row.getByRole('checkbox').click();
     }
   }
 
   async searchProduct(productName: string) {
     await this.searchButton.click();
-
     await this.searchInput.waitFor();
     await this.searchInput.fill(productName);
   }
 
   async openProductSummeryPage(productName: string) {
     const productLink = this.page.getByRole('link', { name: productName, exact: true });
-
-    await productLink.waitFor();
+    await this.page.waitForTimeout(1000);
     await productLink.click();
   }
 

@@ -1,5 +1,11 @@
 import { Page, Locator } from '@playwright/test';
 import { BasePage } from '../basePage';
+import { StoreProducts, Product } from '../../config/product.types';
+import { ShopifyProductResponse } from '../../config/product.types';
+import fs from 'fs';
+import path from 'path';
+
+const configPath = path.resolve(__dirname, '../../../testData/products/productsconfig.json');
 
 export class ShopifyProductsSummaryPage extends BasePage {
   readonly page: Page;
@@ -16,6 +22,9 @@ export class ShopifyProductsSummaryPage extends BasePage {
 
   // Pricing
   readonly priceInput: Locator;
+
+  //weight
+  readonly productWeight: Locator;
 
   // Inventory
   readonly inventoryTrackedCheckbox: Locator;
@@ -63,6 +72,10 @@ export class ShopifyProductsSummaryPage extends BasePage {
     // ================= PRICING =================
 
     this.priceInput = this.page.locator('input[name="price"]');
+
+    // ================= Weight=================
+
+    this.productWeight = this.page.locator('#ShippingCardWeight');
 
     // ================= INVENTORY =================
 
@@ -168,6 +181,11 @@ export class ShopifyProductsSummaryPage extends BasePage {
     }
   }
 
+  async getProductWeight(): Promise<string> {
+    const textContent = await this.productWeight.inputValue();
+    return textContent?.trim() || '';
+  }
+
   async addTag(tag: string) {
     await this.tagsInput.fill(tag);
     await this.page.keyboard.press('Enter');
@@ -179,5 +197,62 @@ export class ShopifyProductsSummaryPage extends BasePage {
 
   async discardChanges() {
     await this.discardButton.click();
+  }
+
+  getProductAddedMessage(productName: string) {
+    return this.page.getByRole('heading', {
+      name: new RegExp(`Added ${productName}`, 'i'),
+    });
+  }
+
+  getProductIdFromPage(page: Page): number {
+    const url = page.url();
+    const match = url.match(/\/products\/(\d+)/);
+    if (!match) {
+      throw new Error(`Product ID not found in URL: ${url}`);
+    }
+    return Number(match[1]);
+  }
+
+  async getProductJson(store: string, productId: number) {
+    return await this.page.evaluate(
+      async ({ store, productId }) => {
+        const res = await fetch(`https://admin.shopify.com/store/${store}/products/${productId}.json`);
+        return res.json();
+      },
+      { store, productId },
+    );
+  }
+
+  extractProductData(productJson: ShopifyProductResponse): Product {
+    if (!productJson?.product?.variants?.length) {
+      throw new Error('No variants found in product JSON');
+    }
+    return {
+      product_id: productJson.product.id,
+      variant_id: productJson.product.variants[0].id,
+    };
+  }
+
+  updateProductConfig(store: string, type: keyof StoreProducts, product: Product) {
+    // read latest JSON
+    const config: Record<string, StoreProducts> = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    // create store if not exists
+    if (!config[store]) {
+      config[store] = {
+        simple: [],
+        variable: [],
+        digital: [],
+        dangerous: [],
+      };
+    }
+    // avoid duplicates
+    const exists = config[store][type].some((p) => p.product_id === product.product_id);
+
+    if (!exists) {
+      config[store][type].push(product);
+    }
+    // write back to JSON file
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
   }
 }

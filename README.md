@@ -25,8 +25,7 @@ Creates `auth.json` with saved session. Run this first or when session expires.
 
 ### Run Single Test File
 ```bash
-npx playwright test tests/suites/label_generation/manualLabelGeneration.spec.ts --project="Google Chrome" --headed
-```
+npx playwright test tests/suites/label_generation/manualLabelGeneration.spec.ts --project="Google Chrome" --hea```
 
 ### Run All Tests
 ```bash

@@ -32,7 +32,6 @@ export class GenerateLabelManuallyPage extends BasePage {
   readonly dialogModalCloseButton: Locator;
   readonly LogModalRequestSection: Locator;
   readonly LogModalResponseSection: Locator;
-  readonly xmlModalPreContent: Locator;
   readonly productPrice: Locator;
   readonly getShippingServiceLabel: (radioId: string) => Locator;
 
@@ -236,6 +235,12 @@ export class GenerateLabelManuallyPage extends BasePage {
     await expect(radio).toBeChecked();
   }
 
+  async getWeightFromRequestLog() {
+    const logs = await this.getParsedDataFromRequestLog();
+    const weight = logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.weight?.value || null;
+    return weight;
+  }
+
   async waitUntilGeneratePackageButtonVisible(): Promise<void> {
     // await this.page.reload();
     await this.waitForLoadingToComplete();
@@ -260,7 +265,7 @@ export class GenerateLabelManuallyPage extends BasePage {
     await this.clickRateActionsMenuInShippingRates();
     await this.page.waitForTimeout(1000);
     await this.clickViewLogsFromRatesMenu();
-    await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
+    //await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
   }
 
   async closeModal() {
@@ -323,6 +328,33 @@ export class GenerateLabelManuallyPage extends BasePage {
     const specialServices = shipmentSpecialServices?.specialServiceTypes || [];
     const locationId = shipmentSpecialServices?.holdAtLocationDetail?.locationId || null;
     return { specialServices, locationId };
+  }
+
+  async getDimensionsFromRequestLog() {
+    const logs = await this.getParsedDataFromRequestLog();
+    const dimensions = logs?.requestObject?.requestedShipment?.requestedPackageLineItems?.[0]?.dimensions || null;
+    return dimensions;
+  }
+  async mapUnit(unit?: string) {
+    const unitMap: Record<string, string> = {
+      in: 'IN',
+      cm: 'CM',
+      ft: 'FT',
+      mt: 'M',
+    };
+    return unit ? unitMap[unit] : undefined;
+  }
+
+  async validateDimensionsFromLogs(input: { length: number; width: number; height: number; unit?: string }) {
+    const apiDimensions = await this.getDimensionsFromRequestLog();
+    expect(apiDimensions).not.toBeNull();
+    expect(apiDimensions.length).toBe(input.length);
+    expect(apiDimensions.width).toBe(input.width);
+    expect(apiDimensions.height).toBe(input.height);
+    if (input.unit) {
+      expect(apiDimensions.units).toBe(await this.mapUnit(input.unit));
+    }
+    console.log('apiDimensions:', apiDimensions);
   }
 
   async closeRatesLog() {
