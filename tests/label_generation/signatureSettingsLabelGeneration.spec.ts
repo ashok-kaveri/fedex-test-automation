@@ -3,7 +3,7 @@ import ShopifyOrderUploader from '../../src/helpers/createOrder';
 
 //test.describe.configure({ mode: 'serial' });
 
-test.describe('Manual Label Generation with signature options', () => {
+test.describe('Manual Label Generation with signature options', { tag: '@regression' }, () => {
   let orderUploader: ShopifyOrderUploader;
 
   //Signature

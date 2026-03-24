@@ -3,7 +3,7 @@ import ShopifyOrderUploader from '../../src/helpers/createOrder';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Manual Label Generation with Insurance', () => {
+test.describe('Manual Label Generation with Insurance', { tag: '@regression' }, () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
 

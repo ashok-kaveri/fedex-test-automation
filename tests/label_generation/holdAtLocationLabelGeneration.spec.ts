@@ -3,7 +3,7 @@ import ShopifyOrderUploader from '../../src/helpers/createOrder';
 
 test.describe.configure({ mode: 'serial' });
 
-test.describe('Manual Label Generation Flow for Hold At Location', () => {
+test.describe('Manual Label Generation Flow for Hold At Location', { tag: '@regression' }, () => {
   let sharedOrderID: string;
   let orderUploader: ShopifyOrderUploader;
   const HAL_LOCATION = 'HHRAA';
