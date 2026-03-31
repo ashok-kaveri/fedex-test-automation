@@ -38,7 +38,7 @@ test.describe('Return Label Generation Flow', { tag: "@regression" }, () => {
     // Use the sharedPage from the fixture for direct URL navigation
     await pages.sharedPage.goto(`https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/shopify`);
     await pages.shippingPage.searchButton.waitFor({ state: 'visible', timeout: 30000 });
-    await pages.shippingPage.searchOrder(sharedOrderID);
+    await pages.shippingPage.searchOrderWithRetries(sharedOrderID);
     await pages.shippingPage.orderClick();
     await pages.orderSummaryPage.navigatingToReturnLabelPage();
     await pages.returnLabelPage.validateReturnLabelTitle();

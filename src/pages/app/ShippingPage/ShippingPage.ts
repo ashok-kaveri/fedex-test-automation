@@ -60,7 +60,7 @@ export class ShippingPage extends BasePage {
     await this.ordersButton.click();
   }
 
-  async searchOrder(orderID: string, maxRetries: number = 3): Promise<void> {
+  async searchOrderWithRetries(orderID: string, maxRetries: number = 3): Promise<void> {
     const cleanOrderID = orderID.replace(/^#/, '');
 
     await this.searchButton.waitFor({ state: 'visible', timeout: 10000 });
@@ -160,6 +160,19 @@ export class ShippingPage extends BasePage {
       await this.selectAllCheckbox.setChecked(true, { force: true });
     }
   }
+
+async searchOrder(orderID: string){
+  const cleanOrderID = orderID.replace(/^#/, '');
+
+    await this.searchButton.waitFor({ state: 'visible', timeout: 10000 });
+    await this.searchButton.click();
+    await this.searchInput.waitFor({ state: 'visible', timeout: 10000 });
+
+        await this.searchInput.clear();
+        await this.searchInput.fill(cleanOrderID);
+        await this.searchInput.press('Enter');
+
+}
 
   async selectOrderCheckboxByOrderIdWithLabelGenerated(orderID: string) {
     await this.searchOrder(orderID);
