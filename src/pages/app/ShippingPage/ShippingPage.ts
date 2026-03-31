@@ -160,13 +160,23 @@ export class ShippingPage extends BasePage {
   }
 
   async selectOrderCheckboxByOrderIdWithLabelGenerated(orderID: string) {
+    await this.searchOrder(orderID);
     const normalized = orderID.startsWith('#') ? orderID : `#${orderID}`;
     const row = this.ordersTable.locator('tr.Polaris-IndexTable__TableRow').filter({
       has: this.appFrame.locator('a.orderId', { hasText: normalized }),
     });
     await this.waitForPageLoadState('domcontentloaded');
     const checkbox = row.locator('input[id^="Select-"][type="checkbox"]').first();
-    await checkbox.setChecked(true, { force: true });
+    const checkboxId = await checkbox.getAttribute('id');
+    if (checkboxId) {
+      const label = row.locator(`label[for="${checkboxId}"]`).first();
+      if ((await label.count()) > 0) {
+        await label.click({ force: true });
+        return;
+      }
+    }
+    // Fallback: dispatch click event directly on the input
+    await checkbox.dispatchEvent('click');
   }
 
   async openMoreActionsInOrderGrid() {
