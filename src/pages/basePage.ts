@@ -1,6 +1,10 @@
 import { Page, FrameLocator, Locator, expect, BrowserContext } from '@playwright/test';
 import { AppFrameContentLocators, AppFrameHelper } from '../helpers/appFrameHelper';
 import axios from 'axios';
+import path from 'path';
+import fs from 'fs';
+import AdmZip from 'adm-zip';
+
 // eslint-disable-next-line
 const { PDFParse } = require('pdf-parse');
 /**
@@ -80,6 +84,42 @@ export class BasePage {
     const button = this.page.getByRole('button', { name: buttonName }).first();
     await button.waitFor({ state: 'visible', timeout: 5000 });
     await button.click();
+  }
+
+  async downloadLogs(triggerAction: () => Promise<void>): Promise<string> {
+    const dir = path.resolve('testLabelLogs');
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    const [download] = await Promise.all([this.page.waitForEvent('download'), triggerAction()]);
+    const now = new Date();
+    const timestamp = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}_${now.getHours()}-${now.getMinutes()}`;
+    const filePath = path.join(dir, `fedex-log-${timestamp}.zip`);
+    await download.saveAs(filePath);
+    return filePath;
+  }
+
+  async getLabelRequestLog(filePath: string) {
+    const zip = new AdmZip(filePath);
+    const entries = zip.getEntries();
+    for (const entry of entries) {
+      if (entry.entryName.includes('Request')) {
+        const content = entry.getData().toString('utf8');
+        return JSON.parse(content);
+      }
+    }
+    throw new Error(`No Request log found in zip: ${filePath}`);
+  }
+
+  async cleanupLogs(filePath: string) {
+    if (filePath && fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+        console.log(`Cleanup: Deleted ${path.basename(filePath)}`);
+      } catch (error) {
+        console.error(`Cleanup Error: ${error}`);
+      }
+    }
   }
 
   async captureDocumentUrl(context: BrowserContext, triggerAction: () => Promise<void>, urlParamName: string = 'document'): Promise<{ documentUrl: string; pdfText: string }> {

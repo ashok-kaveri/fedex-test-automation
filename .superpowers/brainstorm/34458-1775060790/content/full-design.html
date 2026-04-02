@@ -1,0 +1,181 @@
+<h2>FedexDomainExpert — Full System Design</h2>
+<p class="subtitle">Conversational RAG · Python · qwen2.5:14b · ChromaDB · Streamlit Web UI</p>
+
+<!-- PROJECT STRUCTURE -->
+<div class="section">
+  <div class="label">📁 Project Structure</div>
+  <div style="background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:20px;font-family:monospace;font-size:13px;color:#e6edf3;line-height:2;">
+    <span style="color:#58a6ff;">FedexDomainExpert/</span><br>
+    &nbsp;&nbsp;<span style="color:#3fb950;">ingest/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">web_scraper.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># Crawl PluginHive + FedEx API docs</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">sheets_loader.py</span>&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># Pull Google Sheets test cases</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">codebase_loader.py</span>&nbsp;<span style="color:#484f58;"># Index Playwright spec + page files</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">run_ingest.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># Master ingestion runner</span><br>
+    &nbsp;&nbsp;<span style="color:#3fb950;">rag/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">vectorstore.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># ChromaDB setup &amp; search</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">chain.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># LangChain conversational RAG</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">prompts.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># Domain expert persona + system prompt</span><br>
+    &nbsp;&nbsp;<span style="color:#3fb950;">ui/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">chat_app.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># Streamlit web chat (mini ChatGPT)</span><br>
+    &nbsp;&nbsp;<span style="color:#3fb950;">api/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">server.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># FastAPI for Claude Code integration</span><br>
+    &nbsp;&nbsp;<span style="color:#3fb950;">data/</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#94a3b8;">chroma_db/</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># Persisted vector store (local disk)</span><br>
+    &nbsp;&nbsp;<span style="color:#94a3b8;">config.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#484f58;"># Ollama URL, model names, paths</span><br>
+    &nbsp;&nbsp;<span style="color:#94a3b8;">requirements.txt</span><br>
+  </div>
+</div>
+
+<!-- DATA FLOW -->
+<div class="section">
+  <div class="label">🔄 Two Pipelines</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+    <!-- INGEST PIPELINE -->
+    <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:10px;padding:16px;">
+      <div style="color:#38bdf8;font-weight:700;font-size:14px;margin-bottom:12px;">1️⃣ Ingest Pipeline (run once, refresh anytime)</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#1e293b;border-radius:6px;padding:10px;font-size:12px;">
+          <div style="color:#94a3b8;margin-bottom:4px;">📄 Sources</div>
+          <div style="color:#e2e8f0;">PluginHive docs · FedEx API docs<br>Google Sheets test cases · Playwright codebase</div>
+        </div>
+        <div style="text-align:center;color:#334155;font-size:18px;">↓</div>
+        <div style="background:#1e293b;border-radius:6px;padding:10px;font-size:12px;">
+          <div style="color:#94a3b8;margin-bottom:4px;">✂️ Chunk &amp; Clean</div>
+          <div style="color:#e2e8f0;">Split into 500-token chunks with 50-token overlap. Strip HTML, format code blocks.</div>
+        </div>
+        <div style="text-align:center;color:#334155;font-size:18px;">↓</div>
+        <div style="background:#1e293b;border-radius:6px;padding:10px;font-size:12px;">
+          <div style="color:#94a3b8;margin-bottom:4px;">🔢 Embed</div>
+          <div style="color:#e2e8f0;"><code style="color:#818cf8;">nomic-embed-text</code> via Ollama<br>Fast, local, 768-dim vectors</div>
+        </div>
+        <div style="text-align:center;color:#334155;font-size:18px;">↓</div>
+        <div style="background:#1e293b;border-radius:6px;padding:10px;font-size:12px;">
+          <div style="color:#94a3b8;margin-bottom:4px;">🗄️ Store</div>
+          <div style="color:#e2e8f0;">ChromaDB persisted to <code style="color:#818cf8;">data/chroma_db/</code><br>Tagged by source (docs/code/tests)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUERY PIPELINE -->
+    <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:10px;padding:16px;">
+      <div style="color:#a78bfa;font-weight:700;font-size:14px;margin-bottom:12px;">2️⃣ Query Pipeline (every chat message)</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <div style="background:#1e293b;border-radius:6px;padding:10px;font-size:12px;">
+          <div style="color:#94a3b8;margin-bottom:4px;">💬 User Question</div>
+          <div style="color:#e2e8f0;">"How does label generation work?" or "Take me on a tour"</div>
+        </div>
+        <div style="text-align:center;color:#334155;font-size:18px;">↓</div>
+        <div style="background:#1e293b;border-radius:6px;padding:10px;font-size:12px;">
+          <div style="color:#94a3b8;margin-bottom:4px;">🔄 Reformulate with History</div>
+          <div style="color:#e2e8f0;">LangChain rewrites question using chat history so "tell me more" resolves correctly</div>
+        </div>
+        <div style="text-align:center;color:#334155;font-size:18px;">↓</div>
+        <div style="background:#1e293b;border-radius:6px;padding:10px;font-size:12px;">
+          <div style="color:#94a3b8;margin-bottom:4px;">🔍 Retrieve</div>
+          <div style="color:#e2e8f0;">ChromaDB returns top-5 relevant chunks from knowledge base</div>
+        </div>
+        <div style="text-align:center;color:#334155;font-size:18px;">↓</div>
+        <div style="background:#1e293b;border-radius:6px;padding:10px;font-size:12px;">
+          <div style="color:#94a3b8;margin-bottom:4px;">🧠 qwen2.5:14b Answers</div>
+          <div style="color:#e2e8f0;">Streamed response as FedEx domain expert — cites sources, explains clearly</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- WEB UI MOCKUP -->
+<div class="section">
+  <div class="label">🖥️ Web Chat UI (Streamlit)</div>
+  <div class="mockup">
+    <div class="mockup-header">FedEx Domain Expert — http://localhost:8501</div>
+    <div class="mockup-body" style="padding:0;overflow:hidden;">
+      <div style="display:flex;height:320px;">
+        <!-- Sidebar -->
+        <div style="width:200px;background:#0f172a;border-right:1px solid #1e293b;padding:16px;flex-shrink:0;">
+          <div style="color:#818cf8;font-weight:700;font-size:13px;margin-bottom:16px;">🧠 FedEx Expert</div>
+          <div style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Knowledge Base</div>
+          <div style="font-size:12px;color:#94a3b8;line-height:2;">
+            <div>📄 PluginHive Docs</div>
+            <div>📄 FedEx API Docs</div>
+            <div>📊 Test Cases</div>
+            <div>💻 Codebase</div>
+          </div>
+          <div style="margin-top:20px;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Quick Asks</div>
+          <div style="font-size:11px;color:#475569;line-height:2;">
+            <div style="cursor:pointer;color:#818cf8;">▶ Take a tour</div>
+            <div style="cursor:pointer;">▶ How labels work</div>
+            <div style="cursor:pointer;">▶ FedEx services</div>
+          </div>
+          <div style="position:absolute;bottom:16px;left:16px;">
+            <div style="background:#1e3a5f;border-radius:6px;padding:6px 10px;font-size:11px;color:#38bdf8;">🔄 Refresh Docs</div>
+          </div>
+        </div>
+        <!-- Chat area -->
+        <div style="flex:1;display:flex;flex-direction:column;background:#0a0f1e;">
+          <div style="flex:1;padding:16px;overflow:hidden;">
+            <div style="display:flex;gap:10px;margin-bottom:14px;">
+              <div style="width:28px;height:28px;background:#4f46e5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🧠</div>
+              <div style="background:#1e293b;border-radius:10px;padding:10px 14px;font-size:12px;color:#e2e8f0;max-width:80%;line-height:1.6;">
+                Hi! I'm your FedEx Shopify App domain expert. I know everything about label generation, rates, tracking, packaging, and the full test suite. What would you like to know?
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;flex-direction:row-reverse;margin-bottom:14px;">
+              <div style="width:28px;height:28px;background:#334155;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">👤</div>
+              <div style="background:#4f46e5;border-radius:10px;padding:10px 14px;font-size:12px;color:#e2e8f0;max-width:70%;line-height:1.6;">
+                Take me on a tour of the app
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;">
+              <div style="width:28px;height:28px;background:#4f46e5;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🧠</div>
+              <div style="background:#1e293b;border-radius:10px;padding:10px 14px;font-size:12px;color:#e2e8f0;max-width:80%;line-height:1.6;">
+                <span style="color:#818cf8;font-weight:700;">Sure! The FedEx Shopify App has 5 main sections:</span><br><br>
+                <span style="color:#34d399;">1. Rates & Carriers</span> — configures which FedEx services show at checkout...<br>
+                <span style="color:#34d399;">2. Label Generation</span> — manual and auto label workflows...<span style="display:inline-block;width:8px;height:12px;background:#818cf8;animation:blink 1s infinite;margin-left:2px;vertical-align:middle;border-radius:1px;"></span>
+              </div>
+            </div>
+          </div>
+          <!-- Input -->
+          <div style="border-top:1px solid #1e293b;padding:12px;display:flex;gap:10px;">
+            <div style="flex:1;background:#1e293b;border-radius:8px;padding:8px 14px;font-size:12px;color:#475569;">Ask anything about the FedEx app...</div>
+            <div style="background:#4f46e5;border-radius:8px;padding:8px 14px;font-size:12px;color:white;cursor:pointer;">Send →</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- KNOWLEDGE SOURCES -->
+<div class="section">
+  <div class="label">📚 Knowledge Sources (Phase 1)</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+    <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:24px;margin-bottom:6px;">🌐</div>
+      <div style="color:#38bdf8;font-size:12px;font-weight:700;margin-bottom:4px;">PluginHive Docs</div>
+      <div style="color:#64748b;font-size:11px;">Auto-scraped. App features, settings, how-tos</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:24px;margin-bottom:6px;">📡</div>
+      <div style="color:#38bdf8;font-size:12px;font-weight:700;margin-bottom:4px;">FedEx API Docs</div>
+      <div style="color:#64748b;font-size:11px;">Rates, labels, tracking, pickup APIs</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:24px;margin-bottom:6px;">📊</div>
+      <div style="color:#38bdf8;font-size:12px;font-weight:700;margin-bottom:4px;">Google Sheets</div>
+      <div style="color:#64748b;font-size:11px;">All test cases, scenarios, expected results</div>
+    </div>
+    <div style="background:#0f172a;border:1px solid #1e3a5f;border-radius:8px;padding:12px;text-align:center;">
+      <div style="font-size:24px;margin-bottom:6px;">💻</div>
+      <div style="color:#38bdf8;font-size:12px;font-weight:700;margin-bottom:4px;">Playwright Codebase</div>
+      <div style="color:#64748b;font-size:11px;">Spec files, page objects, test patterns</div>
+    </div>
+  </div>
+</div>
+
+<div style="background:#1e1b4b;border:2px solid #4f46e5;border-radius:10px;padding:16px;text-align:center;margin-top:8px;">
+  <div style="color:#c7d2fe;font-size:14px;font-weight:700;margin-bottom:4px;">✅ Does this design look right?</div>
+  <div style="color:#818cf8;font-size:13px;">Approve this → I'll write the full spec doc → then create the implementation plan → then build it</div>
+</div>

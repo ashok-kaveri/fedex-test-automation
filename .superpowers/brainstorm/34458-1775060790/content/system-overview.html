@@ -1,0 +1,61 @@
+<h2>FedEx AI Agent System — What You're Building</h2>
+<p class="subtitle">A multi-model RAG-powered intelligence layer for your FedEx Shopify automation project</p>
+
+<div class="section">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:20px 0;">
+
+    <div style="background:#1a1a2e;border:2px solid #4f46e5;border-radius:12px;padding:20px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">🧠</div>
+      <div style="color:#818cf8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">qwen2.5:14b</div>
+      <div style="color:#e2e8f0;font-weight:700;font-size:15px;margin-bottom:8px;">Domain Expert</div>
+      <div style="color:#94a3b8;font-size:13px;line-height:1.5">Knows everything about the FedEx Shopify App. Onboards new team members. Writes test cases from Trello cards.</div>
+    </div>
+
+    <div style="background:#1a1a2e;border:2px solid #0ea5e9;border-radius:12px;padding:20px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">👁️</div>
+      <div style="color:#38bdf8;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">qwen2.5vl:latest</div>
+      <div style="color:#e2e8f0;font-weight:700;font-size:15px;margin-bottom:8px;">Visual Expert</div>
+      <div style="color:#94a3b8;font-size:13px;line-height:1.5">Verifies FedEx labels, shipping documents, and screenshots from test runs.</div>
+    </div>
+
+    <div style="background:#1a1a2e;border:2px solid #10b981;border-radius:12px;padding:20px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">💻</div>
+      <div style="color:#34d399;font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;">deepseek-coder:6.7b</div>
+      <div style="color:#e2e8f0;font-weight:700;font-size:15px;margin-bottom:8px;">Code Agent</div>
+      <div style="color:#94a3b8;font-size:13px;line-height:1.5">Writes and fixes Playwright test cases in TypeScript. Follows your ESLint rules and POM patterns.</div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:20px;margin-top:8px;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="font-size:28px;">⚡</div>
+      <div>
+        <div style="color:#f1f5f9;font-weight:700;font-size:16px;">Claude Code — Master Orchestrator</div>
+        <div style="color:#64748b;font-size:13px;">Manages all 3 models. Routes tasks. Enforces quality. You talk to me, I handle the rest.</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:3px solid #f59e0b;">
+        <div style="color:#fbbf24;font-size:12px;font-weight:700;margin-bottom:4px;">FLOW 1: Onboarding</div>
+        <div style="color:#94a3b8;font-size:12px;">New teammate asks questions → Domain Expert answers from RAG knowledge base</div>
+      </div>
+      <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:3px solid #ef4444;">
+        <div style="color:#f87171;font-size:12px;font-weight:700;margin-bottom:4px;">FLOW 2: Test Failure</div>
+        <div style="color:#94a3b8;font-size:12px;">Test fails → Visual Expert inspects screenshot → Domain Expert diagnoses → Coder fixes</div>
+      </div>
+      <div style="background:#1e293b;border-radius:8px;padding:12px;border-left:3px solid #8b5cf6;">
+        <div style="color:#a78bfa;font-size:12px;font-weight:700;margin-bottom:4px;">FLOW 3: New Feature Card</div>
+        <div style="color:#94a3b8;font-size:12px;">Trello card arrives → Domain Expert writes test spec → Code Agent implements it</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;margin-top:20px;">
+  <div style="display:inline-block;background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px 24px;">
+    <span style="color:#64748b;font-size:13px;">📚 Knowledge Sources: </span>
+    <span style="color:#e2e8f0;font-size:13px;">PluginHive Docs · FedEx API Docs · Google Sheets Test Cases · Trello Cards · Codebase</span>
+  </div>
+</div>

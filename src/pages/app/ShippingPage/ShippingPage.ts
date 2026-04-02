@@ -22,6 +22,7 @@ export class ShippingPage extends BasePage {
   // readonly productsTab: Locator;
 
   readonly yesBtnInPopUpForRequestPickup: Locator;
+  readonly orderTableRows: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -47,6 +48,7 @@ export class ShippingPage extends BasePage {
     this.refreshButton = this.appFrame.locator('button:has-text("Refresh")');
     this.headers = this.appFrame.locator('table thead th');
     this.yesBtnInPopUpForRequestPickup = this.appFrame.getByRole('button', { name: 'Yes' });
+    this.orderTableRows = this.ordersTable.locator('tr.Polaris-IndexTable__TableRow');
   }
 
   getOrderRow(orderID: string): Locator {
@@ -58,7 +60,7 @@ export class ShippingPage extends BasePage {
     await this.ordersButton.click();
   }
 
-  async searchOrder(orderID: string, maxRetries: number = 3): Promise<void> {
+  async searchOrderWithRetries(orderID: string, maxRetries: number = 3): Promise<void> {
     const cleanOrderID = orderID.replace(/^#/, '');
 
     await this.searchButton.waitFor({ state: 'visible', timeout: 10000 });
@@ -159,14 +161,36 @@ export class ShippingPage extends BasePage {
     }
   }
 
+async searchOrder(orderID: string){
+  const cleanOrderID = orderID.replace(/^#/, '');
+
+    await this.searchButton.waitFor({ state: 'visible', timeout: 10000 });
+    await this.searchButton.click();
+    await this.searchInput.waitFor({ state: 'visible', timeout: 10000 });
+
+        await this.searchInput.clear();
+        await this.searchInput.fill(cleanOrderID);
+        await this.searchInput.press('Enter');
+
+}
+
   async selectOrderCheckboxByOrderIdWithLabelGenerated(orderID: string) {
+    await this.searchOrder(orderID);
     const normalized = orderID.startsWith('#') ? orderID : `#${orderID}`;
-    const row = this.ordersTable.locator('tr.Polaris-IndexTable__TableRow').filter({
-      has: this.appFrame.locator('a.orderId', { hasText: normalized }),
-    });
-    await this.waitForPageLoadState('domcontentloaded');
+    const orderLink = this.appFrame.locator('a.orderId', { hasText: normalized });
+    const row = this.orderTableRows.filter({ has: orderLink });
+    await row.waitFor({ state: 'visible', timeout: 10000 });
     const checkbox = row.locator('input[id^="Select-"][type="checkbox"]').first();
-    await checkbox.setChecked(true, { force: true });
+    await checkbox.waitFor({ state: 'attached', timeout: 10000 });
+    const checkboxId = await checkbox.getAttribute('id');
+    if (checkboxId) {
+      const label = row.locator(`label[for="${checkboxId}"]`).first();
+      if ((await label.count()) > 0) {
+        await label.click({ force: true });
+        return;
+      }
+    }
+    await checkbox.dispatchEvent('click');
   }
 
   async openMoreActionsInOrderGrid() {

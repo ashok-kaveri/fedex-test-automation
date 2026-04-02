@@ -3,7 +3,7 @@ import axios from 'axios';
 import type { APIRequestContext } from '@playwright/test';
 import productConfigJson from '../../testData/products/productsconfig.json';
 import { StoreProducts, Product } from '../config/product.types';
-import addressConfigJson from '../../testData/products/addressConfig.json';
+import addressConfigJson from '../../testData/products/addressconfig.json';
 import { Address, AddressKey } from '../../src/config/address.types';
 
 const ADDRESS_CONFIG = addressConfigJson as Record<AddressKey, Address>;

@@ -1,0 +1,103 @@
+<h2>3 Architecture Approaches</h2>
+<p class="subtitle">Pick the one that fits your ambition vs. build-time trade-off — I'll recommend at the end</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Simple RAG <span style="color:#94a3b8;font-size:12px;font-weight:400;">— 1-2 days to build</span></h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;">
+        <div style="background:#0f172a;border-radius:6px;padding:8px;font-size:12px;color:#94a3b8;">
+          <span style="color:#4ade80">1.</span> Scrape docs → chunk → embed<br>
+          <span style="color:#4ade80">2.</span> User asks question<br>
+          <span style="color:#4ade80">3.</span> Find relevant chunks<br>
+          <span style="color:#4ade80">4.</span> qwen2.5:14b answers
+        </div>
+        <div>
+          <div style="color:#4ade80;font-size:12px;margin-bottom:4px">✅ Pros</div>
+          <ul style="color:#94a3b8;font-size:12px;margin:0;padding-left:16px;line-height:1.8">
+            <li>Fast to build</li>
+            <li>Very reliable</li>
+            <li>Easy to debug</li>
+          </ul>
+          <div style="color:#f87171;font-size:12px;margin:8px 0 4px">❌ Cons</div>
+          <ul style="color:#94a3b8;font-size:12px;margin:0;padding-left:16px;line-height:1.8">
+            <li>No memory — forgets previous questions</li>
+            <li>"What did I just ask?" breaks it</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)" style="border-color:#4f46e5;">
+    <div class="letter" style="background:#4f46e5;">B</div>
+    <div class="content">
+      <h3>Conversational RAG ⭐ <span style="color:#818cf8;font-size:12px;font-weight:400;">— Recommended · 2-3 days</span></h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;">
+        <div style="background:#0f172a;border-radius:6px;padding:8px;font-size:12px;color:#94a3b8;">
+          <span style="color:#818cf8">1.</span> Scrape docs → chunk → embed<br>
+          <span style="color:#818cf8">2.</span> User asks question<br>
+          <span style="color:#818cf8">3.</span> Reformulate with chat history<br>
+          <span style="color:#818cf8">4.</span> Find relevant chunks<br>
+          <span style="color:#818cf8">5.</span> qwen2.5:14b answers with memory
+        </div>
+        <div>
+          <div style="color:#4ade80;font-size:12px;margin-bottom:4px">✅ Pros</div>
+          <ul style="color:#94a3b8;font-size:12px;margin:0;padding-left:16px;line-height:1.8">
+            <li>Full chat memory per session</li>
+            <li>Follow-up questions work perfectly</li>
+            <li>"Take me on a tour" works!</li>
+            <li>Feels like real expert convo</li>
+          </ul>
+          <div style="color:#f87171;font-size:12px;margin:8px 0 4px">❌ Cons</div>
+          <ul style="color:#94a3b8;font-size:12px;margin:0;padding-left:16px;line-height:1.8">
+            <li>Slightly more complex than A</li>
+            <li>Long chats hit context limits</li>
+          </ul>
+        </div>
+      </div>
+      <div style="background:#1e1b4b;border:1px solid #4f46e5;border-radius:6px;padding:8px;font-size:12px;color:#a5b4fc;margin-top:4px;">
+        💡 This is the sweet spot — real conversation feel, not much extra complexity
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Agentic RAG <span style="color:#94a3b8;font-size:12px;font-weight:400;">— Full power · 5-7 days</span></h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;">
+        <div style="background:#0f172a;border-radius:6px;padding:8px;font-size:12px;color:#94a3b8;">
+          <span style="color:#fb923c">Domain Expert has tools:</span><br><br>
+          🔍 search_docs(query)<br>
+          📁 read_codebase(file)<br>
+          📋 get_test_cases(feature)<br>
+          🃏 get_trello_cards()<br>
+          ▶️ run_test(spec_file)
+        </div>
+        <div>
+          <div style="color:#4ade80;font-size:12px;margin-bottom:4px">✅ Pros</div>
+          <ul style="color:#94a3b8;font-size:12px;margin:0;padding-left:16px;line-height:1.8">
+            <li>Most powerful — can look things up dynamically</li>
+            <li>Can check live test status</li>
+            <li>Extensible with any tool</li>
+          </ul>
+          <div style="color:#f87171;font-size:12px;margin:8px 0 4px">❌ Cons</div>
+          <ul style="color:#94a3b8;font-size:12px;margin:0;padding-left:16px;line-height:1.8">
+            <li>qwen2.5:14b tool-calling is unreliable at 14b scale</li>
+            <li>Much harder to debug</li>
+            <li>Slow — each tool call = extra LLM round trip</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:14px;margin-top:16px;text-align:center;">
+  <span style="color:#4f46e5;font-weight:700;">⭐ My recommendation: Option B</span>
+  <span style="color:#64748b;font-size:13px;"> — Conversational RAG gives you "take me on a tour" + follow-up questions out of the box. We can add agent tools later in Phase 2.</span>
+</div>
