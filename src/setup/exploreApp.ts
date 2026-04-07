@@ -37,13 +37,40 @@ test('Explore app UI for code generation', async ({ page }) => {
     return;
   }
 
-  const store   = STORE.trim().endsWith('.myshopify.com') ? STORE.trim() : `${STORE.trim()}.myshopify.com`;
-  const appBase = `https://${store}/admin/apps/fedex-shipping`;
-  const appUrl  = APP_PATH ? `${appBase}/${APP_PATH}` : appBase;
+  // Use the same URL pattern as the automation codebase (basePage.ts / ShippingPage.ts)
+  // e.g. https://admin.shopify.com/store/kee-fedex-qa/apps/testing-553/shopify
+  const store   = STORE.trim().replace(/\.myshopify\.com$/, '');
+  const appBase = `https://admin.shopify.com/store/${store}/apps/testing-553`;
+  const appHome = `${appBase}/shopify`;
+  const appUrl  = APP_PATH ? `${appBase}/${APP_PATH}` : appHome;
 
-  steps.push(`Navigating to ${appUrl}`);
-  await page.goto(appUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  await page.waitForTimeout(5000);
+  // Step 1: Navigate to the app home (same as clicking the app button)
+  steps.push(`Navigating to app home: ${appHome}`);
+  await page.goto(appHome, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.waitForTimeout(3000);
+
+  // Check session is valid
+  const homeUrl = page.url();
+  if (homeUrl.includes('login') || homeUrl.includes('account')) {
+    writeResult({ error: 'Session expired — delete auth.json and run: npx playwright test --project=setup', elements: [], steps, app_url: appHome });
+    return;
+  }
+
+  // Step 2: If a sub-path is requested, use the sidebar nav link (same as selectAppMenu in basePage.ts)
+  if (APP_PATH) {
+    steps.push(`Navigating to section via sidebar: ${APP_PATH}`);
+    const navLink = page.locator(`a[href*="/apps/testing-553/${APP_PATH}"]`);
+    const navFound = await navLink.count();
+    if (navFound > 0) {
+      await navLink.first().click({ force: true });
+      await page.waitForTimeout(3000);
+    } else {
+      // Fallback: direct URL if sidebar link not found
+      steps.push(`Sidebar link not found — navigating directly to ${appUrl}`);
+      await page.goto(appUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await page.waitForTimeout(3000);
+    }
+  }
 
   // Use existing AppFrameHelper — same as all POMs
   const appFrame = AppFrameHelper.getAppFrame(page);
@@ -52,9 +79,7 @@ test('Explore app UI for code generation', async ({ page }) => {
   const iframeCount = await page.locator('iframe[name="app-iframe"]').count();
   if (iframeCount === 0) {
     const url = page.url();
-    const msg = (url.includes('login') || url.includes('account'))
-      ? 'Session expired — delete auth.json and run: npx playwright test --project=setup'
-      : `App iframe not found at ${url}`;
+    const msg = `App iframe not found at ${url}`;
     writeResult({ error: msg, elements: [], steps, app_url: appUrl });
     return;
   }
