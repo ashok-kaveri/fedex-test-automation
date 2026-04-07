@@ -68,7 +68,7 @@ test('Explore app UI for code generation', async ({ page }) => {
       // Fallback: direct URL if sidebar link not found
       steps.push(`Sidebar link not found — navigating directly to ${appUrl}`);
       await page.goto(appUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(5000);
     }
   }
 
@@ -84,7 +84,23 @@ test('Explore app UI for code generation', async ({ page }) => {
     return;
   }
 
-  steps.push('App iframe found — capturing elements');
+  steps.push('App iframe found — waiting for content to load');
+
+  // Wait for app content inside the iframe (#AppFrameMain — same as appContent.getAppFrameMain())
+  try {
+    await appFrame.locator('#AppFrameMain').waitFor({ state: 'visible', timeout: 20000 });
+    steps.push('App content loaded (#AppFrameMain visible)');
+  } catch {
+    // Some pages may not have #AppFrameMain — try waiting for any button or heading
+    try {
+      await appFrame.getByRole('heading').first().waitFor({ state: 'visible', timeout: 10000 });
+      steps.push('App content loaded (heading visible)');
+    } catch {
+      steps.push('Warning: App content may not be fully loaded');
+    }
+  }
+
+  steps.push('Capturing elements');
 
   // Capture interactive elements using same role-based approach as POMs
   const roles: Array<{ role: Parameters<typeof appFrame.getByRole>[0]; label: string }> = [
