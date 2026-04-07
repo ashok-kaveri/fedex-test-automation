@@ -24,6 +24,18 @@ const APP_PATH   = process.env.EXPLORE_APP_PATH  || '';
 const OUTPUT     = process.env.EXPLORE_OUTPUT    || '/tmp/explore_result.json';
 const STORE      = process.env.STORE             || '';
 
+// UI element texts already in the codebase — skip re-capturing these
+const SKIP_ELEMENTS: string[] = (() => {
+  try { return JSON.parse(process.env.SKIP_ELEMENTS || '[]') as string[]; }
+  catch { return []; }
+})();
+
+function isAlreadyKnown(name: string): boolean {
+  if (SKIP_ELEMENTS.length === 0) return false;
+  const lower = name.toLowerCase();
+  return SKIP_ELEMENTS.some(s => s === lower || lower.includes(s) || s.includes(lower));
+}
+
 function writeResult(data: { error: string | null; elements: string[]; steps: string[]; app_url?: string }) {
   fs.writeFileSync(OUTPUT, JSON.stringify(data, null, 2), 'utf8');
 }
@@ -126,7 +138,10 @@ test('Explore app UI for code generation', async ({ page }) => {
           const name    = (ariaLbl || text || '').trim().slice(0, 80);
           if (!name) continue;
 
+          // Skip elements already captured in existing POM — only new elements needed
+          const isNew = !isAlreadyKnown(name);
           let entry = `${label}: '${name}'`;
+          if (!isNew) entry += ' [existing]';  // tag so writer knows it's already covered
 
           const checked = await el.getAttribute('aria-checked').catch(() => null);
           if (checked !== null) entry += ` [checked=${checked}]`;
