@@ -19,6 +19,7 @@
   "description": "Fedex test automation project using Playwright",
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@types/adm-zip": "^0.5.8",
     "@types/node": "^24.9.1",
     "@types/pdf-parse": "^1.1.5",
     "@typescript-eslint/eslint-plugin": "^7.18.0",

@@ -41,6 +41,21 @@ export default defineConfig({
       name: 'setup',
       testMatch: /.*\.setup\.ts/,
       testDir: './src/setup',
+      use: {
+        channel: 'chrome',
+        headless: false,
+      },
+    },
+    {
+      name: 'explore',
+      testMatch: /exploreApp\.ts/,
+      testDir: './src/setup',
+      dependencies: ['setup'],
+      use: {
+        channel: 'chrome',
+        headless: false,
+        storageState: './auth.json',
+      },
     },
     {
       name: 'Google Chrome',
