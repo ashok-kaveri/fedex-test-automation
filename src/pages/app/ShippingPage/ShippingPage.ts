@@ -272,4 +272,77 @@ async searchOrder(orderID: string){
   async navigateToProductsPage(): Promise<void> {
     await this.page.goto(`https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/products`);
   }
+
+  /**
+   * Poll for "label generated" after a bulk Auto-Generate Labels action.
+   *
+   * The FedEx app processes labels asynchronously — for 100 orders this takes
+   * roughly 2–3 minutes. The status only becomes visible after a page reload.
+   *
+   * This method reloads the page every `reloadIntervalMs` and checks the orders
+   * table for "label generated". It gives up after `timeoutMs`.
+   *
+   * @param timeoutMs         Total wait budget (default 4 min)
+   * @param reloadIntervalMs  How often to reload and re-check (default 30 s)
+   */
+  async waitForBulkLabelsGenerated(
+    timeoutMs = 240_000,
+    reloadIntervalMs = 30_000,
+  ): Promise<void> {
+    const deadline = Date.now() + timeoutMs;
+    let attempt = 0;
+
+    while (Date.now() < deadline) {
+      attempt++;
+      const remaining = Math.round((deadline - Date.now()) / 1000);
+      console.log(`[ShippingPage] Checking for "label generated" (attempt ${attempt}, ${remaining}s left)…`);
+
+      try {
+        // Quick check first — maybe it's already there
+        const found = await this.ordersTable
+          .getByText(/label generated/i)
+          .first()
+          .isVisible()
+          .catch(() => false);
+
+        if (found) {
+          console.log(`[ShippingPage] ✅ "label generated" found on attempt ${attempt}`);
+          return;
+        }
+      } catch {
+        // table not ready yet — reload and try again
+      }
+
+      if (Date.now() >= deadline) break;
+
+      console.log(`[ShippingPage] Not ready yet — reloading in ${reloadIntervalMs / 1000}s…`);
+      await this.page.waitForTimeout(reloadIntervalMs);
+      await this.page.reload({ waitUntil: 'domcontentloaded' });
+      await this.ordersTable.waitFor({ state: 'visible', timeout: 20_000 });
+    }
+
+    throw new Error(
+      `"label generated" not found after ${timeoutMs / 1000}s (${attempt} reload attempts). ` +
+      `Labels may still be processing — check the FedEx app manually.`,
+    );
+  }
+
+  // ================= Navigate directly to app orders/shipping list via URL =================
+  // Avoids new-tab issues caused by clickAppButton(); lands directly on the orders grid.
+  async navigateToAppOrdersPage(): Promise<void> {
+    await this.page.goto(
+      `https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/`,
+      { waitUntil: 'domcontentloaded' },
+    );
+    // Wait for the orders table (iframe content) to be ready
+    await this.ordersTable.waitFor({ state: 'visible', timeout: 30000 });
+  }
+
+  // ================= Click a specific order by ID from the orders grid =================
+  async clickOrderById(orderID: string): Promise<void> {
+    const normalized = orderID.startsWith('#') ? orderID : `#${orderID}`;
+    const orderLink = this.appFrame.locator('a.orderId', { hasText: normalized });
+    await orderLink.first().waitFor({ state: 'visible', timeout: 10000 });
+    await orderLink.first().click();
+  }
 }

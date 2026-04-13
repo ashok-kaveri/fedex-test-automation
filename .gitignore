@@ -31,3 +31,5 @@ debug_label.pdf
 
 # Claude Code worktrees
 .claude/worktrees/
+.claude/worktrees/*
+.cloude

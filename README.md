@@ -182,3 +182,93 @@ await orderUploader.uploadOrderWithMultipleProducts(
   'UK'
 );
 ```
+
+---
+
+## 📦 Bulk Order Creation
+
+Use this when a test case needs multiple orders (bulk buy scenarios).  
+No browser, no config.json pasting, no separate CLI tool needed.
+
+### How it works
+
+There are **2 modes**:
+
+| Mode | When to use |
+|---|---|
+| **Clone from existing order** | You need exact same products/address as a real order |
+| **Fresh orders** | You just need N basic orders to appear in the FedEx app |
+
+---
+
+### ▶️ Run from terminal
+
+**Clone an existing order N times** *(recommended for bulk-buy test cases)*
+```bash
+TEMPLATE_ORDER_ID=6888460681264 ORDER_COUNT=25 npm run seed:bulk
+```
+- `TEMPLATE_ORDER_ID` — the numeric ID from the Shopify admin URL:  
+  `admin.shopify.com/.../orders/`**`6888460681264`**  
+  Pick any unfulfilled order. The script fetches it via API automatically — no `.json` trick needed.
+- `ORDER_COUNT` — how many copies to create
+
+**Create N fresh orders** *(uses productsconfig.json — simple product, US address)*
+```bash
+ORDER_COUNT=10 npm run seed:bulk
+```
+
+**Default — 5 fresh orders**
+```bash
+npm run seed:bulk
+```
+
+---
+
+### Output
+```
+📦 Cloning order #6888460681264 × 25…
+[ShopifyOrderUploader] 1/25 → #1665
+[ShopifyOrderUploader] 2/25 → #1666
+...
+✅ Bulk orders created:
+   1. #1665  (id: 6901234567890)
+   2. #1666  (id: 6901234567891)
+   ...
+Total: 25/25 orders created
+```
+
+---
+
+### Use inside a test (beforeAll)
+
+```ts
+import ShopifyOrderUploader from '../../src/helpers/createOrder';
+
+test.beforeAll(async ({ request }) => {
+  const uploader = new ShopifyOrderUploader(request);
+
+  // Clone from existing order:
+  const { names, ids } = await uploader.uploadBulkOrdersFromExisting(
+    '6888460681264',  // order ID from URL
+    10,               // number of copies
+  );
+
+  // OR — fresh orders:
+  const { names, ids } = await uploader.uploadBulkOrders(10);
+
+  console.log('Created:', names); // ["#1665", "#1666", ...]
+});
+```
+
+---
+
+### Environment variables for bulk orders
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `TEMPLATE_ORDER_ID` | No | — | Shopify order ID to clone. If not set, creates fresh orders. |
+| `ORDER_COUNT` | No | `5` | Number of orders to create |
+| `ORDER_DELAY_MS` | No | `1000` | Delay between orders in ms (avoid rate limiting) |
+| `STORE` | Yes | — | Shopify store name (same as other tests) |
+| `SHOPIFY_ACCESS_TOKEN` | Yes | — | Admin API token (same as other tests) |
+| `SHOPIFY_API_VERSION` | Yes | — | API version e.g. `2026-01` (same as other tests) |

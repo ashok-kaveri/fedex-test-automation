@@ -289,4 +289,16 @@ export class AdditionalServices extends BasePage {
     await this.dryIceHeading.scrollIntoViewIfNeeded();
     await this.page.waitForTimeout(300);
   }
+
+  /**
+   * Navigate to the Additional Services / Settings page via the app sidebar.
+   * Waits for the Rate Settings heading to confirm the page has loaded.
+   */
+  async navigateToAdditionalServices(): Promise<void> {
+    await this.clickAppButton();
+    await this.selectAppMenu('settings');
+    await this.page.waitForLoadState('domcontentloaded');
+    await this.page.waitForTimeout(2000);
+    await this.rateSettingsHeading.waitFor({ state: 'visible', timeout: 15000 });
+  }
 }

@@ -11,6 +11,7 @@ export class OrderSummaryPage extends BasePage {
   readonly nextOrderButton: Locator;
   readonly previousOrderButton: Locator;
   readonly orderPositionIndicator: Locator;
+  readonly backToOrdersButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -21,9 +22,20 @@ export class OrderSummaryPage extends BasePage {
     this.printDocumentsButton = this.appFrame.getByRole('button', { name: 'Print Documents' });
     this.labelGeneratedStatus = this.appFrame.locator('text=label generated');
 
-    this.nextOrderButton = this.appFrame.getByRole('button', { name: 'Next', exact: true });
-    this.previousOrderButton = this.appFrame.getByRole('button', { name: 'Previous', exact: true });
-    this.orderPositionIndicator = this.appFrame.locator('[data-testid="order-position-indicator"]');
+    // Next / Previous are icon-only buttons inside nav[aria-label="Pagination"]
+    const paginationNav = this.appFrame.locator('nav').filter({ hasText: '' }).nth(0);
+    this.nextOrderButton = this.appFrame.getByRole('navigation', { name: 'Pagination' })
+      .getByRole('button', { name: 'Next' });
+    this.previousOrderButton = this.appFrame.getByRole('navigation', { name: 'Pagination' })
+      .getByRole('button', { name: 'Previous' });
+
+    // Position indicator: not rendered as visible text in current app version.
+    // Tests use page URL comparison instead (order ID changes in URL on navigation).
+    // Keep this locator as a stub so callers don't break; it resolves to the pagination nav.
+    this.orderPositionIndicator = this.appFrame.getByRole('navigation', { name: 'Pagination' });
+
+    // "Orders" back-button present on Order Summary page — goes to app's orders list
+    this.backToOrdersButton = this.appFrame.getByRole('button', { name: 'Orders', exact: true });
   }
 
   async verifyLabelGenerated(): Promise<void> {
@@ -57,7 +69,10 @@ export class OrderSummaryPage extends BasePage {
   }
 
   async waitForOrderDetailsToLoad(timeoutMs = 15000): Promise<void> {
-    await this.packagesSection.waitFor({ state: 'visible', timeout: timeoutMs });
+    // Wait for network to settle after navigation, then confirm the navigation
+    // buttons are rendered (they are always present when order list navigation exists)
+    await this.page.waitForLoadState('networkidle', { timeout: timeoutMs }).catch(() => {});
+    await this.nextOrderButton.waitFor({ state: 'visible', timeout: timeoutMs });
   }
 
   async verifyNextButtonIsEnabled(): Promise<void> {

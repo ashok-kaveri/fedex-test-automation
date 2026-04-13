@@ -61,10 +61,38 @@ test('Explore app UI for code generation', async ({ page }) => {
   await page.goto(appHome, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForTimeout(3000);
 
-  // Check session is valid
+  // Check session is valid — detect login redirect AND Shopify bot-challenge page
   const homeUrl = page.url();
   if (homeUrl.includes('login') || homeUrl.includes('account')) {
-    writeResult({ error: 'Session expired — delete auth.json and run: npx playwright test --project=setup', elements: [], steps, app_url: appHome });
+    writeResult({ error: 'Session expired — delete auth.json and run: npx playwright test --project=setup --headed', elements: [], steps, app_url: appHome });
+    return;
+  }
+
+  // Detect Shopify / Cloudflare connection-verification interstitial
+  const pageText = await page.innerText('body').catch(() => '');
+  const challengePhrases = [
+    'connection needs to be verified',
+    'let us know you',
+    'verify you are human',
+    'just a moment',
+    'checking your browser',
+    'needs to be verified before you can proceed',
+  ];
+  const isChallenge = challengePhrases.some(p => pageText.toLowerCase().includes(p));
+  if (isChallenge) {
+    writeResult({
+      error:
+        '⚠️ Shopify connection-verification challenge detected.\n' +
+        'The stored session (auth.json) is being blocked by Shopify bot-detection.\n' +
+        'Fix:\n' +
+        '  1. Delete auth.json in the automation repo\n' +
+        '  2. Run: npx playwright test --project=setup --headed\n' +
+        '  3. Log in manually — session will be saved to auth.json\n' +
+        '  4. Retry the QA Explorer',
+      elements: [],
+      steps,
+      app_url: appHome,
+    });
     return;
   }
 
