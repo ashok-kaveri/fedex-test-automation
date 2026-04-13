@@ -122,5 +122,22 @@
       }
     ],
     "dangerous": []
-  }
+  },
+  "kee-rest-fedex": {
+    "simple": [
+    { "product_id": 9181963649240, "variant_id": 51538019975384 }
+  ],
+
+  "variable": [
+    { "product_id": 9181963747544, "variant_id": 51538020073688 },
+    { "product_id": 9181963747544, "variant_id": 51538020106456 }
+  ],
+
+  "digital": [
+    { "product_id": 9181963813080, "variant_id": 51538020270296 },
+    { "product_id": 9181963845848, "variant_id": 51538020303064 }
+  ],
+
+  "dangerous": []
+}
 }

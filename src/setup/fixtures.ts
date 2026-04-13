@@ -19,8 +19,8 @@ import { ShopifyCreateStoreFormPage } from '../pages/shopify/ShopifyCreateStoreF
 import { ShopifyStoreSelectionPage } from '../pages/shopify/ShopifyStoreSelectionPage';
 import { ShopifyStoreInstallationPage } from '../pages/shopify/ShopifyStoreInstallationPage';
 import { ShopifyDevDashboardStorePage } from '../pages/shopify/ShopifyDevDashboardStorePage';
-import { ShopifyDevDashboardAppPage } from '../pages/shopify/ShopifyDevDashboardAppPage.ts';
-import { InstallationAuthPage } from '../pages/app/installationAuthPage/installationAuthPage.ts';
+import { ShopifyDevDashboardAppPage } from '../pages/shopify/ShopifyDevDashboardAppPage';
+import { InstallationAuthPage } from '../pages/app/installationAuthPage/installationAuthPage';
 
 export type Pages = {
   sharedPage: Page;

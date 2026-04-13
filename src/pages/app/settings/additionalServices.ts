@@ -15,6 +15,16 @@ export class AdditionalServices extends BasePage {
   readonly internationalShippingSettingsHeading: Locator;
   readonly rateSettingsHeading: Locator;
 
+  // --- Dry Ice for FedEx ---
+  readonly dryIceHeading: Locator;
+  readonly dryIceToggleCheckbox: Locator;
+  readonly dryIceToggleLabel: Locator;
+  readonly dryIceWeightInput: Locator;
+  readonly dryIceWeightUnitSelect: Locator;
+  readonly dryIceSaveButton: Locator;
+  readonly dryIceSection: Locator;
+  readonly dryIceSuccessBanner: Locator;
+
   constructor(page: Page) {
     super(page);
 
@@ -35,6 +45,16 @@ export class AdditionalServices extends BasePage {
       .getByRole('button', { name: 'save', exact: false });
     this.internationalShippingSettingsHeading = this.appFrame.getByRole('heading', { name: 'International Shipping Settings' });
     this.rateSettingsHeading = this.appFrame.getByRole('heading', { name: 'Rate Settings' });
+
+    // --- Dry Ice for FedEx ---
+    this.dryIceHeading = this.appFrame.getByRole('heading', { name: 'Dry Ice' });
+    this.dryIceToggleCheckbox = this.appFrame.locator('input[name="isDryIceEnabled"]');
+    this.dryIceToggleLabel = this.appFrame.locator('label:has-text("Enable Dry Ice Support")');
+    this.dryIceWeightInput = this.appFrame.locator('input[name="dryIceWeight"]');
+    this.dryIceWeightUnitSelect = this.appFrame.locator('select[name="dryIceWeightUnit"]');
+    this.dryIceSection = this.appFrame.getByRole('heading', { name: 'Dry Ice' }).locator('..').locator('..').locator('..');
+    this.dryIceSaveButton = this.dryIceSection.getByRole('button', { name: 'save', exact: false });
+    this.dryIceSuccessBanner = this.appFrame.locator('text=Dry Ice settings saved');
   }
 
   async enableFedexOneRate(enable: boolean) {
@@ -89,9 +109,9 @@ export class AdditionalServices extends BasePage {
   /**
    * Enables or disables the "Include Duties and Taxes in Checkout Rates" toggle.
    * Scrolls into view, checks current state, clicks label if a change is needed,
-   * and verifies stability before returning. Falls back to an assertion if unstable.
+   * and verifies stability before returning.
    */
-  async enableDutiesAndTaxes(enable: boolean): Promise<void> {
+  async enableDutiesAndTaxes(enable: boolean) {
     await this.dutiesAndTaxesCheckbox.scrollIntoViewIfNeeded();
     for (let attempt = 0; attempt < 3; attempt++) {
       const isChecked = await this.dutiesAndTaxesCheckbox.isChecked();
@@ -132,54 +152,141 @@ export class AdditionalServices extends BasePage {
     }
   }
 
-  /**
-   * Saves the Additional Services section by clicking the save button
-   * scoped to that section heading and waits for the page to settle.
-   */
-  async saveDutiesAndTaxesSetting(): Promise<void> {
-    await this.dutiesAndTaxesSaveButton.scrollIntoViewIfNeeded();
-    await this.dutiesAndTaxesSaveButton.click();
-    await this.page.waitForTimeout(1000);
-  }
+  // --- Dry Ice for FedEx ---
 
   /**
-   * Reads and returns the current checked state of the Duties and Taxes checkbox.
+   * Enables or disables the "Enable Dry Ice Support" toggle.
+   * Scrolls the toggle into view, checks current state, clicks the label if a
+   * change is needed, and verifies stability across multiple polls before returning.
+   * Throws an assertion error if the desired state cannot be reached after 3 attempts.
    */
-  async isDutiesAndTaxesEnabled(): Promise<boolean> {
-    await this.dutiesAndTaxesCheckbox.scrollIntoViewIfNeeded();
-    return this.dutiesAndTaxesCheckbox.isChecked();
-  }
-
-  /**
-   * Full workflow: set the Duties and Taxes toggle to the desired state and persist it.
-   * Returns the final persisted state for assertion in tests.
-   */
-  async setDutiesAndTaxesAndSave(enable: boolean): Promise<void> {
-    await this.enableDutiesAndTaxes(enable);
-    await this.saveDutiesAndTaxesSetting();
-    // Re-read after save to confirm persistence
-    const persisted = await this.isDutiesAndTaxesEnabled();
-    if (persisted !== enable) {
-      throw new Error(
-        `Duties and Taxes setting did not persist after save. Expected: ${enable}, Got: ${persisted}`
-      );
+  async enableDryIceSupport(enable: boolean): Promise<void> {
+    await this.dryIceToggleCheckbox.scrollIntoViewIfNeeded();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const isChecked = await this.dryIceToggleCheckbox.isChecked();
+      if (isChecked === enable) {
+        let isStable = true;
+        for (let poll = 0; poll < 4; poll++) {
+          await this.page.waitForTimeout(400);
+          if ((await this.dryIceToggleCheckbox.isChecked()) !== enable) {
+            isStable = false;
+            break;
+          }
+        }
+        if (isStable) {
+          return;
+        }
+      }
+      await this.dryIceToggleLabel.click();
+      await this.page.waitForTimeout(750);
+      const updatedState = await this.dryIceToggleCheckbox.isChecked();
+      if (updatedState === enable) {
+        let isStable = true;
+        for (let poll = 0; poll < 4; poll++) {
+          await this.page.waitForTimeout(400);
+          if ((await this.dryIceToggleCheckbox.isChecked()) !== enable) {
+            isStable = false;
+            break;
+          }
+        }
+        if (isStable) {
+          return;
+        }
+      }
+    }
+    if (enable) {
+      await expect(this.dryIceToggleCheckbox).toBeChecked({ timeout: 3000 });
+    } else {
+      await expect(this.dryIceToggleCheckbox).not.toBeChecked({ timeout: 3000 });
     }
   }
 
   /**
-   * Verifies the Additional Services section heading is visible,
-   * confirming the page has loaded the relevant section.
+   * Enters the specified weight value into the dry ice weight input field.
+   * Clears any existing value before typing the new one.
    */
-  async verifyAdditionalServicesSectionVisible(): Promise<void> {
-    await this.additionalServicesHeading.scrollIntoViewIfNeeded();
-    await expect(this.additionalServicesHeading).toBeVisible({ timeout: 10000 });
+  async enterDryIceWeight(weight: string): Promise<void> {
+    await this.dryIceWeightInput.scrollIntoViewIfNeeded();
+    await this.dryIceWeightInput.clear();
+    await this.dryIceWeightInput.fill(weight);
   }
 
   /**
-   * Verifies the International Shipping Settings section heading is visible.
+   * Selects the dry ice weight unit (e.g. "kg" or "lbs") from the unit dropdown.
+   * Waits briefly after selection to allow any reactive UI updates to settle.
    */
-  async verifyInternationalShippingSettingsVisible(): Promise<void> {
-    await this.internationalShippingSettingsHeading.scrollIntoViewIfNeeded();
-    await expect(this.internationalShippingSettingsHeading).toBeVisible({ timeout: 10000 });
+  async selectDryIceWeightUnit(unit: string): Promise<void> {
+    await this.dryIceWeightUnitSelect.scrollIntoViewIfNeeded();
+    await this.dryIceWeightUnitSelect.selectOption({ value: unit });
+    await this.page.waitForTimeout(500);
+  }
+
+  /**
+   * Clicks the Save button scoped to the Dry Ice section.
+   * Waits for the success banner to appear and asserts its visibility.
+   */
+  async saveDryIceSettings(): Promise<void> {
+    await this.dryIceSaveButton.scrollIntoViewIfNeeded();
+    await this.dryIceSaveButton.click();
+    await expect(this.dryIceSuccessBanner).toBeVisible({ timeout: 10000 });
+  }
+
+  /**
+   * Configures the full dry ice settings in one call:
+   * 1. Enables or disables the toggle.
+   * 2. If enabling, enters the weight and selects the unit.
+   * 3. Saves and asserts the success banner.
+   */
+  async configureDryIce(enable: boolean, weight?: string, unit?: string): Promise<void> {
+    await this.enableDryIceSupport(enable);
+    if (enable) {
+      if (weight !== undefined) {
+        await this.enterDryIceWeight(weight);
+      }
+      if (unit !== undefined) {
+        await this.selectDryIceWeightUnit(unit);
+      }
+    }
+    await this.saveDryIceSettings();
+  }
+
+  /**
+   * Verifies that the dry ice toggle reflects the expected enabled/disabled state.
+   * Used for post-save or post-refresh assertions.
+   */
+  async assertDryIceToggleState(expectedEnabled: boolean): Promise<void> {
+    await this.dryIceToggleCheckbox.scrollIntoViewIfNeeded();
+    if (expectedEnabled) {
+      await expect(this.dryIceToggleCheckbox).toBeChecked({ timeout: 5000 });
+    } else {
+      await expect(this.dryIceToggleCheckbox).not.toBeChecked({ timeout: 5000 });
+    }
+  }
+
+  /**
+   * Verifies that the dry ice weight input contains the expected value.
+   * Used for post-save or post-refresh persistence assertions.
+   */
+  async assertDryIceWeightValue(expectedWeight: string): Promise<void> {
+    await this.dryIceWeightInput.scrollIntoViewIfNeeded();
+    await expect(this.dryIceWeightInput).toHaveValue(expectedWeight, { timeout: 5000 });
+  }
+
+  /**
+   * Verifies that the dry ice weight unit dropdown has the expected selected value.
+   * Used for post-save or post-refresh persistence assertions.
+   */
+  async assertDryIceWeightUnit(expectedUnit: string): Promise<void> {
+    await this.dryIceWeightUnitSelect.scrollIntoViewIfNeeded();
+    await expect(this.dryIceWeightUnitSelect).toHaveValue(expectedUnit, { timeout: 5000 });
+  }
+
+  /**
+   * Scrolls the Dry Ice section into view.
+   * Useful as a navigation step before interacting with dry ice controls.
+   */
+  async scrollToDryIceSection(): Promise<void> {
+    await this.dryIceHeading.scrollIntoViewIfNeeded();
+    await this.page.waitForTimeout(300);
   }
 }
