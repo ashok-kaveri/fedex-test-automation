@@ -4,6 +4,7 @@ export type Address = {
   state: string;
   countryCode: string;
   zip: string;
+  residential?: boolean;
 };
 
 export type AddressKey = 'default' | 'UK' | 'CA';

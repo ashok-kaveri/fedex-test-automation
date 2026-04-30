@@ -304,12 +304,18 @@ export class GenerateLabelManuallyPage extends BasePage {
   }
 
   async getParsedDataFromRequestLog() {
+    const { request } = await this.getParsedRateLogData();
+    return request;
+  }
+
+  async getParsedRateLogData() {
     await this.requestHeader.waitFor({ state: 'visible', timeout: 5000 });
-    const logString = await this.LogModalRequestSection.innerText();
-    const trimmedLog = logString.trim();
-    const jsonData = JSON.parse(trimmedLog);
+    const requestText = (await this.LogModalRequestSection.innerText()).trim();
+    const responseText = (await this.LogModalResponseSection.innerText()).trim();
+    const request = JSON.parse(requestText);
+    const response = JSON.parse(responseText);
     await this.closeRatesLog();
-    return jsonData;
+    return { request, response };
   }
 
   async getShipmentSpecialServicesFromRequestLog() {

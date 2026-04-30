@@ -19,8 +19,9 @@ import { ShopifyCreateStoreFormPage } from '../pages/shopify/ShopifyCreateStoreF
 import { ShopifyStoreSelectionPage } from '../pages/shopify/ShopifyStoreSelectionPage';
 import { ShopifyStoreInstallationPage } from '../pages/shopify/ShopifyStoreInstallationPage';
 import { ShopifyDevDashboardStorePage } from '../pages/shopify/ShopifyDevDashboardStorePage';
-import { ShopifyDevDashboardAppPage } from '../pages/shopify/ShopifyDevDashboardAppPage.ts';
-import { InstallationAuthPage } from '../pages/app/installationAuthPage/installationAuthPage.ts';
+import { ShopifyDevDashboardAppPage } from '../pages/shopify/ShopifyDevDashboardAppPage';
+import { InstallationAuthPage } from '../pages/app/installationAuthPage/installationAuthPage';
+import { LabelFailureValidations } from '../pages/app/labelFailureValidations/labelFailureValidations';
 
 export type Pages = {
   sharedPage: Page;
@@ -45,6 +46,7 @@ export type Pages = {
   shopifyStoreSelectionPage: ShopifyStoreSelectionPage;
   shopifyStoreInstallationPage: ShopifyStoreInstallationPage; 
   authPage: InstallationAuthPage; 
+  labelFailureValidations: LabelFailureValidations;
 };
 
 export const test = baseTest.extend<object, { pages: Pages }>({
@@ -78,7 +80,8 @@ export const test = baseTest.extend<object, { pages: Pages }>({
         shopifyDevDashboardAppPage: new ShopifyDevDashboardAppPage(page),
         shopifyStoreSelectionPage: new ShopifyStoreSelectionPage(page),
         shopifyStoreInstallationPage: new ShopifyStoreInstallationPage(page),
-        authPage: new InstallationAuthPage(page)
+        authPage: new InstallationAuthPage(page),
+        labelFailureValidations: new LabelFailureValidations(page)
       };
       await use(pages);
       await context.close();

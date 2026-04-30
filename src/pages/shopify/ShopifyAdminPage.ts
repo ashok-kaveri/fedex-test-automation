@@ -6,11 +6,13 @@ export class ShopifyAdminPage extends BasePage {
   readonly searchButton: Locator;
   readonly searchContainer: Locator;
   readonly ordersButton: Locator;
+  readonly ordersNavLink: Locator;
   readonly searchInput: Locator;
   readonly searchResults: Locator;
   readonly moreActionsButton: Locator;
   readonly generateLabelLink: Locator;
   readonly autoGenerateLabel: Locator;
+  readonly autoGenerateLabelByHref: Locator;
   readonly markAsFulfilledButton: Locator;
   readonly fulfillmentStatusBadge: Locator;
   readonly generateReturnLabelLink: Locator;
@@ -25,11 +27,13 @@ export class ShopifyAdminPage extends BasePage {
     this.searchButton = page.getByRole('button', { name: /search/i });
     this.searchContainer = page.locator('#search-container');
     this.ordersButton = this.searchContainer.getByRole('button', { name: 'Orders' });
+    this.ordersNavLink = page.getByRole('link', { name: /^Orders\b/i }).first();
     this.searchInput = page.getByRole('combobox', { name: 'Search' });
     this.searchResults = page.locator('ul#search-results');
     this.moreActionsButton = page.getByRole('button', { name: 'More actions' }).first();
     this.generateLabelLink = page.getByRole('link', { name: 'Generate Label', exact: true });
     this.autoGenerateLabel = page.getByRole('link', { name: 'Auto-Generate Label', exact: true });
+    this.autoGenerateLabelByHref = page.locator('a[href*="/api/v1/labels/auto?id="]').first();
     this.markAsFulfilledButton = page.getByRole('button', { name: 'Mark as fulfilled' });
     // this.fulfillmentStatusBadge = page.locator('s-internal-badge:nth-child(4) > .badge');
     this.fulfillmentStatusBadge = page.getByText('CompletePaidCompleteFulfilledArchived');
@@ -42,6 +46,10 @@ export class ShopifyAdminPage extends BasePage {
   getOrderLink(orderID: string): Locator {
     return this.searchResults.locator(`a[role="option"][href*="/orders/"]`, { hasText: orderID });
   }
+
+  getOrderLinkFromOrdersPage(orderID: string): Locator {
+    return this.page.getByRole('link', { name: orderID, exact: true }).first();
+  }
   
   getAppLink(appName: string): Locator {  
     return this. page.getByRole('option', { name: appName}).nth(0);
@@ -52,8 +60,15 @@ export class ShopifyAdminPage extends BasePage {
   async navigateToStore(storeName: string): Promise<void> {
     await this.page.goto(`https://admin.shopify.com/store/${storeName}`);
     await this.page.waitForLoadState('domcontentloaded');
-    await this.page.waitForLoadState('networkidle');
     await this.searchButton.waitFor({ state: 'visible', timeout: 30000 });
+  }
+
+  async navigateToOrdersList(storeName: string): Promise<void> {
+    await this.page.goto(`https://admin.shopify.com/store/${storeName}/orders`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+    await this.ordersNavLink.waitFor({ state: 'visible', timeout: 30000 });
   }
 
   // Search and open order by ID with retry logic
@@ -88,6 +103,27 @@ export class ShopifyAdminPage extends BasePage {
     throw new Error(`Order ${orderID} not found after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
+  async openOrderFromOrdersList(orderID: string, maxRetries: number = 5): Promise<void> {
+    const orderLink = this.getOrderLinkFromOrdersPage(orderID);
+    let lastError: Error | undefined;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        await orderLink.waitFor({ state: 'visible', timeout: 5000 });
+        await orderLink.click();
+        return;
+      } catch (error) {
+        lastError = error as Error;
+        if (attempt < maxRetries) {
+          await this.page.reload({ waitUntil: 'domcontentloaded', timeout: 60000 });
+          await this.page.waitForTimeout(3000);
+        }
+      }
+    }
+
+    throw new Error(`Order ${orderID} not found on Orders page after ${maxRetries} attempts: ${lastError?.message}`);
+  }
+
   //Return the Order fuflilment status
   async isOrderFulfilled(): Promise<string> {
   const badge = this.page
@@ -102,6 +138,7 @@ export class ShopifyAdminPage extends BasePage {
   async openMoreActions(): Promise<void> {
     await this.moreActionsButton.waitFor({ state: 'visible', timeout: 10000 });
     await this.moreActionsButton.click();
+    await this.page.waitForTimeout(5000);
   }
 
   // Click on Generate Label link to open manual label generation page

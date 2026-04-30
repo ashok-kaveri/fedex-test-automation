@@ -33,13 +33,7 @@ interface User {
   lastName: string;
   email: string;
   phone: string;
-  address: {
-    street: string;
-    city: string;
-    state: string;
-    countryCode: string;
-    zip: string;
-  };
+  address: Address;
 }
 
 interface LineItem {
@@ -55,6 +49,12 @@ type ProductRequest = {
   productType: 'variable' | 'simple' | 'digital' | 'dangerous';
   productIndexes?: number[];
   quantities?: number[];
+};
+
+type UploadOrderOptions = {
+  shippingAddress: Address;
+  billingAddress?: Address;
+  productRequests?: ProductRequest[];
 };
 
 class ShopifyOrderUploader {
@@ -83,6 +83,13 @@ class ShopifyOrderUploader {
     return this.upload(user, items, `Multi Product Order (${addressKey})`);
   }
 
+  public async uploadOrderWithAddresses({ shippingAddress, billingAddress, productRequests }: UploadOrderOptions): Promise<string | null> {
+    const shippingUser = this.buildUser(shippingAddress);
+    const billingUser = this.buildUser(billingAddress ?? shippingAddress);
+    const items = this.getMultipleLineItems(productRequests);
+    return this.upload(shippingUser, items, 'Custom Address Order', billingUser);
+  }
+
   public getLastOrderId(): string | null {
     return this.lastOrderId;
   }
@@ -91,13 +98,13 @@ class ShopifyOrderUploader {
   // CORE
   // ======================
 
-  private async upload(user: User, lineItems: LineItem[], label: string): Promise<string | null> {
+  private async upload(user: User, lineItems: LineItem[], label: string, billingUser?: User): Promise<string | null> {
     const payload = {
       order: {
         email: user.email,
         line_items: lineItems,
         customer: this.getCustomer(user),
-        billing_address: this.getAddress(user),
+        billing_address: this.getAddress(billingUser ?? user),
         shipping_address: this.getAddress(user),
       },
     };
@@ -200,13 +207,16 @@ class ShopifyOrderUploader {
 
   private getDefaultUser(addressKey: AddressKey = 'default'): User {
     const addr = ADDRESS_CONFIG[addressKey];
+    return this.buildUser(addr);
+  }
 
+  private buildUser(address: Address): User {
     return {
       firstName: 'Test',
       lastName: 'User',
       email: 'test.user@example.com',
       phone: '1234567890',
-      address: addr,
+      address,
     };
   }
 
@@ -220,6 +230,7 @@ class ShopifyOrderUploader {
       province: user.address.state,
       country: user.address.countryCode,
       zip: user.address.zip,
+      ...(user.address.residential === false ? { company: 'PluginHive QA Business' } : {}),
     };
   }
 
