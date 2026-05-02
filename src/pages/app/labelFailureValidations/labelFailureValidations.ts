@@ -1,5 +1,6 @@
 import { expect, Locator, Page } from '@playwright/test';
 import { BasePage } from '../../basePage';
+import type { ShopifyAdminPage } from '../../shopify/ShopifyAdminPage';
 
 type FailureDialogDetails = {
   code: string;
@@ -99,6 +100,42 @@ export class LabelFailureValidations extends BasePage {
     }
 
     throw new Error(`Order ${orderName} did not move to failed state after ${maxRetries} polling attempts`);
+  }
+
+  async triggerAutoGenerateLabelUntilFailed(
+    shopifyAdmin: ShopifyAdminPage,
+    storeName: string,
+    orderName: string,
+    options: { maxAttempts?: number; statePollRetries?: number } = {},
+  ): Promise<void> {
+    const maxAttempts = options.maxAttempts ?? 3;
+    const statePollRetries = options.statePollRetries ?? 10;
+    let lastError: Error | undefined;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        if (attempt === 1) {
+          await shopifyAdmin.navigateToStore(storeName);
+          await shopifyAdmin.searchAndOpenOrder(orderName, 5);
+        } else {
+          await shopifyAdmin.navigateToOrdersList(storeName);
+          await shopifyAdmin.openOrderFromOrdersList(orderName, 5);
+        }
+
+        await shopifyAdmin.openMoreActions();
+        await shopifyAdmin.clickOnAutoLabelGeneration();
+        await this.openShippingGrid();
+        await this.waitForOrderToReachFinalState(orderName, statePollRetries);
+        return;
+      } catch (error) {
+        lastError = error as Error;
+        if (attempt === maxAttempts) {
+          throw lastError;
+        }
+      }
+    }
+
+    throw lastError ?? new Error(`Failed to auto-generate label for ${orderName}`);
   }
 
   async openOrderFailureMessage(orderName: string): Promise<void> {

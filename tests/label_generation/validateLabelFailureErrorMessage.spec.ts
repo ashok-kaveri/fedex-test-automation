@@ -9,35 +9,6 @@ if (!store) {
 
 test.describe.configure({ mode: 'serial' });
 
-async function triggerAutoGenerateLabelWithRetry(pages: any, storeName: string, orderName: string) {
-  let lastError: Error | undefined;
-
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      if (attempt === 1) {
-        await pages.shopifyAdmin.navigateToStore(storeName);
-        await pages.shopifyAdmin.searchAndOpenOrder(orderName, 5);
-      } else {
-        await pages.shopifyAdmin.navigateToOrdersList(storeName);
-        await pages.shopifyAdmin.openOrderFromOrdersList(orderName, 5);
-      }
-
-      await pages.shopifyAdmin.openMoreActions();
-      await pages.shopifyAdmin.clickOnAutoLabelGeneration();
-      await pages.labelFailureValidations.openShippingGrid();
-      await pages.labelFailureValidations.waitForOrderToReachFinalState(orderName, 10);
-      return;
-    } catch (error) {
-      lastError = error as Error;
-      if (attempt === 3) {
-        throw lastError;
-      }
-    }
-  }
-
-  throw lastError ?? new Error(`Failed to auto-generate label for ${orderName}`);
-}
-
 test.describe('Validate label failure error message', { tag: '@regression' }, () => {
   let sharedOrderName: string;
   let sharedOrderId: string;
@@ -76,7 +47,11 @@ test.describe('Validate label failure error message', { tag: '@regression' }, ()
   test('Verify short city auto-label failure modal and request payload', async ({ pages }) => {
     test.setTimeout(180000);
 
-    await triggerAutoGenerateLabelWithRetry(pages, store, sharedOrderName);
+    await pages.labelFailureValidations.triggerAutoGenerateLabelUntilFailed(
+      pages.shopifyAdmin,
+      store,
+      sharedOrderName,
+    );
 
     await pages.labelFailureValidations.openOrderFailureMessage(sharedOrderName);
     const failureInfo = await pages.labelFailureValidations.getFailureDialogDetails();
