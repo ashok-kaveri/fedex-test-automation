@@ -192,6 +192,58 @@ export class LabelFailureValidations extends BasePage {
     throw lastError ?? new Error(`Failed to auto-generate label for ${orderName}`);
   }
 
+  async verifyShortCityAutoLabelFailure(
+    shopifyAdmin: ShopifyAdminPage,
+    storeName: string,
+    orderName: string,
+    city: string,
+  ): Promise<void> {
+    await this.triggerAutoGenerateLabelUntilFailed(shopifyAdmin, storeName, orderName);
+
+    await this.openOrderFailureMessage(orderName);
+    const failureInfo = await this.getFailureDialogDetails();
+
+    expect(failureInfo.code).toBe('CITY.TOO.SHORT');
+    expect(failureInfo.message).toContain('City name is too short. Please provide the full city name.');
+    expect(failureInfo.resolution).toContain('support@pluginhive.com');
+
+    await this.openRequestResponseXmlView();
+    const { request, response } = await this.getRequestResponsePayload();
+
+    const requestedShipment = (request.requestObject as Record<string, unknown>)?.requestedShipment as Record<string, unknown>;
+    const recipients = requestedShipment?.recipients as Array<Record<string, unknown>> | undefined;
+    const address =
+      (recipients?.[0]?.address as Record<string, unknown> | undefined) ??
+      ((requestedShipment?.recipient as Record<string, unknown> | undefined)?.address as Record<string, unknown> | undefined);
+    const responsePayload = response.jsonResponse as Record<string, unknown>;
+    const errors = responsePayload?.errors as Array<Record<string, unknown>>;
+
+    expect(address?.city).toBe(city);
+    expect(address?.postalCode).toBe('GU21 2MY');
+    expect(address?.countryCode).toBe('GB');
+    expect(response.status).toBe(400);
+    expect(errors?.[0]?.code).toBe('CITY.TOO.SHORT');
+  }
+
+  async verifyValidCityAutoLabelSuccess(
+    shopifyAdmin: ShopifyAdminPage,
+    storeName: string,
+    orderName: string,
+  ): Promise<void> {
+    await this.triggerAutoGenerateLabelUntilStatus(
+      shopifyAdmin,
+      storeName,
+      orderName,
+      'label generated',
+    );
+
+    await this.openShippingGrid();
+    const rowText = await this.waitForOrderToReachStatus(orderName, 'label generated', 10);
+
+    expect(rowText).toContain('label generated');
+    expect(rowText).not.toContain('failed');
+  }
+
   async openOrderFailureMessage(orderName: string): Promise<void> {
     const row = this.getOrderRow(orderName);
     await row.waitFor({ state: 'visible', timeout: 15000 });
