@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from '../basePage';
 
 export class ShopifyAdminPage extends BasePage {
@@ -136,9 +136,15 @@ export class ShopifyAdminPage extends BasePage {
 
   // Open more actions menu
   async openMoreActions(): Promise<void> {
+    await this.page.waitForURL(/\/orders\/\d+/, { timeout: 30000 });
+    await this.page.waitForLoadState('domcontentloaded');
+    console.log('[auto-label] order page ready:', this.page.url());
     await this.moreActionsButton.waitFor({ state: 'visible', timeout: 10000 });
+    await this.moreActionsButton.waitFor({ state: 'attached', timeout: 10000 });
     await this.moreActionsButton.click();
-    await this.page.waitForTimeout(5000);
+    console.log('[auto-label] clicked More actions');
+    await this.autoGenerateLabel.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {});
+    console.log('[auto-label] menu visible:', await this.autoGenerateLabel.isVisible().catch(() => false));
   }
 
   // Click on Generate Label link to open manual label generation page
@@ -150,7 +156,76 @@ export class ShopifyAdminPage extends BasePage {
   //Click on Auto-label generation
 
   async clickOnAutoLabelGeneration(): Promise<void> {
-    await this.autoGenerateLabel.click();
+    let lastError: Error | undefined;
+    const candidates: Locator[] = [this.autoGenerateLabel, this.autoGenerateLabelByHref];
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        if (attempt > 1) {
+          await this.openMoreActions();
+        }
+
+        for (const candidate of candidates) {
+          if ((await candidate.count()) === 0) continue;
+
+          const beforeUrl = this.page.url();
+          console.log(`[auto-label] attempt ${attempt} candidate start:`, beforeUrl);
+          await expect(candidate).toBeVisible({ timeout: 10000 });
+          await expect(candidate).toBeEnabled({ timeout: 10000 });
+          await candidate.scrollIntoViewIfNeeded();
+          await this.page.waitForTimeout(1000);
+          await candidate.click({ trial: true });
+          console.log(`[auto-label] attempt ${attempt} candidate passed trial click`);
+          await candidate.click();
+          console.log(`[auto-label] attempt ${attempt} candidate clicked`);
+
+          const handoffConfirmed = await this.waitForAutoGenerateHandoff({ timeoutMs: 8000 }).then(() => true).catch(() => false);
+          console.log(`[auto-label] attempt ${attempt} handoff confirmed:`, handoffConfirmed, 'current url:', this.page.url());
+          if (handoffConfirmed) {
+            await this.page.waitForTimeout(2000);
+            return;
+          }
+
+          const afterUrl = this.page.url();
+          const menuStillVisible = await candidate.isVisible().catch(() => false);
+          console.log(`[auto-label] attempt ${attempt} after click url:`, afterUrl, 'menuStillVisible:', menuStillVisible);
+
+          if (afterUrl !== beforeUrl || !menuStillVisible) {
+            await this.waitForAutoGenerateHandoff();
+            await this.page.waitForTimeout(2000);
+            return;
+          }
+        }
+
+        await expect(this.autoGenerateLabelByHref).toBeVisible({ timeout: 5000 });
+        await this.autoGenerateLabelByHref.scrollIntoViewIfNeeded();
+        await this.page.waitForTimeout(1000);
+        console.log(`[auto-label] attempt ${attempt} forcing href fallback click`);
+        await this.autoGenerateLabelByHref.click({ force: true });
+        await this.waitForAutoGenerateHandoff();
+        await this.page.waitForTimeout(2000);
+        return;
+      } catch (error) {
+        lastError = error as Error;
+        console.log(`[auto-label] attempt ${attempt} failed:`, lastError.message);
+      }
+    }
+
+    throw lastError ?? new Error('Failed to trigger Auto-Generate Label');
+  }
+
+  async waitForAutoGenerateHandoff(options: { timeoutMs?: number } = {}): Promise<void> {
+    const timeoutMs = options.timeoutMs ?? 10000;
+    await this.page.waitForURL(url => !/\/orders\/\d+/.test(url.toString()), { timeout: timeoutMs });
+    await this.page.waitForLoadState('domcontentloaded').catch(() => {});
+    await this.page.waitForURL(
+      url => {
+        const current = url.toString();
+        return current.includes('/apps/testing-553/api/v1/labels/auto?id=') || current.includes('/apps/testing-553/shopify');
+      },
+      { timeout: timeoutMs },
+    );
+    await this.page.frameLocator('iframe[name="app-iframe"]').locator('body').waitFor({ state: 'attached', timeout: timeoutMs });
   }
 
   //Click on Generate Return Label

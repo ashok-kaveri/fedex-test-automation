@@ -17,6 +17,7 @@ export class LabelFailureValidations extends BasePage {
   readonly shippingGridUrl: string;
   readonly allTab: Locator;
   readonly ordersTable: Locator;
+  readonly refreshButton: Locator;
   readonly errorInfoDialog: Locator;
   readonly requestResponseDialog: Locator;
   readonly requestSection: Locator;
@@ -30,6 +31,7 @@ export class LabelFailureValidations extends BasePage {
     this.shippingGridUrl = `https://admin.shopify.com/store/${process.env.STORE}/apps/testing-553/shopify`;
     this.allTab = this.appFrame.getByRole('tab', { name: 'All' });
     this.ordersTable = this.appFrame.getByRole('table');
+    this.refreshButton = this.appFrame.getByRole('button', { name: 'Refresh' });
     this.errorInfoDialog = this.appFrame.getByRole('dialog').filter({ hasText: 'Error Info' }).first();
     this.requestResponseDialog = this.appFrame.getByRole('dialog').filter({ hasText: 'Request' }).filter({ hasText: 'Response' }).first();
     this.requestSection = this.requestResponseDialog.locator('pre').first();
@@ -59,37 +61,27 @@ export class LabelFailureValidations extends BasePage {
     await this.ordersTable.waitFor({ state: 'visible', timeout: 20000 });
   }
 
-  async hardRefreshShippingGrid(): Promise<void> {
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      await this.page.goto(this.shippingGridUrl, {
-        waitUntil: 'domcontentloaded',
-        timeout: 60000,
-      });
-      await this.page.waitForTimeout(4000);
-
-      const allTabVisible = await this.allTab.isVisible().catch(() => false);
-      const tableVisible = await this.ordersTable.isVisible().catch(() => false);
-
-      if (allTabVisible && tableVisible) {
-        return;
-      }
+  async refreshShippingGridIfAvailable(): Promise<void> {
+    if (await this.refreshButton.isVisible().catch(() => false)) {
+      await this.refreshButton.click();
     }
-
-    await this.allTab.waitFor({ state: 'visible', timeout: 20000 });
-    await this.ordersTable.waitFor({ state: 'visible', timeout: 20000 });
+    await this.page.waitForTimeout(3000);
   }
 
   async waitForOrderToAppear(orderName: string, maxRetries: number = 12): Promise<void> {
+    await this.allTab.waitFor({ state: 'visible', timeout: 20000 });
+    await this.ordersTable.waitFor({ state: 'visible', timeout: 20000 });
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       const row = this.getOrderRow(orderName);
       if (await row.isVisible().catch(() => false)) {
         return;
       }
 
-      await this.hardRefreshShippingGrid();
+      await this.refreshShippingGridIfAvailable();
     }
 
-    throw new Error(`Order ${orderName} did not appear in the shipping grid after ${maxRetries} hard refresh attempts`);
+    throw new Error(`Order ${orderName} did not appear in the shipping grid after ${maxRetries} polling attempts`);
   }
 
   async waitForOrderToReachFinalState(orderName: string, maxRetries: number = 12): Promise<string> {
@@ -103,10 +95,10 @@ export class LabelFailureValidations extends BasePage {
         return rowText;
       }
 
-      await this.hardRefreshShippingGrid();
+      await this.refreshShippingGridIfAvailable();
     }
 
-    throw new Error(`Order ${orderName} did not move to failed state after ${maxRetries} hard refresh attempts`);
+    throw new Error(`Order ${orderName} did not move to failed state after ${maxRetries} polling attempts`);
   }
 
   async openOrderFailureMessage(orderName: string): Promise<void> {
@@ -118,10 +110,12 @@ export class LabelFailureValidations extends BasePage {
     await messageButton.waitFor({ state: 'visible', timeout: 10000 });
     await messageButton.click();
     await this.errorInfoDialog.waitFor({ state: 'visible', timeout: 10000 });
+    await expect(this.errorInfoDialog).toContainText('FedEx Error Code', { timeout: 15000 });
   }
 
   async getFailureDialogDetails(): Promise<FailureDialogDetails> {
     await this.errorInfoDialog.waitFor({ state: 'visible', timeout: 10000 });
+    await expect(this.errorInfoDialog).toContainText('FedEx Error Code', { timeout: 15000 });
     const dialogText = await this.errorInfoDialog.innerText();
 
     const codeMatch = dialogText.match(/FedEx Error Code\s+([A-Z._]+)/i);
